@@ -1,0 +1,12 @@
+modLoader="javafml"
+loaderVersion="[11,)"
+license="GPL-3.0-only"
+[[mods]]
+modId="ferrum_runtime"
+version="1.0.0"
+displayName="FerrumMC headless runtime"
+[[dependencies.ferrum_runtime]]
+modId="neoforge"
+type="required"
+versionRange="[26.2.0.93]"
+side="SERVER"

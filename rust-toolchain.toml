@@ -1,0 +1,3 @@
+[toolchain]
+# scripts/env.ps1 verifies the installed stable toolchain is exactly 1.99.1.
+channel = "stable"

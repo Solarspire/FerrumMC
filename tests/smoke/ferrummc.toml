@@ -1,0 +1,34 @@
+# Isolated loopback-only, offline handshake test. Never use this for a public server.
+seed = "1"
+allow_nether = false
+allow_end = false
+spawn_protection = 0
+default_gamemode = "Creative"
+force_gamemode = true
+
+[networking.java]
+address = "127.0.0.1:25566"
+online_mode = false
+encryption = false
+view_distance = 2
+simulation_distance = 2
+motd = "FerrumMC Phase 2 smoke test"
+
+[networking.java.compression]
+enabled = false
+
+[networking.bedrock]
+enabled = false
+online_mode = false
+
+[networking.lan_broadcast]
+enabled = false
+
+[telemetry]
+enabled = false
+
+[logging]
+color = false
+
+[commands]
+use_tty = false

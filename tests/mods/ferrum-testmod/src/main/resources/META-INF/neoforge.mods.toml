@@ -1,0 +1,18 @@
+license="GPL-3.0-only"
+[[mods]]
+modId="ferrum_testmod"
+version="1.0.0"
+displayName="Ferrum Validation Mod"
+description='''Stock NeoForge ground truth for FerrumMC's allowlisted bridge.'''
+[[dependencies.ferrum_testmod]]
+modId="neoforge"
+type="required"
+versionRange="[26.2.0.93]"
+ordering="NONE"
+side="BOTH"
+[[dependencies.ferrum_testmod]]
+modId="minecraft"
+type="required"
+versionRange="[26.2]"
+ordering="NONE"
+side="BOTH"
