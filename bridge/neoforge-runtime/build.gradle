@@ -1,0 +1,45 @@
+plugins { id 'java-library' }
+
+group = 'net.solarspire.ferrum'
+version = '1.0.0'
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+def server = file('.cache/server')
+def argsFile = new File(server, 'libraries/net/neoforged/neoforge/26.2.0.93/win_args.txt')
+if (!argsFile.isFile()) {
+    throw new GradleException('Run scripts/prepare-neoforge-runtime.ps1 first')
+}
+def installedArgs = argsFile.readLines()
+def libraries = files(installedArgs[installedArgs.indexOf('-classpath') + 1].split(';').collect {
+    new File(server, it)
+})
+def game = files(
+    new File(server, 'libraries/net/neoforged/minecraft-server-patched/26.2.0.93/minecraft-server-patched-26.2.0.93.jar'),
+    new File(server, 'libraries/net/neoforged/neoforge/26.2.0.93/neoforge-26.2.0.93-universal.jar'))
+
+sourceSets {
+    bootstrap { compileClasspath = libraries }
+    main { compileClasspath = libraries + game + sourceSets.bootstrap.output }
+    smoke { compileClasspath = libraries + sourceSets.bootstrap.output }
+    failureProbe { compileClasspath = libraries + game }
+    clientProbe { compileClasspath = libraries + game }
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.register('bootstrapJar', Jar) {
+    archiveClassifier = 'bootstrap'
+    from sourceSets.bootstrap.output
+}
+tasks.register('smokeJar', Jar) {
+    archiveClassifier = 'smoke'
+    from sourceSets.smoke.output
+}
+tasks.register('failureProbeJar', Jar) {
+    archiveClassifier = 'failure-probe'
+    from sourceSets.failureProbe.output
+}
+tasks.register('clientProbeJar', Jar) {
+    archiveClassifier = 'client-probe'
+    from sourceSets.clientProbe.output
+}
+tasks.named('assemble') { dependsOn tasks.named('bootstrapJar'), tasks.named('smokeJar'), tasks.named('failureProbeJar'), tasks.named('clientProbeJar') }

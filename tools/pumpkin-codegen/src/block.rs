@@ -1,0 +1,1956 @@
+use heck::{ToShoutySnakeCase, ToUpperCamelCase};
+use proc_macro2::{Span, TokenStream};
+use pumpkin_nbt::deserializer::NbtReadHelper;
+use pumpkin_util::math::{experience::Experience, vector3::Vector3};
+use quote::{ToTokens, format_ident, quote};
+use serde::Deserialize;
+use std::{
+    collections::{BTreeMap, HashSet},
+    fs,
+    io::{Cursor, Read, Seek, SeekFrom},
+    panic,
+};
+use syn::{Ident, LitInt, LitStr};
+
+use crate::bitsets::{Bitset, gen_u16_bitset};
+
+/// Converts a sparse index-value list into a dense array, filling gaps with `None` tokens.
+///
+/// # Arguments
+/// – `array` – pairs of `(index, value)` where `index` is the position in the output array.
+fn fill_array<T: Clone + ToTokens>(array: Vec<(u16, T)>) -> Vec<TokenStream> {
+    let max_index = array.iter().map(|(index, _)| index).max().unwrap();
+    let mut raw_id_from_state_id_ordered = vec![quote! { None }; (max_index + 1) as usize];
+
+    for (state_id, id_lit) in array {
+        raw_id_from_state_id_ordered[state_id as usize] = quote! { #id_lit };
+    }
+
+    raw_id_from_state_id_ordered
+}
+
+/// Converts a sparse `(block_ident, state_index, state_id)` list into a dense `TokenStream` array.
+///
+/// # Arguments
+/// – `array` – triples of `(block_ident, state_index, state_id)` mapping each state ID to the block constant and local index.
+fn fill_state_array(array: Vec<(Ident, usize, u16)>) -> Vec<TokenStream> {
+    let max_index = array.iter().map(|(_, _, index)| index).max().unwrap();
+    let mut ret = vec![quote! { Missed State }; (max_index + 1) as usize];
+
+    for (block, index, state_id) in array {
+        let index_lit = LitInt::new(&index.to_string(), Span::call_site());
+        ret[state_id as usize] = quote! { &Block::#block.states[#index_lit] };
+    }
+
+    ret
+}
+
+/// Converts a block registry name into the SCREAMING_SNAKE_CASE constant identifier.
+///
+/// # Arguments
+/// – `block` – the lowercase registry name (e.g., `"stone_slab"`).
+fn const_block_name_from_block_name(block: &str) -> String {
+    block.to_shouty_snake_case()
+}
+
+/// Derives the UpperCamelCase struct name for a block-property group from a derived base name.
+///
+/// # Arguments
+/// – `name` – a base name such as `"oak_slab_like"` which is converted to e.g., `"OakSlabLikeProperties"`.
+fn property_group_name_from_derived_name(name: &str) -> String {
+    format!("{name}_properties").to_upper_camel_case()
+}
+
+fn common_suffix_group_alias(blocks: &[(String, u16)]) -> Option<String> {
+    if blocks.is_empty() {
+        return None;
+    }
+    let token_lists: Vec<Vec<&str>> = blocks
+        .iter()
+        .map(|(name, _)| name.split('_').collect())
+        .collect();
+
+    let first = &token_lists[0];
+    let mut common_suffix_len = 0;
+
+    for i in 1..=first.len() {
+        let candidate_suffix = &first[first.len() - i..];
+        let all_match = token_lists
+            .iter()
+            .all(|tokens| tokens.len() >= i && &tokens[tokens.len() - i..] == candidate_suffix);
+        if all_match {
+            common_suffix_len = i;
+        } else {
+            break;
+        }
+    }
+
+    if common_suffix_len > 0 {
+        let suffix_tokens = &first[first.len() - common_suffix_len..];
+        let suffix_str = suffix_tokens.join("_");
+        Some(format!("{suffix_str}_properties").to_upper_camel_case())
+    } else {
+        None
+    }
+}
+
+/// Discriminates between the runtime representations of a block property.
+enum PropertyType {
+    /// The property is a simple boolean (`true`/`false`).
+    Bool,
+    /// The property is an integer with an inclusive range.
+    Int { min: u8, max: u8 },
+    /// The property is an enum with a generated Rust type identified by `name`.
+    Enum {
+        name: String,
+        values: Vec<String>,
+        prop_variant_name: String,
+        canonical_enum_name: String,
+        shared_none_variants: Vec<(String, String)>,
+    },
+}
+
+/// Maps a single block-property field to its Rust type representation.
+struct PropertyVariantMapping {
+    /// The serialized property name as it appears in JSON (e.g., `"facing"`).
+    original_name: String,
+    /// The Rust type used to represent this property in the generated code.
+    property_type: PropertyType,
+}
+
+/// Accumulated data for a group of blocks that share the same set of block properties.
+struct PropertyCollectionData {
+    /// The ordered list of property-to-type mappings that form the generated struct fields.
+    variant_mappings: Vec<PropertyVariantMapping>,
+    /// All blocks (by name and numeric ID) that belong to this property group.
+    blocks: Vec<(String, u16)>,
+}
+
+impl PropertyCollectionData {
+    /// Registers an additional block that shares this property group.
+    ///
+    /// # Arguments
+    /// – `block_name` – the registry name of the block.
+    /// – `block_id` – the numeric block ID.
+    pub fn add_block(&mut self, block_name: String, block_id: u16) {
+        self.blocks.push((block_name, block_id));
+    }
+
+    /// Creates a new `PropertyCollectionData` from an ordered list of property mappings with no blocks yet registered.
+    ///
+    /// # Arguments
+    /// – `variant_mappings` – the property-to-type mappings for this group.
+    pub const fn from_mappings(variant_mappings: Vec<PropertyVariantMapping>) -> Self {
+        Self {
+            variant_mappings,
+            blocks: Vec::new(),
+        }
+    }
+
+    /// Derives the base name for this property group from the first registered block.
+    pub fn derive_name(&self) -> String {
+        format!("{}_like", self.blocks[0].0)
+    }
+}
+
+/// Deserialized representation of a single block property enum, used to emit the Rust enum definition.
+#[derive(Deserialize, Clone, Debug)]
+pub struct PropertyStruct {
+    /// The UpperCamelCase name used for the generated Rust enum (e.g., `"Facing"`).
+    pub name: String,
+    /// The ordered list of variant value strings (e.g., `["north", "south", ...]`).
+    pub values: Vec<String>,
+}
+
+impl ToTokens for PropertyStruct {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        if self.values[0] == "true" && self.values[1] == "false" {
+            return;
+        }
+
+        let name = Ident::new(&self.name, Span::call_site());
+        let count = self.values.len();
+        let variant_count = count as u16;
+
+        let is_number_values = !self.values.is_empty()
+            && self.values.iter().all(|v| v.starts_with('L'))
+            && self.values.iter().any(|v| v == "L1");
+
+        let mut variants = Vec::with_capacity(count);
+        let mut literals = Vec::with_capacity(count);
+        let mut indices = Vec::with_capacity(count);
+
+        for (i, raw_value) in self.values.iter().enumerate() {
+            let ident = Ident::new(&raw_value.to_upper_camel_case(), Span::call_site());
+
+            let literal_str = if is_number_values {
+                raw_value.strip_prefix('L').unwrap_or(raw_value)
+            } else {
+                raw_value.as_str()
+            };
+
+            variants.push(ident);
+            literals.push(literal_str);
+            indices.push(i as u16);
+        }
+        tokens.extend(quote! {
+            #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+            pub enum #name {
+                #(#variants),*
+            }
+
+            impl #name {
+                #[must_use]
+                pub const fn to_value(&self) -> &'static str {
+                    match self {
+                        #(Self::#variants => #literals),*
+                    }
+                }
+            }
+
+            impl EnumVariants for #name {
+                fn variant_count() -> u16 {
+                    #variant_count
+                }
+
+                fn to_index(&self) -> u16 {
+                    match self {
+                        #(Self::#variants => #indices),*
+                    }
+                }
+
+                fn from_index(index: u16) -> Self {
+                    match index {
+                        #(#indices => Self::#variants,)*
+                        _ => panic!("Invalid index: {index}"),
+                    }
+                }
+
+                fn to_value(&self) -> &'static str {
+                    self.to_value()
+                }
+
+                fn from_value(value: &str) -> Self {
+                    match value {
+                        #(#literals => Self::#variants),*,
+                        _ => panic!("Invalid value: {value}"),
+                    }
+                }
+            }
+        });
+    }
+}
+
+/// Code-generation wrapper that emits the full `BlockProperties` impl for one property group.
+struct BlockPropertyStruct {
+    /// The property group data used to generate the struct and its trait implementation.
+    data: PropertyCollectionData,
+    /// Type aliases for this property struct.
+    aliases: Vec<Ident>,
+}
+
+impl ToTokens for BlockPropertyStruct {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let struct_name = property_group_name_from_derived_name(&self.data.derive_name());
+        let name = Ident::new(&struct_name, Span::call_site());
+
+        // Strukturfelder generieren
+        let fields = self.data.variant_mappings.iter().map(|entry| {
+            let key = Ident::new_raw(&entry.original_name, Span::call_site());
+            match &entry.property_type {
+                PropertyType::Bool => quote! { pub #key: bool },
+                PropertyType::Int { .. } => quote! { pub #key: u8 },
+                PropertyType::Enum { name, .. } => {
+                    let value = Ident::new(name, Span::call_site());
+                    quote! { pub #key: #value }
+                }
+            }
+        });
+
+        let block_ids = self.data.blocks.iter().map(|(name, _)| {
+            Ident::new(&const_block_name_from_block_name(name), Span::call_site())
+        });
+
+        let to_index_logic = self.data.variant_mappings.iter().rev().map(|entry| {
+            let field = Ident::new_raw(&entry.original_name, Span::call_site());
+            match &entry.property_type {
+                PropertyType::Bool => quote! { (!self.#field as u16, 2) },
+                PropertyType::Int { min, max } => {
+                    let count = (max - min + 1) as u16;
+
+                    if *min > 0 {
+                        quote! { ((self.#field - #min) as u16, #count) }
+                    } else {
+                        quote! { (self.#field as u16, #count) }
+                    }
+                }
+                PropertyType::Enum { name, .. } => {
+                    let ty = Ident::new(name, Span::call_site());
+                    quote! { (self.#field.to_index(), #ty::variant_count()) }
+                }
+            }
+        });
+
+        let from_index_body = self
+            .data
+            .variant_mappings
+            .iter()
+            .rev()
+            .map(|entry| {
+                let field_name = Ident::new_raw(&entry.original_name, Span::call_site());
+                match &entry.property_type {
+                    PropertyType::Bool => quote! {
+                        #field_name: {
+                            let value = index % 2;
+                            index /= 2;
+                            value == 0
+                        }
+                    },
+                    PropertyType::Int { min, max } => {
+                        let count = (max - min + 1) as u16;
+                        let val = if *min > 0 {
+                            quote! { value + #min }
+                        } else {
+                            quote! {value}
+                        };
+                        quote! {
+                            #field_name: {
+                                let value = (index % #count) as u8;
+                                index /= #count;
+                                #val
+                            }
+                        }
+                    }
+                    PropertyType::Enum { name, .. } => {
+                        let enum_ident = Ident::new(name, Span::call_site());
+                        quote! {
+                            #field_name: {
+                                let value = index % #enum_ident::variant_count();
+                                index /= #enum_ident::variant_count();
+                                #enum_ident::from_index(value)
+                            }
+                        }
+                    }
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let to_props_entries = self.data.variant_mappings.iter().map(|entry| {
+            let key_variant = Ident::new(
+                &entry.original_name.to_upper_camel_case(),
+                Span::call_site(),
+            );
+            let field = Ident::new_raw(&entry.original_name, Span::call_site());
+            match &entry.property_type {
+                PropertyType::Bool | PropertyType::Int { .. } => quote! {
+                    Property::#key_variant(self.#field)
+                },
+                PropertyType::Enum {
+                    name,
+                    values,
+                    prop_variant_name,
+                    canonical_enum_name,
+                    ..
+                } => {
+                    let prop_var_ident = Ident::new(prop_variant_name, Span::call_site());
+                    if name == canonical_enum_name {
+                        quote! { Property::#prop_var_ident(self.#field) }
+                    } else {
+                        let enum_ident = Ident::new(name, Span::call_site());
+                        let canon_ident = Ident::new(canonical_enum_name, Span::call_site());
+                        let val_idents: Vec<Ident> = values
+                            .iter()
+                            .map(|v| Ident::new(&v.to_upper_camel_case(), Span::call_site()))
+                            .collect();
+                        quote! {
+                            Property::#prop_var_ident(match self.#field {
+                                #(#enum_ident::#val_idents => #canon_ident::#val_idents),*
+                            })
+                        }
+                    }
+                }
+            }
+        });
+
+        let mut from_props_arms = Vec::new();
+        for entry in &self.data.variant_mappings {
+            let key_variant = Ident::new(
+                &entry.original_name.to_upper_camel_case(),
+                Span::call_site(),
+            );
+            let field_name = Ident::new_raw(&entry.original_name, Span::call_site());
+            match &entry.property_type {
+                PropertyType::Bool => {
+                    from_props_arms.push(quote! {
+                        Property::#key_variant(value) => block_props.#field_name = *value,
+                    });
+                }
+                PropertyType::Int { min, max } => {
+                    if *min == 0 {
+                        from_props_arms.push(quote! {
+                            Property::#key_variant(value) => {
+                                block_props.#field_name = if *value <= #max { *value } else { 0 };
+                            }
+                        });
+                    } else {
+                        from_props_arms.push(quote! {
+                            Property::#key_variant(value) => {
+                                block_props.#field_name = if *value >= #min && *value <= #max { *value } else { #min };
+                            }
+                        });
+                    }
+                }
+                PropertyType::Enum {
+                    name,
+                    values,
+                    prop_variant_name,
+                    canonical_enum_name,
+                    shared_none_variants,
+                } => {
+                    let prop_var_ident = Ident::new(prop_variant_name, Span::call_site());
+                    let enum_ident = Ident::new(name, Span::call_site());
+                    if name == canonical_enum_name {
+                        from_props_arms.push(quote! {
+                            Property::#prop_var_ident(value) => block_props.#field_name = *value,
+                        });
+                        for (other_prop_var, other_enum) in shared_none_variants {
+                            let other_prop_var_ident =
+                                Ident::new(other_prop_var, Span::call_site());
+                            let other_enum_ident = Ident::new(other_enum, Span::call_site());
+                            from_props_arms.push(quote! {
+                                Property::#other_prop_var_ident(#other_enum_ident::None) => {
+                                    block_props.#field_name = #enum_ident::None;
+                                }
+                            });
+                        }
+                    } else {
+                        let canon_ident = Ident::new(canonical_enum_name, Span::call_site());
+                        let val_idents: Vec<Ident> = values
+                            .iter()
+                            .map(|v| Ident::new(&v.to_upper_camel_case(), Span::call_site()))
+                            .collect();
+                        from_props_arms.push(quote! {
+                            Property::#prop_var_ident(value) => match *value {
+                                #(#canon_ident::#val_idents => block_props.#field_name = #enum_ident::#val_idents,)*
+                                _ => {}
+                            },
+                        });
+                    }
+                }
+            }
+        }
+
+        let aliases = self.aliases.iter().map(|alias| {
+            quote! { pub type #alias = #name; }
+        });
+
+        tokens.extend(quote! {
+            #[derive(Clone, Copy, Eq, PartialEq)]
+            pub struct #name {
+                #(#fields),*
+            }
+
+            #(#aliases)*
+
+            impl #name {
+                #[inline]
+                #[must_use]
+                pub fn from_index(mut index: u16) -> Self {
+                    Self {
+                        #(#from_index_body),*
+                    }
+                }
+
+                #[inline]
+                #[must_use]
+                pub fn from_state_id(id: BlockStateId) -> Self {
+                    let block = Block::from_state_id(id);
+                    let min_id = block.states[0].id.as_u16();
+                    Self::from_index(id.as_u16() - min_id)
+                }
+
+                #[inline]
+                #[must_use]
+                pub fn to_state_id(&self, block: &Block) -> BlockStateId {
+                    <Self as BlockProperties>::to_state_id(self, block)
+                }
+
+                #[inline]
+                #[must_use]
+                pub fn default(block: &Block) -> Self {
+                    <Self as BlockProperties>::default(block)
+                }
+            }
+
+            impl BlockProperties for #name {
+               fn to_index(&self) -> u16 {
+                    let (index, _) = [#(#to_index_logic),*]
+                        .iter()
+                        .fold((0, 1), |(curr, mul), &(val, count)| (curr + val * mul, mul * count));
+                    index
+                }
+
+                #[allow(unused_assignments)]
+                fn from_index(index: u16) -> Self {
+                    Self::from_index(index)
+                }
+
+                #[inline]
+                #[allow(clippy::manual_range_patterns)]
+                fn handles_block_id(block_id: BlockId) -> bool where Self: Sized {
+                    matches!(block_id, #(BlockId::#block_ids)|*)
+                }
+
+                fn to_state_id(&self, block: &Block) -> BlockStateId {
+                    if !Self::handles_block_id(block.id) {
+                        panic!("{} is not a valid block for {}", block.name, #struct_name);
+                    }
+                    block.states[self.to_index() as usize].id
+                }
+
+                fn from_state_id(id: BlockStateId, block: &Block) -> Self {
+                    debug_assert!(
+                        Self::handles_block_id(block.id),
+                        "{} is not a valid block for {}", block.name, #struct_name
+                    );
+
+                    let min_id = block.states[0].id.as_u16();
+                    let max_id = block.states.last().map(|s| s.id.as_u16()).unwrap_or(min_id);
+
+                    if (min_id..=max_id).contains(&id.as_u16()) {
+                        Self::from_index(id.as_u16() - min_id)
+                    } else {
+                        #[cfg(debug_assertions)]
+                        panic!("State ID {} does not exist for {}", id, block.name);
+
+                        #[cfg(not(debug_assertions))]
+                        Self::from_index(0)
+                    }
+                }
+
+                fn default(block: &Block) -> Self {
+                    if !Self::handles_block_id(block.id) {
+                        panic!("{} is not a valid block for {}", block.name, #struct_name);
+                    }
+                    Self::from_state_id(block.default_state.id)
+                }
+
+                fn to_props(&self) -> Vec<Property> {
+                   vec![ #(#to_props_entries),* ]
+                }
+
+                #[allow(clippy::manual_range_patterns, clippy::single_match)]
+                fn from_props(props: &[Property], block: &Block) -> Self {
+                    #[cfg(debug_assertions)]
+                    if !Self::handles_block_id(block.id) {
+                        panic!("{} is not a valid block for {}", block.name, #struct_name);
+                    }
+                    let mut block_props = Self::default(block);
+                    for prop in props {
+                        match prop {
+                            #(#from_props_arms)*
+                            _ => {}
+                        }
+                    }
+                    block_props
+                }
+            }
+        });
+    }
+}
+
+/// Deserialized flammability data for a block.
+#[derive(Deserialize)]
+pub struct FlammableStruct {
+    /// Chance (0–300) that fire spreads to neighbouring blocks.
+    pub spread_chance: u8,
+    /// Chance (0–300) that the block itself burns away.
+    pub burn_chance: u8,
+}
+
+impl ToTokens for FlammableStruct {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let spread_chance = &self.spread_chance;
+        let burn_chance = &self.burn_chance;
+
+        tokens.extend(quote! {
+            Flammable {
+                spread_chance: #spread_chance,
+                burn_chance: #burn_chance,
+            }
+        });
+    }
+}
+
+/// Axis-aligned bounding box used to describe block collision and outline shapes.
+#[derive(Deserialize, Clone, Copy)]
+pub struct BoundingBox {
+    /// The minimum corner of the bounding box.
+    pub min: Vector3<f64>,
+    /// The maximum corner of the bounding box.
+    pub max: Vector3<f64>,
+}
+
+impl ToTokens for BoundingBox {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let min_x = &self.min.x;
+        let min_y = &self.min.y;
+        let min_z = &self.min.z;
+
+        let max_x = &self.max.x;
+        let max_y = &self.max.y;
+        let max_z = &self.max.z;
+
+        tokens.extend(quote! {
+            BoundingBox {
+                min: Vector3::new(#min_x, #min_y, #min_z),
+                max: Vector3::new(#max_x, #max_y, #max_z),
+            }
+        });
+    }
+}
+
+#[derive(Deserialize, Copy, Clone, PartialEq, Eq)]
+pub struct BlockStateId(pub u16);
+
+impl ToTokens for BlockStateId {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let inner = self.0;
+        tokens.extend(quote! { BlockStateId::new(#inner).unwrap() });
+    }
+}
+
+/// Deserialized representation of a single block state as stored in `blocks.json`.
+#[derive(Deserialize, Clone)]
+pub struct BlockState {
+    /// Globally unique numeric ID for this block state.
+    pub id: BlockStateId,
+    /// Bitfield encoding boolean state properties (air, random ticks, etc.).
+    pub state_flags: u16,
+    /// Bitfield encoding which sides of the block are solid.
+    pub side_flags: u8,
+    /// Name of the note-block instrument for this state. TODO: make this an enum
+    pub instrument: String,
+    /// Light level emitted by this state (0–15).
+    pub luminance: u8,
+    /// How pistons interact with this block state.
+    pub piston_behavior: PistonBehavior,
+    /// Mining hardness of this block state.
+    pub hardness: f32,
+    /// Indices into the global shapes array for collision shape segments.
+    pub collision_shapes: Vec<u16>,
+    /// Indices into the global shapes array for outline (selection) shape segments.
+    pub outline_shapes: Vec<u16>,
+    /// Opacity value for light propagation, if non-full.
+    pub opacity: Option<u8>,
+    /// Associated block-entity type ID, if any.
+    pub block_entity_type: Option<u16>,
+}
+
+/// Describes how a piston interacts with a block.
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PistonBehavior {
+    /// The block can be pushed and pulled normally.
+    #[serde(alias = "PUSH_PULL")]
+    Normal,
+    /// The block is destroyed when pushed.
+    #[serde(alias = "POPPED")]
+    Destroy,
+    /// The block prevents piston movement.
+    Block,
+    /// The piston ignores the block entirely.
+    #[serde(alias = "IMMOVEABLE")]
+    Ignore,
+    /// The block can only be pushed, not pulled.
+    #[serde(alias = "PUSH")]
+    PushOnly,
+}
+
+impl PistonBehavior {
+    fn to_tokens(&self) -> TokenStream {
+        match self {
+            Self::Normal => quote! { PistonBehavior::Normal },
+            Self::Destroy => quote! { PistonBehavior::Destroy },
+            Self::Block => quote! { PistonBehavior::Block },
+            Self::Ignore => quote! { PistonBehavior::Ignore },
+            Self::PushOnly => quote! { PistonBehavior::PushOnly },
+        }
+    }
+}
+
+#[derive(Deserialize, Copy, Clone)]
+#[serde(rename_all = "snake_case")]
+enum SpawnFloorPredicate {
+    Never,
+    Always,
+    OcelotOrParrot,
+    PolarBear,
+    FireImmune,
+}
+
+impl ToTokens for SpawnFloorPredicate {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(match self {
+            Self::Never => quote! { SpawnFloorPredicate::Never },
+            Self::Always => quote! { SpawnFloorPredicate::Always },
+            Self::OcelotOrParrot => quote! { SpawnFloorPredicate::OcelotOrParrot },
+            Self::PolarBear => quote! { SpawnFloorPredicate::PolarBear },
+            Self::FireImmune => quote! { SpawnFloorPredicate::FireImmune },
+        });
+    }
+}
+
+#[derive(Deserialize, Copy, Clone)]
+#[serde(rename_all = "snake_case")]
+enum SuffocationPredicate {
+    Never,
+    Always,
+}
+
+impl ToTokens for SuffocationPredicate {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(match self {
+            Self::Never => quote! { SuffocationPredicate::Never },
+            Self::Always => quote! { SuffocationPredicate::Always },
+        });
+    }
+}
+
+impl BlockState {
+    /// Bit flag indicating this state is an air block.
+    const IS_AIR: u16 = 1 << 0;
+
+    const IS_LIQUID: u16 = 1 << 5;
+
+    /// Bit flag indicating this state receives random tick events.
+    const HAS_RANDOM_TICKS: u16 = 1 << 9;
+
+    const IS_SOLID_RENDER: u16 = 1 << 10;
+    const CAN_OCCLUDE: u16 = 1 << 11;
+    const HAS_ANALOG_OUTPUT_SIGNAL: u16 = 1 << 12;
+
+    /// Returns `true` if this state receives random tick events.
+    const fn has_random_ticks(&self) -> bool {
+        self.state_flags & Self::HAS_RANDOM_TICKS != 0
+    }
+
+    /// Returns `true` if this state is an air variant.
+    pub const fn is_air(&self) -> bool {
+        self.state_flags & Self::IS_AIR != 0
+    }
+
+    pub const fn is_liquid(&self) -> bool {
+        self.state_flags & Self::IS_LIQUID != 0
+    }
+
+    pub const fn is_solid_render(&self) -> bool {
+        self.state_flags & Self::IS_SOLID_RENDER != 0
+    }
+
+    pub const fn can_occlude(&self) -> bool {
+        self.state_flags & Self::CAN_OCCLUDE != 0
+    }
+
+    pub const fn has_analog_output_signal(&self) -> bool {
+        self.state_flags & Self::HAS_ANALOG_OUTPUT_SIGNAL != 0
+    }
+
+    /// Emits the `BlockState { … }` struct literal token stream for code generation.
+    fn to_tokens(&self) -> TokenStream {
+        let mut tokens = TokenStream::new();
+        let id = self.id;
+        let state_flags = LitInt::new(&self.state_flags.to_string(), Span::call_site());
+        let side_flags = LitInt::new(&self.side_flags.to_string(), Span::call_site());
+        let instrument = format_ident!("{}", self.instrument.to_upper_camel_case());
+        let luminance = LitInt::new(&self.luminance.to_string(), Span::call_site());
+        let hardness = self.hardness;
+        let opacity = if let Some(opacity) = self.opacity {
+            let opacity = LitInt::new(&opacity.to_string(), Span::call_site());
+            quote! { #opacity }
+        } else {
+            quote! { 0 }
+        };
+        let block_entity_type = if let Some(block_entity_type) = self.block_entity_type {
+            let block_entity_type = LitInt::new(&block_entity_type.to_string(), Span::call_site());
+            quote! { #block_entity_type }
+        } else {
+            quote! { u16::MAX }
+        };
+
+        let collision_shapes = self
+            .collision_shapes
+            .iter()
+            .map(|shape_id| LitInt::new(&shape_id.to_string(), Span::call_site()));
+        let outline_shapes = self
+            .outline_shapes
+            .iter()
+            .map(|shape_id| LitInt::new(&shape_id.to_string(), Span::call_site()));
+        let piston_behavior = &self.piston_behavior.to_tokens();
+
+        tokens.extend(quote! {
+            BlockState {
+                id: #id,
+                state_flags: #state_flags,
+                side_flags: #side_flags,
+                instrument: NoteblockInstrument::#instrument,
+                luminance: #luminance,
+                piston_behavior: #piston_behavior,
+                hardness: #hardness,
+                collision_shapes: &[#(#collision_shapes),*],
+                outline_shapes: &[#(#outline_shapes),*],
+                opacity: #opacity,
+                block_entity_type: #block_entity_type,
+            }
+        });
+        tokens
+    }
+}
+
+#[derive(Deserialize, Copy, Clone)]
+pub struct BlockId(pub u16);
+
+impl ToTokens for BlockId {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let inner = self.0;
+        tokens.extend(quote! { BlockId::new(#inner).unwrap() });
+    }
+}
+
+/// Deserialized representation of a Minecraft block as stored in `blocks.json`.
+#[derive(Deserialize)]
+pub struct Block {
+    /// Numeric block ID used in the protocol.
+    pub id: BlockId,
+    /// Registry name without the `minecraft:` namespace prefix.
+    pub name: String,
+    /// Translation key for the block's display name.
+    // pub translation_key: String,
+    /// Mining hardness; affects how long the block takes to break.
+    pub hardness: f32,
+    /// Blast resistance against explosions.
+    pub blast_resistance: f32,
+    pub map_color: u8,
+    /// Numeric ID of the corresponding item, if any.
+    pub item_id: u16,
+    /// Flammability data, present only if the block can catch fire.
+    pub flammable: Option<FlammableStruct>,
+    /// Friction applied to entities walking on this block.
+    pub slipperiness: f32,
+    /// Horizontal velocity multiplier for entities inside this block.
+    pub velocity_multiplier: f32,
+    /// Jump velocity multiplier applied when jumping from this block.
+    pub jump_velocity_multiplier: f32,
+    /// Hash keys referencing the properties defined for this block.
+    pub properties: Vec<i32>,
+    /// State ID of the default (canonical) block state.
+    pub default_state_id: BlockStateId,
+    /// All possible states for this block in state-ID order.
+    pub states: Vec<BlockState>,
+    /// Experience points dropped when the block is mined, if any.
+    pub experience: Option<Experience>,
+    /// Loot table identifier
+    pub loot_table: Option<String>,
+    /// Position-derived shape offset applied by vanilla, if any.
+    shape_offset: Option<BlockShapeOffset>,
+    /// Spawn floor predicate for this block, if any.
+    spawn_floor_predicate: Option<SpawnFloorPredicate>,
+    /// Suffocation predicate for this block, if it differs from the default.
+    suffocation_predicate: Option<SuffocationPredicate>,
+}
+
+impl ToTokens for Block {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let id = self.id;
+        let name = LitStr::new(&self.name, Span::call_site());
+        //let translation_key = LitStr::new(&self.translation_key, Span::call_site());
+        let hardness = &self.hardness;
+        let blast_resistance = &self.blast_resistance;
+        let map_color = &self.map_color;
+
+        let item_id = LitInt::new(&self.item_id.to_string(), Span::call_site());
+        let slipperiness = &self.slipperiness;
+        let velocity_multiplier = &self.velocity_multiplier;
+        let jump_velocity_multiplier = &self.jump_velocity_multiplier;
+        let experience = if let Some(exp) = &self.experience {
+            let exp_tokens = exp.to_token_stream();
+            quote! { Some(#exp_tokens) }
+        } else {
+            quote! { None }
+        };
+        let loot_table = if let Some(loot) = &self.loot_table {
+            let loot_lit = LitStr::new(loot, Span::call_site());
+            quote! { Some(#loot_lit) }
+        } else {
+            quote! { None }
+        };
+        // Generate state tokens
+        let states = self.states.iter().map(BlockState::to_tokens);
+
+        let default_state_ref: &BlockState = self
+            .states
+            .iter()
+            .find(|state| state.id == self.default_state_id)
+            .unwrap();
+        let mut default_state = default_state_ref.clone();
+        default_state.id = default_state_ref.id;
+        let default_state = default_state.to_tokens();
+        let flammable = if let Some(flammable) = &self.flammable {
+            let flammable_tokens = flammable.to_token_stream();
+            quote! { Some(#flammable_tokens) }
+        } else {
+            quote! { None }
+        };
+        tokens.extend(quote! {
+            Block {
+                id: #id,
+                name: #name,
+                hardness: #hardness,
+                blast_resistance: #blast_resistance,
+                map_color: #map_color,
+                slipperiness: #slipperiness,
+                velocity_multiplier: #velocity_multiplier,
+                jump_velocity_multiplier: #jump_velocity_multiplier,
+                item_id: #item_id,
+                default_state: &#default_state,
+                states: &[#(#states),*],
+                flammable: #flammable,
+                experience: #experience,
+                loot_table: #loot_table,
+            }
+        });
+    }
+}
+
+/// The underlying data type of generated block property as classified in `properties.json`.
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(tag = "type")]
+pub enum GeneratedPropertyType {
+    /// A simple `true`/`false` boolean property.
+    #[serde(rename = "boolean")]
+    Boolean,
+    /// An integer property with an inclusive range.
+    #[serde(rename = "int")]
+    Int {
+        /// Minimum value (inclusive).
+        min: u8,
+        /// Maximum value (inclusive).
+        max: u8,
+    },
+    /// A named-variant enum property.
+    #[serde(rename = "enum")]
+    Enum {
+        /// The ordered list of variant strings.
+        values: Vec<String>,
+    },
+}
+
+/// A single block property entry as deserialized from `properties.json`.
+#[derive(Deserialize, Clone)]
+pub struct GeneratedProperty {
+    /// A stable integer hash used to identify this property across blocks.
+    hash_key: i32,
+    /// The name used for the generated Rust enum type.
+    enum_name: String,
+    /// The property name as it appears in block state JSON.
+    serialized_name: String,
+    /// The kind and possible values of this property.
+    #[serde(rename = "type")]
+    #[serde(flatten)]
+    property_type: GeneratedPropertyType,
+}
+
+impl GeneratedProperty {
+    /// Converts this deserialized property into the intermediate `Property` used during code generation.
+    fn to_property(&self) -> Property {
+        let enum_name = match &self.property_type {
+            GeneratedPropertyType::Boolean => "boolean".to_string(),
+            GeneratedPropertyType::Int { min, max } => format!("integer_{min}_to_{max}"),
+            GeneratedPropertyType::Enum { .. } => self.enum_name.clone(),
+        };
+
+        let values = match &self.property_type {
+            GeneratedPropertyType::Boolean => {
+                vec!["true".to_string(), "false".to_string()]
+            }
+            GeneratedPropertyType::Int { min, max } => {
+                let mut values = Vec::new();
+                for i in *min..=*max {
+                    values.push(format!("L{i}"));
+                }
+                values
+            }
+            GeneratedPropertyType::Enum { values } => values.clone(),
+        };
+
+        Property {
+            enum_name,
+            serialized_name: self.serialized_name.clone(),
+            values,
+        }
+    }
+}
+
+/// Intermediate representation of a block property used while building the property group map.
+#[derive(Clone)]
+struct Property {
+    /// The Rust enum type name for this property.
+    enum_name: String,
+    /// The JSON key name for this property.
+    serialized_name: String,
+    /// All possible string values this property can take.
+    values: Vec<String>,
+}
+
+/// Top-level container for all block assets loaded from `blocks.json`.
+#[derive(Deserialize)]
+pub struct BlockAssets {
+    /// All blocks with their states and properties.
+    pub blocks: Vec<Block>,
+    /// All unique bounding boxes referenced by block states.
+    pub shapes: Vec<BoundingBox>,
+    /// Registry names of all block entity types.
+    pub block_entity_types: Vec<String>,
+}
+
+#[derive(Deserialize)]
+struct BlockShapeOffset {
+    #[serde(rename = "type")]
+    offset_type: BlockShapeOffsetType,
+    max_horizontal: f32,
+    max_vertical: f32,
+}
+
+#[derive(Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum BlockShapeOffsetType {
+    Xz,
+    Xyz,
+}
+
+/// Reads all block assets and generates the complete block registry `TokenStream`.
+pub fn build() -> TokenStream {
+    let blocks_assets: BlockAssets =
+        serde_json::from_str(&fs::read_to_string("../../assets/blocks.json").unwrap())
+            .expect("Failed to parse blocks.json");
+
+    let shape_offset_arms = blocks_assets
+        .blocks
+        .iter()
+        .filter_map(|block| {
+            let offset = block.shape_offset.as_ref()?;
+            let block = format_ident!("{}", const_block_name_from_block_name(&block.name));
+            let offset_type = match offset.offset_type {
+                BlockShapeOffsetType::Xz => quote! { ShapeOffsetType::Xz },
+                BlockShapeOffsetType::Xyz => quote! { ShapeOffsetType::Xyz },
+            };
+            let max_horizontal = offset.max_horizontal;
+            let max_vertical = offset.max_vertical;
+
+            Some(quote! {
+                BlockId::#block => Some(ShapeOffset {
+                    offset_type: #offset_type,
+                    max_horizontal: #max_horizontal,
+                    max_vertical: #max_vertical,
+                }),
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let generated_properties: Vec<GeneratedProperty> =
+        serde_json::from_str(&fs::read_to_string("../../assets/properties.json").unwrap())
+            .expect("Failed to parse properties.json");
+
+    let generated_prop_map: BTreeMap<i32, &GeneratedProperty> = generated_properties
+        .iter()
+        .map(|p| (p.hash_key, p))
+        .collect();
+
+    let property_key_names: std::collections::BTreeSet<String> = generated_properties
+        .iter()
+        .map(|p| p.serialized_name.clone())
+        .collect();
+    let property_key_variants: Vec<Ident> = property_key_names
+        .iter()
+        .map(|name| Ident::new(&name.to_upper_camel_case(), Span::call_site()))
+        .collect();
+    let property_key_literals: Vec<&str> = property_key_names.iter().map(String::as_str).collect();
+
+    struct EnumPropMeta {
+        prop_variant_name: String,
+        canonical_enum_name: String,
+        shared_none_variants: Vec<(String, String)>,
+    }
+
+    let mut props_by_key: BTreeMap<String, Vec<&GeneratedProperty>> = BTreeMap::new();
+    for prop in &generated_properties {
+        props_by_key
+            .entry(prop.serialized_name.clone())
+            .or_default()
+            .push(prop);
+    }
+
+    let mut enum_prop_meta: BTreeMap<i32, EnumPropMeta> = BTreeMap::new();
+    let mut property_enum_variants = Vec::new();
+    let mut property_key_arms = Vec::new();
+    let mut property_value_str_arms = Vec::new();
+    let mut property_from_key_and_int_arms = Vec::new();
+    let mut property_from_key_value_str_arms = Vec::new();
+    let mut property_matches_shared_none_arms = Vec::new();
+
+    for (key_name, group) in &props_by_key {
+        let key_ident = Ident::new(&key_name.to_upper_camel_case(), Span::call_site());
+        let has_bool = group
+            .iter()
+            .any(|p| matches!(p.property_type, GeneratedPropertyType::Boolean));
+        let has_int = group
+            .iter()
+            .any(|p| matches!(p.property_type, GeneratedPropertyType::Int { .. }));
+
+        let enum_entries: Vec<(&GeneratedProperty, String, &[String])> = group
+            .iter()
+            .filter_map(|p| match &p.property_type {
+                GeneratedPropertyType::Enum { values } => {
+                    Some((*p, p.enum_name.to_upper_camel_case(), values.as_slice()))
+                }
+                _ => None,
+            })
+            .collect();
+
+        let mut canonical_for_entry: Vec<(String, &[String])> =
+            Vec::with_capacity(enum_entries.len());
+        let mut unique_canonical_enums: BTreeMap<String, &[String]> = BTreeMap::new();
+        for (_, enum_camel, values) in &enum_entries {
+            let canon_name = enum_entries
+                .iter()
+                .find(|(_, _, other_vals)| {
+                    other_vals.len() > values.len() && values.iter().all(|v| other_vals.contains(v))
+                })
+                .map_or_else(
+                    || enum_camel.clone(),
+                    |(_, other_camel, _)| other_camel.clone(),
+                );
+            let canon_vals_slice = enum_entries
+                .iter()
+                .find(|(_, c, _)| *c == canon_name)
+                .map(|(_, _, v)| *v)
+                .unwrap();
+            unique_canonical_enums.insert(canon_name.clone(), canon_vals_slice);
+            canonical_for_entry.push((canon_name, canon_vals_slice));
+        }
+
+        let total_distinct_types =
+            usize::from(has_bool) + usize::from(has_int) + unique_canonical_enums.len();
+
+        let mut canon_with_none: Vec<(String, String)> = Vec::new();
+        for (canon_name, canon_vals) in &unique_canonical_enums {
+            let prop_var = if total_distinct_types == 1 {
+                key_name.to_upper_camel_case()
+            } else {
+                canon_name.clone()
+            };
+            if canon_vals.iter().any(|v| v == "none") {
+                canon_with_none.push((prop_var, canon_name.clone()));
+            }
+        }
+
+        for ((p, _, _), (canon_name, _)) in enum_entries.iter().zip(canonical_for_entry.iter()) {
+            let prop_variant_name = if total_distinct_types == 1 {
+                key_name.to_upper_camel_case()
+            } else {
+                canon_name.clone()
+            };
+            let shared_none_variants: Vec<(String, String)> = canon_with_none
+                .iter()
+                .filter(|(_, other_canon)| other_canon != canon_name)
+                .cloned()
+                .collect();
+            enum_prop_meta.insert(
+                p.hash_key,
+                EnumPropMeta {
+                    prop_variant_name,
+                    canonical_enum_name: canon_name.clone(),
+                    shared_none_variants,
+                },
+            );
+        }
+
+        if canon_with_none.len() > 1 {
+            for i in 0..canon_with_none.len() {
+                for j in 0..canon_with_none.len() {
+                    if i != j {
+                        let (pv_a, ce_a) = &canon_with_none[i];
+                        let (pv_b, ce_b) = &canon_with_none[j];
+                        let pv_a_ident = Ident::new(pv_a, Span::call_site());
+                        let ce_a_ident = Ident::new(ce_a, Span::call_site());
+                        let pv_b_ident = Ident::new(pv_b, Span::call_site());
+                        let ce_b_ident = Ident::new(ce_b, Span::call_site());
+                        property_matches_shared_none_arms.push(quote! {
+                            (Self::#pv_a_ident(#ce_a_ident::None), Self::#pv_b_ident(#ce_b_ident::None)) => true,
+                        });
+                    }
+                }
+            }
+        }
+
+        if has_bool {
+            property_enum_variants.push(quote! { #key_ident(bool) });
+            property_key_arms.push(quote! { Self::#key_ident(_) => PropertyKey::#key_ident, });
+            property_value_str_arms.push(quote! {
+                Self::#key_ident(v) => if v { "true" } else { "false" },
+            });
+        }
+        if has_int {
+            property_enum_variants.push(quote! { #key_ident(u8) });
+            property_key_arms.push(quote! { Self::#key_ident(_) => PropertyKey::#key_ident, });
+            property_value_str_arms.push(quote! {
+                Self::#key_ident(v) => if (v as usize) < INT_STRS.len() { INT_STRS[v as usize] } else { "0" },
+            });
+            property_from_key_and_int_arms.push(quote! {
+                PropertyKey::#key_ident => Some(Self::#key_ident(value)),
+            });
+        }
+        for (canon_name, _) in &unique_canonical_enums {
+            let prop_var = if total_distinct_types == 1 {
+                key_name.to_upper_camel_case()
+            } else {
+                canon_name.clone()
+            };
+            let var_ident = Ident::new(&prop_var, Span::call_site());
+            let canon_ident = Ident::new(canon_name, Span::call_site());
+            property_enum_variants.push(quote! { #var_ident(#canon_ident) });
+            property_key_arms.push(quote! { Self::#var_ident(_) => PropertyKey::#key_ident, });
+            property_value_str_arms.push(quote! { Self::#var_ident(v) => v.to_value(), });
+        }
+
+        if has_int {
+            property_from_key_value_str_arms.push(quote! {
+                PropertyKey::#key_ident => value.parse::<u8>().ok().map(Self::#key_ident),
+            });
+        } else {
+            let mut val_arms = Vec::new();
+            let mut seen_vals = HashSet::new();
+            if has_bool {
+                seen_vals.insert("true");
+                seen_vals.insert("false");
+                val_arms.push(quote! { "true" => Some(Self::#key_ident(true)), });
+                val_arms.push(quote! { "false" => Some(Self::#key_ident(false)), });
+            }
+            for (canon_name, canon_vals) in &unique_canonical_enums {
+                let prop_var = if total_distinct_types == 1 {
+                    key_name.to_upper_camel_case()
+                } else {
+                    canon_name.clone()
+                };
+                let var_ident = Ident::new(&prop_var, Span::call_site());
+                let canon_ident = Ident::new(canon_name, Span::call_site());
+                for val_str in *canon_vals {
+                    if seen_vals.insert(val_str.as_str()) {
+                        let val_ident =
+                            Ident::new(&val_str.to_upper_camel_case(), Span::call_site());
+                        val_arms.push(quote! {
+                            #val_str => Some(Self::#var_ident(#canon_ident::#val_ident)),
+                        });
+                    }
+                }
+            }
+            property_from_key_value_str_arms.push(quote! {
+                PropertyKey::#key_ident => match value {
+                    #(#val_arms)*
+                    _ => None,
+                },
+            });
+        }
+    }
+
+    let mut random_tick_states = Vec::new();
+    let mut air_states = Vec::new();
+    let mut liquid_states = Vec::new();
+
+    let mut constants_list = Vec::new();
+    let mut block_id_constants = Vec::new();
+    let mut block_from_name_entries = Vec::new();
+    let mut block_from_item_id_arms = Vec::new();
+    let mut spawn_floor_predicate_arms = Vec::new();
+    let mut suffocation_predicate_arms = Vec::new();
+
+    let mut raw_id_from_state_id_array = Vec::new();
+    let mut type_from_raw_id_array = Vec::new();
+    let mut state_from_state_id_array = Vec::<(Ident, usize, u16)>::new();
+
+    let mut property_enums: BTreeMap<String, PropertyStruct> = BTreeMap::new();
+    for generated_property in &generated_properties {
+        if matches!(
+            generated_property.property_type,
+            GeneratedPropertyType::Enum { .. }
+        ) {
+            let property = generated_property.to_property();
+            let renamed_property = property.enum_name.to_upper_camel_case();
+            property_enums
+                .entry(renamed_property.clone())
+                .or_insert_with(|| PropertyStruct {
+                    name: renamed_property,
+                    values: property.values,
+                });
+        }
+    }
+    let mut block_properties: Vec<BlockPropertyStruct> = Vec::new();
+    let mut property_collection_map: BTreeMap<Vec<i32>, PropertyCollectionData> = BTreeMap::new();
+    let mut existing_item_ids: HashSet<u16> = HashSet::new();
+
+    for block in blocks_assets.blocks {
+        let mut property_collection = HashSet::new();
+        let mut property_mapping = Vec::new();
+
+        for property_hash in &block.properties {
+            let generated_property = generated_prop_map
+                .get(property_hash)
+                .expect("Property hash not found in generated_properties");
+
+            property_collection.insert(generated_property.hash_key);
+
+            let property = generated_property.to_property();
+            let renamed_property = property.enum_name.to_upper_camel_case();
+
+            let property_type = match &generated_property.property_type {
+                GeneratedPropertyType::Boolean => PropertyType::Bool,
+                GeneratedPropertyType::Int { min, max } => PropertyType::Int {
+                    min: *min,
+                    max: *max,
+                },
+                GeneratedPropertyType::Enum { values } => {
+                    let meta = enum_prop_meta
+                        .get(&generated_property.hash_key)
+                        .expect("Enum metadata missing");
+                    PropertyType::Enum {
+                        name: renamed_property.clone(),
+                        values: values.clone(),
+                        prop_variant_name: meta.prop_variant_name.clone(),
+                        canonical_enum_name: meta.canonical_enum_name.clone(),
+                        shared_none_variants: meta.shared_none_variants.clone(),
+                    }
+                }
+            };
+
+            if let PropertyType::Enum { name, .. } = &property_type {
+                property_enums
+                    .entry(name.clone())
+                    .or_insert_with(|| PropertyStruct {
+                        name: name.clone(),
+                        values: property.values.clone(),
+                    });
+            }
+
+            property_mapping.push(PropertyVariantMapping {
+                original_name: property.serialized_name,
+                property_type,
+            });
+        }
+
+        let mut multiplier = 1;
+        let mut property_descriptors = Vec::new();
+        for hash in block.properties.iter().rev() {
+            let gen_prop = generated_prop_map.get(hash).unwrap();
+            let variant_count = match &gen_prop.property_type {
+                GeneratedPropertyType::Boolean => 2,
+                GeneratedPropertyType::Int { min, max } => (max - min + 1) as u16,
+                GeneratedPropertyType::Enum { values } => values.len() as u16,
+            };
+            property_descriptors.push(quote! {
+                PropertyDescriptor {
+                    hash_key: #hash,
+                    multiplier: #multiplier,
+                    variant_count: #variant_count,
+                }
+            });
+            multiplier *= variant_count;
+        }
+
+        let const_ident = format_ident!("{}", const_block_name_from_block_name(&block.name));
+        let name_str = &block.name;
+        let item_id = block.item_id;
+        let block_id = block.id;
+
+        if let Some(predicate) = block.spawn_floor_predicate {
+            spawn_floor_predicate_arms.push(quote! {
+                BlockId::#const_ident => #predicate,
+            });
+        }
+
+        if let Some(predicate) = block.suffocation_predicate {
+            suffocation_predicate_arms.push(quote! {
+                BlockId::#const_ident => #predicate,
+            });
+        }
+
+        // let mut block_with_descriptors = block.clone();
+        // block_with_descriptors.property_descriptors = property_descriptors;
+
+        constants_list.push(quote! {
+            pub const #const_ident: Self = #block;
+        });
+
+        block_id_constants.push(quote! {
+            pub const #const_ident: Self = #block_id;
+        });
+
+        type_from_raw_id_array.push((block.id.0, quote! { &Block::#const_ident }));
+
+        block_from_name_entries.push(quote! {
+            #name_str => Block::#const_ident,
+        });
+
+        for (i, state) in block.states.iter().enumerate() {
+            if state.has_random_ticks() {
+                let state_id = LitInt::new(&state.id.0.to_string(), Span::call_site());
+                random_tick_states.push(state_id);
+            }
+            if state.is_air() {
+                let state_id = LitInt::new(&state.id.0.to_string(), Span::call_site());
+                air_states.push(state_id);
+            }
+            if state.is_liquid() {
+                let state_id = LitInt::new(&state.id.0.to_string(), Span::call_site());
+                liquid_states.push(state_id);
+            }
+
+            raw_id_from_state_id_array.push((state.id.0, quote! { BlockId::#const_ident }));
+            state_from_state_id_array.push((const_ident.clone(), i, state.id.0));
+        }
+
+        if !property_collection.is_empty() {
+            let mut property_collection_vec: Vec<i32> = property_collection.into_iter().collect();
+            property_collection_vec.sort_unstable();
+
+            property_collection_map
+                .entry(property_collection_vec)
+                .or_insert_with(|| PropertyCollectionData::from_mappings(property_mapping))
+                .add_block(block.name.clone(), block.id.0);
+        }
+
+        if existing_item_ids.insert(item_id) {
+            block_from_item_id_arms.push(quote! {
+                #item_id => Some(&Self::#const_ident),
+            });
+        }
+    }
+
+    let mut block_properties_from_state_and_block_id_arms = Vec::new();
+    let mut block_properties_from_props_and_name_arms = Vec::new();
+
+    let mut emitted_aliases = HashSet::new();
+    for property_group in property_collection_map.values() {
+        emitted_aliases.insert(property_group_name_from_derived_name(
+            &property_group.derive_name(),
+        ));
+    }
+
+    for property_group in property_collection_map.into_values() {
+        let struct_name = property_group_name_from_derived_name(&property_group.derive_name());
+        let property_name = Ident::new(&struct_name, Span::call_site());
+
+        let mut group_aliases = Vec::new();
+
+        if let Some(canonical) = common_suffix_group_alias(&property_group.blocks) {
+            if emitted_aliases.insert(canonical.clone()) {
+                group_aliases.push(Ident::new(&canonical, Span::call_site()));
+            }
+        }
+
+        for (b_name, _) in &property_group.blocks {
+            let alias_name = format!("{}_properties", b_name).to_upper_camel_case();
+            if emitted_aliases.insert(alias_name.clone()) {
+                group_aliases.push(Ident::new(&alias_name, Span::call_site()));
+            }
+        }
+
+        let idents: Box<_> = property_group
+            .blocks
+            .iter()
+            .map(|(name, _)| Ident::new(&const_block_name_from_block_name(name), Span::call_site()))
+            .collect();
+
+        block_properties_from_state_and_block_id_arms.push(quote! {
+            #(BlockId::#idents)|* => Box::new(#property_name::from_state_id(state_id)),
+        });
+        block_properties_from_props_and_name_arms.push(quote! {
+            #(BlockId::#idents)|* => Box::new(#property_name::from_props(props, self)),
+        });
+
+        block_properties.push(BlockPropertyStruct {
+            data: property_group,
+            aliases: group_aliases,
+        });
+    }
+
+    let shapes = blocks_assets.shapes.iter().map(ToTokens::to_token_stream);
+
+    let air_state_ids = quote! { #(#air_states)|* };
+    let liquid_state_ids = quote! { #(#liquid_states)|* };
+
+    let block_props = block_properties.iter().map(ToTokens::to_token_stream);
+    let properties = property_enums.values().map(ToTokens::to_token_stream);
+
+    let block_entity_types = blocks_assets
+        .block_entity_types
+        .iter()
+        .map(|entity_type| LitStr::new(entity_type, Span::call_site()));
+
+    let raw_id_from_state_id_ordered = fill_array(raw_id_from_state_id_array);
+    let max_state_id = raw_id_from_state_id_ordered.len();
+    let raw_id_from_state_id = quote! { #(#raw_id_from_state_id_ordered),* };
+
+    let type_from_raw_id_vec = fill_array(type_from_raw_id_array);
+    let max_type_id = type_from_raw_id_vec.len();
+    let type_from_raw_id_items = quote! { #(#type_from_raw_id_vec),* };
+
+    let state_from_state_id_vec = fill_state_array(state_from_state_id_array);
+    let max_state_id_2 = state_from_state_id_vec.len();
+    let state_from_state_id = quote! { #(#state_from_state_id_vec),* };
+
+    assert_eq!(max_state_id, max_state_id_2);
+
+    let Bitset {
+        items,
+        mod_ident,
+        contains_ident,
+    } = &gen_u16_bitset(
+        "RANDOM_TICKS",
+        &random_tick_states
+            .iter()
+            .map(|it| it.base10_parse().unwrap())
+            .collect::<Vec<u16>>(),
+    );
+
+    quote! {
+        #[allow(clippy::wildcard_imports, clippy::enum_glob_use, clippy::too_many_lines, clippy::match_same_arms)]
+        use pumpkin_util::math::boundingbox::BoundingBox;
+
+        use crate::{
+            BlockState, BlockStateId, Block, BlockId,
+            blocks::{Flammable, ShapeOffset, ShapeOffsetType, SpawnFloorPredicate, SuffocationPredicate},
+        };
+        use crate::block_state::PistonBehavior;
+        use pumpkin_util::math::int_provider::{UniformIntProvider, IntProvider, NormalIntProvider};
+        use pumpkin_util::math::experience::Experience;
+        use pumpkin_util::math::vector3::Vector3;
+        use std::collections::BTreeMap;
+
+        #items
+
+        #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+        pub enum PropertyKey {
+            #(#property_key_variants),*
+        }
+
+        impl PropertyKey {
+            #[must_use]
+            pub const fn to_str(self) -> &'static str {
+                match self {
+                    #(Self::#property_key_variants => #property_key_literals),*
+                }
+            }
+
+            #[must_use]
+            #[allow(clippy::should_implement_trait)]
+            pub fn from_str(name: &str) -> Option<Self> {
+                match name {
+                    #(#property_key_literals => Some(Self::#property_key_variants),)*
+                    _ => None,
+                }
+            }
+        }
+
+        impl AsRef<str> for PropertyKey {
+            fn as_ref(&self) -> &str {
+                self.to_str()
+            }
+        }
+
+        #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+        pub enum Property {
+            #(#property_enum_variants),*
+        }
+
+        impl Property {
+            #[must_use]
+            pub const fn key(self) -> PropertyKey {
+                match self {
+                    #(#property_key_arms)*
+                }
+            }
+
+            #[must_use]
+            pub const fn key_str(self) -> &'static str {
+                self.key().to_str()
+            }
+
+            #[must_use]
+            pub const fn value_str(self) -> &'static str {
+                const INT_STRS: [&str; 26] = [
+                    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+                    "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+                    "20", "21", "22", "23", "24", "25",
+                ];
+                match self {
+                    #(#property_value_str_arms)*
+                }
+            }
+
+            #[must_use]
+            pub const fn from_key_and_int(key: PropertyKey, value: u8) -> Option<Self> {
+                match key {
+                    #(#property_from_key_and_int_arms)*
+                    _ => None,
+                }
+            }
+
+            #[must_use]
+            pub fn from_key_value_str(key: PropertyKey, value: &str) -> Option<Self> {
+                match key {
+                    #(#property_from_key_value_str_arms)*
+                }
+            }
+
+            #[must_use]
+            pub fn from_str_pair(key: &str, value: &str) -> Option<Self> {
+                PropertyKey::from_str(key).and_then(|k| Self::from_key_value_str(k, value))
+            }
+
+            #[must_use]
+            pub fn matches_property(self, other: Self) -> bool {
+                self == other || match (self, other) { #(#property_matches_shared_none_arms)* _ => false }
+            }
+        }
+
+        #[derive(Clone, Copy, Debug)]
+        pub struct BlockProperty {
+            pub name: &'static str,
+            pub values: &'static [&'static str],
+        }
+
+        pub trait BlockProperties where Self: 'static {
+            fn to_index(&self) -> u16;
+            fn from_index(index: u16) -> Self where Self: Sized;
+            fn handles_block_id(id: BlockId) -> bool where Self: Sized;
+            fn to_state_id(&self, block: &Block) -> BlockStateId;
+            fn from_state_id(id: BlockStateId, block: &Block) -> Self where Self: Sized;
+            fn default(block: &Block) -> Self where Self: Sized;
+            fn to_props(&self) -> Vec<Property>;
+            fn from_props(props: &[Property], block: &Block) -> Self where Self: Sized;
+        }
+
+        pub trait EnumVariants {
+            fn variant_count() -> u16;
+            fn to_index(&self) -> u16;
+            fn from_index(index: u16) -> Self;
+            fn to_value(&self) -> &'static str;
+            fn from_value(value: &str) -> Self;
+        }
+
+        pub const COLLISION_SHAPES: &[BoundingBox] = &[
+            #(#shapes),*
+        ];
+
+        pub const BLOCK_ENTITY_TYPES: &[&str] = &[
+            #(#block_entity_types),*
+        ];
+
+        #[inline(always)]
+        #[must_use]
+        pub const fn is_air(id: BlockStateId) -> bool {
+            matches!(id.as_u16(), #air_state_ids)
+        }
+
+         #[inline(always)]
+         #[must_use]
+        pub const fn is_liquid(id: BlockStateId) -> bool {
+            matches!(id.as_u16(), #liquid_state_ids)
+        }
+
+        #[inline(always)]
+        #[must_use]
+        pub fn has_random_ticks(id: BlockStateId) -> bool {
+            #mod_ident::#contains_ident(id.as_u16())
+        }
+
+        #[must_use]
+        pub const fn blocks_movement(block_state: &BlockState, id: BlockId) -> bool {
+            block_state.is_solid() && !matches!(id, BlockId::COBWEB | BlockId::BAMBOO_SAPLING)
+        }
+
+        impl BlockState {
+
+            /// Get a [`BlockState`] from a [`BlockStateId`].
+            /// If you need access to the block use `BlockState::from_id_with_block` instead.
+            #[inline]
+            #[must_use]
+            pub fn from_id(id: BlockStateId) -> &'static Self {
+                if id.as_u16() >= BlockStateId::COUNT { return crate::runtime::state(id).unwrap(); }
+                // Safety: We always check this condition when creating a BlockStateId.
+                // the u16 field is private and immutable. BlockStateId::STATE_COUNT is a const u16.
+                // If the condition held once, it will always hold.
+                unsafe { std::hint::assert_unchecked(id.as_u16() < BlockStateId::STATE_COUNT) }
+                // This hint guarantees that bound checks can be optimized away in release builds.
+                // Due to debug_assertions forcing -Zub_checks=yes (rust-lang/rust#123499)
+                // bound checks-panics are replaced with ub-checks on profile.dev
+                // https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/ub-checks.html
+
+                mappings::STATE_FROM_STATE_ID[id.as_u16() as usize]
+            }
+
+            #[doc = r" Get a block state from a state id and the corresponding block."]
+            #[inline]
+            #[must_use]
+            pub fn from_id_with_block(id: BlockStateId) -> (&'static Block, &'static Self) {
+                let block = Block::from_state_id(id);
+                let state = Self::from_id(id);
+                (block, state)
+            }
+        }
+
+        impl BlockStateId {
+            pub const AIR: Self = Block::AIR.default_state.id;
+
+            pub(crate) const STATE_COUNT: u16 = mappings::STATE_FROM_STATE_ID.len() as u16;
+        }
+
+        mod mappings {
+            use crate::{Block, BlockId, BlockState, BlockStateId};
+            use phf;
+
+            pub(super) static BLOCK_FROM_NAME_MAP: phf::Map<&'static str, Block> = phf::phf_map!{
+                #(#block_from_name_entries)*
+            };
+
+            pub(super) static BLOCK_ID_FROM_STATE_ID: [BlockId; #max_state_id] = [
+                #raw_id_from_state_id
+            ];
+
+            pub(super) static TYPE_FROM_RAW_ID: [&Block; #max_type_id] = [
+                #type_from_raw_id_items
+            ];
+
+            pub(super) static STATE_FROM_STATE_ID: [&BlockState; #max_state_id] = [
+                #state_from_state_id
+            ];
+        }
+
+
+        impl Block {
+            #(#constants_list)*
+
+            #[must_use]
+            pub const fn spawn_floor_predicate(&self) -> SpawnFloorPredicate {
+                match self.id {
+                    #(#spawn_floor_predicate_arms)*
+                    _ => SpawnFloorPredicate::Default,
+                }
+            }
+
+            #[must_use]
+            pub const fn suffocation_predicate(&self) -> SuffocationPredicate {
+                match self.id {
+                    #(#suffocation_predicate_arms)*
+                    _ => SuffocationPredicate::Default,
+                }
+            }
+
+            pub(crate) const fn shape_offset(&self) -> Option<ShapeOffset> {
+                match self.id {
+                    #(#shape_offset_arms)*
+                    _ => None,
+                }
+            }
+
+            #[doc = r" Try to parse a block from a resource location string."]
+            #[inline]
+            #[must_use]
+            pub fn from_registry_key(name: &str) -> Option<&'static Self> {
+                mappings::BLOCK_FROM_NAME_MAP.get(name).or_else(|| crate::runtime::block_by_name(name))
+            }
+
+            #[doc = r" Try to get a block from a namespace prefixed name."]
+            #[must_use]
+            pub fn from_name(name: &str) -> Option<&'static Self> {
+                let key = name.strip_prefix("minecraft:").unwrap_or(name);
+                Self::from_registry_key(key)
+            }
+
+            /// Get a [`Block`] from a [`BlockId`]
+            #[inline]
+            #[must_use]
+            pub fn from_id(id: BlockId) -> &'static Self {
+                if id.as_u16() >= BlockId::COUNT { return crate::runtime::block(id).unwrap(); }
+                // Safety: We always check this condition when creating a BlockId.
+                // the u16 field is private and immutable. BlockId::BLOCK_COUNT is a const u16.
+                // If the condition held once, it will always hold.
+                unsafe { std::hint::assert_unchecked(id.as_u16() < BlockId::BLOCK_COUNT) }
+                // This hint guarantees that bound checks can be optimized away in release builds.
+                // Due to debug_assertions forcing -Zub_checks=yes (rust-lang/rust#123499)
+                // bound checks-panics are replaced with ub-checks on profile.dev
+                // https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/ub-checks.html
+
+                mappings::TYPE_FROM_RAW_ID[id.as_u16() as usize]
+            }
+
+            /// Get a [`Block`] from a state id
+            #[inline]
+            #[must_use]
+            pub fn from_state_id(id: BlockStateId) -> &'static Self {
+                Self::from_id(BlockId::from_state_id(id))
+            }
+
+            #[doc = r" Try to parse a block from an item id."]
+            #[must_use]
+            pub fn from_item_id(id: u16) -> Option<&'static Self> {
+                #[allow(unreachable_patterns)]
+                match id {
+                    #(#block_from_item_id_arms)*
+                    _ => crate::runtime::block_by_item(id)
+                }
+            }
+
+            #[track_caller]
+            #[doc = r" Get the properties of the block."]
+            pub fn properties(&self, state_id: BlockStateId) -> Option<Box<dyn BlockProperties>> {
+                Some(match self.id {
+                    #(#block_properties_from_state_and_block_id_arms)*
+                    _ => return None,
+                })
+            }
+
+            #[track_caller]
+            #[doc = r" Get the properties of the block."]
+            pub fn from_properties(&self, props: &[Property]) -> Box<dyn BlockProperties> {
+                match self.id {
+                    #(#block_properties_from_props_and_name_arms)*
+                    _ => panic!("Invalid props")
+                }
+            }
+        }
+
+        impl BlockId {
+            #(#block_id_constants)*
+
+            pub(crate) const BLOCK_COUNT: u16 = mappings::TYPE_FROM_RAW_ID.len() as u16;
+
+            /// Get a [`BlockId`] from a [`BlockStateId`]
+            #[inline]
+            #[must_use]
+            pub fn from_state_id(id: BlockStateId) -> BlockId {
+                if id.as_u16() >= BlockStateId::COUNT { return crate::runtime::state_block(id).unwrap().id; }
+                // Safety: We always check this condition when creating a BlockStateId.
+                // the u16 field is private and immutable. BlockStateId::STATE_COUNT is a const u16.
+                // If the condition held once, it will always hold.
+                unsafe { std::hint::assert_unchecked(id.as_u16() < BlockStateId::STATE_COUNT) }
+                // This hint guarantees that bound checks can be optimized away in release builds.
+                // Due to debug_assertions forcing -Zub_checks=yes (rust-lang/rust#123499)
+                // bound checks-panics are replaced with ub-checks on profile.dev
+                // https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/ub-checks.html
+
+                mappings::BLOCK_ID_FROM_STATE_ID[id.as_u16() as usize]
+            }
+        }
+
+        #(#properties)*
+
+        #(#block_props)*
+
+        impl Facing {
+            #[must_use]
+            pub const fn opposite(&self) -> Self {
+                match self {
+                    Self::North => Self::South,
+                    Self::South => Self::North,
+                    Self::East => Self::West,
+                    Self::West => Self::East,
+                    Self::Up => Self::Down,
+                    Self::Down => Self::Up,
+                }
+            }
+        }
+
+        impl HorizontalFacing {
+            #[must_use]
+            pub fn all() -> [Self; 4] {
+                [
+                    Self::North,
+                    Self::South,
+                    Self::West,
+                    Self::East,
+                ]
+            }
+
+            #[must_use]
+            pub fn to_offset(&self) -> Vector3<i32> {
+                match self {
+                    Self::North => (0, 0, -1),
+                    Self::South => (0, 0, 1),
+                    Self::West => (-1, 0, 0),
+                    Self::East => (1, 0, 0),
+                }
+                .into()
+            }
+            #[must_use]
+            pub const fn to_axis(&self) -> HorizontalAxis {
+                match self {
+                    Self::North | Self::South => HorizontalAxis::Z,
+                    Self::West | Self::East => HorizontalAxis::X,
+                }
+            }
+             #[must_use]
+            pub const fn to_facing(&self) -> HorizontalFacing {
+                match self {
+                    Self::North => HorizontalFacing::North,
+                    Self::South => HorizontalFacing::South,
+                    Self::West => HorizontalFacing::West,
+                    Self::East => HorizontalFacing::East,
+                }
+            }
+            #[must_use]
+            pub const fn opposite(&self) -> Self {
+                match self {
+                    Self::North => Self::South,
+                    Self::South => Self::North,
+                    Self::West => Self::East,
+                    Self::East => Self::West,
+                }
+            }
+
+            #[must_use]
+            pub const fn rotate_clockwise(&self) -> Self {
+                match self {
+                    Self::North => Self::East,
+                    Self::South => Self::West,
+                    Self::West => Self::North,
+                    Self::East => Self::South,
+                }
+            }
+
+            #[must_use]
+            pub const fn rotate_counter_clockwise(&self) -> Self {
+                match self {
+                    Self::North => Self::West,
+                    Self::South => Self::East,
+                    Self::West => Self::South,
+                    Self::East => Self::North,
+                }
+            }
+        }
+
+        impl RailShape {
+            #[must_use]
+            pub const fn is_ascending(&self) -> bool {
+                matches!(self, Self::AscendingEast | Self::AscendingWest | Self::AscendingNorth | Self::AscendingSouth)
+            }
+        }
+
+        impl RailShapeStraight {
+            #[must_use]
+            pub const fn is_ascending(&self) -> bool {
+                matches!(self, Self::AscendingEast | Self::AscendingWest | Self::AscendingNorth | Self::AscendingSouth)
+            }
+        }
+    }
+}

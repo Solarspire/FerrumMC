@@ -1,0 +1,55 @@
+use pumpkin_data::chunk::Biome;
+
+use crate::{
+    biome::BiomeSupplier,
+    generation::{
+        biome_coords, noise::router::multi_noise_sampler::MultiNoiseSampler, section_coords,
+    },
+};
+
+#[derive(Clone, Copy, Debug)]
+pub struct TheEndBiomeSupplier;
+
+impl TheEndBiomeSupplier {
+    const CENTER_BIOME: Biome = Biome::THE_END;
+    const HIGHLANDS_BIOME: Biome = Biome::END_HIGHLANDS;
+    const MIDLANDS_BIOME: Biome = Biome::END_MIDLANDS;
+    const SMALL_ISLANDS_BIOME: Biome = Biome::SMALL_END_ISLANDS;
+    const BARRENS_BIOME: Biome = Biome::END_BARRENS;
+
+    pub const POSSIBLE_BIOMES: [Biome; 5] = [
+        Self::CENTER_BIOME,
+        Self::HIGHLANDS_BIOME,
+        Self::MIDLANDS_BIOME,
+        Self::SMALL_ISLANDS_BIOME,
+        Self::BARRENS_BIOME,
+    ];
+}
+
+impl BiomeSupplier for TheEndBiomeSupplier {
+    fn biome(&self, x: i32, y: i32, z: i32, noise: &mut MultiNoiseSampler<'_>) -> &'static Biome {
+        let x = biome_coords::to_block(x);
+        let y = biome_coords::to_block(y);
+        let z = biome_coords::to_block(z);
+        let section_x = section_coords::block_to_section(x);
+        let section_z = section_coords::block_to_section(z);
+        if (section_x as i64) * (section_x as i64) + (section_z as i64) * (section_z as i64) <= 4096
+        {
+            return &Self::CENTER_BIOME;
+        }
+        let x = section_x.wrapping_mul(2).wrapping_add(1).wrapping_mul(8);
+        let z = section_z.wrapping_mul(2).wrapping_add(1).wrapping_mul(8);
+        let noise = noise.sample_erosion(x, y, z);
+        if noise > 0.25 {
+            return &Self::HIGHLANDS_BIOME;
+        }
+        if noise >= -0.0625 {
+            return &Self::MIDLANDS_BIOME;
+        }
+        if noise < -0.21875 {
+            return &Self::SMALL_ISLANDS_BIOME;
+        }
+
+        &Self::BARRENS_BIOME
+    }
+}

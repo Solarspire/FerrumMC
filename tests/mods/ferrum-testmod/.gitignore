@@ -1,0 +1,9 @@
+.gradle/
+.gradle-user-home/
+.bootstrap/
+.tmp/
+.home/
+build/
+run/
+mdk.zip
+*.log

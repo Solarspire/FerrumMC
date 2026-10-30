@@ -1,0 +1,9 @@
+modLoader="javafml"
+loaderVersion="[11,)"
+license="GPL-3.0-only"
+[[mods]]
+modId="ferrum_failure_probe"
+version="1.0.0"
+displayName="Runtime failure regression fixture"
+[[mixins]]
+config="ferrum-failure-probe.mixins.json"

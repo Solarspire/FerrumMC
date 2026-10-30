@@ -1,0 +1,67 @@
+[package]
+name = "patchbukkit"
+version = "0.2.1"
+edition = "2024"
+authors = ["PumpkinMC Contributors"]
+description = "Compatibility layer for running Bukkit, Spigot, and Paper plugins on Pumpkin"
+license = "GPL-3.0"
+
+build = "build/main.rs"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+"pumpkin" = { package = "pumpkin-core", path = "../../../crates/pumpkin-core", default-features = false }
+pumpkin-data = { workspace = true, features = ["default"] }
+pumpkin-protocol = { workspace = true, features = ["default"] }
+pumpkin-util.workspace = true
+pumpkin-config.workspace = true
+pumpkin-api-macros.workspace = true
+
+tokio.workspace = true
+tracing.workspace = true
+glob = "0.3.4"
+jni = { version = "0.22.4", features = ["invocation"] }
+rust-embed = { version = "8.13.0", features = ["interpolate-folder-path"] }
+walkdir = "2"
+zip.workspace = true
+
+anyhow = "1.0"
+uuid.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+serde-saphyr = "2.0.0"
+
+rand.workspace = true
+prost = "0.14"
+bytes.workspace = true
+time.workspace = true
+
+toml.workspace = true
+ureq = { version = "3", features = ["json"] }
+sha2.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+arc-swap.workspace = true
+tracing-subscriber.workspace = true
+
+[build-dependencies]
+env_logger = "0.11.11"
+log = "0.4"
+prost-build = "0.14"
+protoc-bin-vendored = "3"
+glob = "0.3.4"
+
+[lints.clippy]
+# Groups
+all = { level = "deny", priority = -1 }
+# nursery = { level = "deny", priority = -1 }
+# pedantic = { level = "deny", priority = -1 }
+# cargo = { level = "deny", priority = -1 }
+
+multiple_crate_versions = "allow"
+unnecessary_fallible_conversions = "allow"
+not_unsafe_ptr_arg_deref = "allow" # Not sure about this one

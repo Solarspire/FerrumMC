@@ -1,0 +1,5 @@
+name: FerrumHello
+version: '0.1.0'
+main: net.solarspire.ferrummc.hello.HelloPlugin
+api-version: '26'
+description: FerrumMC Phase 1 lifecycle and event probe

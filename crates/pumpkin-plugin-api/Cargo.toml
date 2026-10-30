@@ -1,0 +1,17 @@
+[package]
+name = "pumpkin-plugin-api"
+version.workspace = true
+edition.workspace = true
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+wit-bindgen = { workspace = true }
+tracing = { workspace = true }
+postcard = { workspace = true }
+tracing-serde-structured = { workspace = true }
+
+[package.metadata.component]
+target = { path = "../pumpkin-plugin-wit" }
+
+[lints]
+workspace = true
