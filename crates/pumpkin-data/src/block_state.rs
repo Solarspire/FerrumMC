@@ -1,7 +1,8 @@
 use pumpkin_util::math::{boundingbox::BoundingBox, position::BlockPos, vector3::Vector3};
 
-use crate::block_properties::{COLLISION_SHAPES, NoteblockInstrument};
+use crate::block_properties::NoteblockInstrument;
 use crate::blocks::SuffocationPredicate;
+use crate::runtime::shape;
 use crate::tag::{self, Taggable};
 use crate::{Block, BlockDirection, BlockId};
 
@@ -205,9 +206,7 @@ impl BlockState {
     }
 
     pub fn get_block_collision_shapes(&self) -> impl Iterator<Item = BoundingBox> + '_ {
-        self.collision_shapes
-            .iter()
-            .map(|&id| COLLISION_SHAPES[id as usize])
+        self.collision_shapes.iter().map(|&id| shape(id))
     }
 
     /// Returns block-local collision shapes with vanilla's coordinate-derived offset applied.
@@ -221,10 +220,7 @@ impl BlockState {
     }
 
     pub fn get_block_outline_shapes(&self) -> impl Iterator<Item = BoundingBox> + '_ {
-        let base_shapes = self
-            .outline_shapes
-            .iter()
-            .map(|&id| COLLISION_SHAPES[id as usize]);
+        let base_shapes = self.outline_shapes.iter().map(|&id| shape(id));
 
         let water_shape = self
             .is_waterlogged()
@@ -242,7 +238,7 @@ impl BlockState {
         let base_shapes = self
             .outline_shapes
             .iter()
-            .map(move |&id| COLLISION_SHAPES[id as usize].shift(offset));
+            .map(move |&id| shape(id).shift(offset));
 
         let water_shape = self
             .is_waterlogged()
@@ -388,14 +384,14 @@ impl std::fmt::Display for BlockStateId {
 // state_flags
 const IS_AIR: u16 = 1 << 0;
 const BURNABLE: u16 = 1 << 1;
-const TOOL_REQUIRED: u16 = 1 << 2;
+pub(crate) const TOOL_REQUIRED: u16 = 1 << 2;
 const SIDED_TRANSPARENCY: u16 = 1 << 3;
 const REPLACEABLE: u16 = 1 << 4;
 const IS_LIQUID: u16 = 1 << 5;
 const IS_SOLID: u16 = 1 << 6;
 const IS_FULL_CUBE: u16 = 1 << 7;
 const IS_SOLID_BLOCK: u16 = 1 << 8;
-const HAS_RANDOM_TICKS: u16 = 1 << 9;
+pub(crate) const HAS_RANDOM_TICKS: u16 = 1 << 9;
 const IS_SOLID_RENDER: u16 = 1 << 10;
 const CAN_OCCLUDE: u16 = 1 << 11;
 const HAS_ANALOG_OUTPUT_SIGNAL: u16 = 1 << 12;

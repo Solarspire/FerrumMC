@@ -2,6 +2,9 @@
 use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
+use pumpkin_util::math::{boundingbox::BoundingBox, vector3::Vector3};
+
+use crate::block_properties::COLLISION_SHAPES;
 use crate::{Block, BlockId, BlockState, BlockStateId, entity::EntityType, item::Item};
 
 pub struct StateDefinition {
@@ -10,7 +13,15 @@ pub struct StateDefinition {
     pub hardness: f32,
     pub luminance: u8,
     pub solid: bool,
+    /// Java's `requiresCorrectToolForDrops`; the cloned stone state would otherwise require a tool for every modded block.
+    pub tool_required: bool,
     pub block_entity: Option<String>,
+    /// Java's `isRandomlyTicking`.
+    pub random_ticks: bool,
+    /// `getCollisionShape` boxes as `[min x, y, z, max x, y, z]`; `None` keeps the cloned template's shape.
+    pub collision_shapes: Option<Vec<[f64; 6]>>,
+    /// `getShape` boxes, same layout.
+    pub outline_shapes: Option<Vec<[f64; 6]>>,
 }
 
 pub struct BlockDefinition {
@@ -20,6 +31,7 @@ pub struct BlockDefinition {
 
 struct Registry {
     blocks: Vec<&'static Block>,
+    state_ids: BTreeMap<&'static str, BTreeMap<BTreeMap<String, String>, BlockStateId>>,
     states: Vec<(
         &'static Block,
         &'static BlockState,
@@ -30,6 +42,29 @@ struct Registry {
 }
 
 static REGISTRY: OnceLock<Registry> = OnceLock::new();
+/// Mod shapes; their indices follow the generated shape table.
+static SHAPES: OnceLock<Vec<BoundingBox>> = OnceLock::new();
+
+/// The shape for an index in `BlockState::collision_shapes` or `outline_shapes`, vanilla or mod.
+#[must_use]
+pub fn shape(id: u16) -> BoundingBox {
+    let vanilla = COLLISION_SHAPES.len();
+    match usize::from(id).checked_sub(vanilla) {
+        None => COLLISION_SHAPES[usize::from(id)],
+        Some(index) => SHAPES
+            .get()
+            .and_then(|shapes| shapes.get(index))
+            .copied()
+            .unwrap_or(COLLISION_SHAPES[0]),
+    }
+}
+
+/// `has_random_ticks` that also knows mod block states.
+#[must_use]
+pub fn has_random_ticks(id: BlockStateId) -> bool {
+    crate::block_properties::has_random_ticks(id)
+        || state(id).is_some_and(BlockState::has_random_ticks)
+}
 
 pub fn installed() -> bool {
     REGISTRY.get().is_some()
@@ -74,6 +109,21 @@ pub fn install(
         .collect();
     let mut blocks = Vec::new();
     let mut states = Vec::new();
+    let mut shapes: Vec<BoundingBox> = Vec::new();
+    let mut intern = |boxes: &[[f64; 6]]| -> &'static [u16] {
+        let ids: Vec<u16> = boxes
+            .iter()
+            .map(|b| {
+                let shape = BoundingBox::new(
+                    Vector3::new(b[0], b[1], b[2]),
+                    Vector3::new(b[3], b[4], b[5]),
+                );
+                shapes.push(shape);
+                (COLLISION_SHAPES.len() + shapes.len() - 1) as u16
+            })
+            .collect();
+        &*Box::leak(ids.into_boxed_slice())
+    };
     for definition in definitions {
         let mut block = Block::STONE.clone();
         block.id = BlockId::runtime(BlockId::COUNT + blocks.len() as u16);
@@ -96,6 +146,20 @@ pub fn install(
                 Block::GLASS.default_state.clone()
             };
             state.id = BlockStateId::runtime((usize::from(BlockStateId::COUNT) + start + i) as u16);
+            if definition.tool_required {
+                state.state_flags |= crate::block_state::TOOL_REQUIRED;
+            } else {
+                state.state_flags &= !crate::block_state::TOOL_REQUIRED;
+            }
+            if definition.random_ticks {
+                state.state_flags |= crate::block_state::HAS_RANDOM_TICKS;
+            }
+            if let Some(boxes) = &definition.collision_shapes {
+                state.collision_shapes = intern(boxes);
+            }
+            if let Some(boxes) = &definition.outline_shapes {
+                state.outline_shapes = intern(boxes);
+            }
             state.hardness = definition.hardness;
             state.luminance = definition.luminance;
             state.block_entity_type = definition
@@ -117,9 +181,21 @@ pub fn install(
         }
         blocks.push(block);
     }
+    let mut state_ids: BTreeMap<_, BTreeMap<_, _>> = BTreeMap::new();
+    for (block, state, properties) in &states {
+        state_ids
+            .entry(block.name)
+            .or_default()
+            .insert(properties.clone(), state.id);
+    }
+    drop(intern);
+    SHAPES
+        .set(shapes)
+        .map_err(|_| "runtime shapes already installed".to_owned())?;
     REGISTRY
         .set(Registry {
             blocks,
+            state_ids,
             states,
             items,
             types,
@@ -204,10 +280,10 @@ pub fn properties(id: BlockStateId) -> Option<&'static BTreeMap<String, String>>
 pub fn resolve(name: &str, properties: &BTreeMap<String, String>) -> Option<BlockStateId> {
     REGISTRY
         .get()?
-        .states
-        .iter()
-        .find(|(block, _, props)| block.name == name && props == properties)
-        .map(|(_, state, _)| state.id)
+        .state_ids
+        .get(name)?
+        .get(properties)
+        .copied()
 }
 
 pub fn block_entity_by_name(name: &str) -> Option<&'static str> {

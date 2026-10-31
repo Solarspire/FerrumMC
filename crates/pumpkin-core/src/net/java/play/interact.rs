@@ -169,14 +169,8 @@ impl JavaClient {
                 PlayerInteractUnknownEntityEvent::new(player, entity_id.0, action);
 
                 'after: {
-                    if event.action == ActionType::Attack {
-                        error!(
-                            "Player id {} interacted with entity id {}, which was not found.",
-                            player.entity_id(),
-                            event.entity_id
-                        );
-                        self.try_kick(&TextComponent::translate(translation::java::MULTIPLAYER_DISCONNECT_INVALID_ENTITY_ATTACKED,[]));
-                    }
+                    // Vanilla ignores interactions with entities that no longer exist.
+                    let _ = &event;
                 }
             }}
         }

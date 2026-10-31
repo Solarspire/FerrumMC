@@ -75,6 +75,9 @@ struct LastHurtByMob {
     entity_id: i32,
 }
 
+/// Grace ticks `setIgnoreFallDamageFromCurrentImpulse(true, ..)` grants.
+const IMPULSE_IMPACT_GRACE_TICKS: i32 = 40;
+
 /// Represents a living entity within the game world.
 ///
 /// This struct encapsulates the core properties and behaviors of living entities, including players, mobs, and other creatures.
@@ -99,6 +102,8 @@ pub struct LivingEntity {
     pub dead: AtomicBool,
     /// The distance the entity has been falling.
     pub fall_distance: AtomicCell<f32>,
+    pub current_impulse_impact_y: AtomicCell<Option<f64>>,
+    pub impulse_grace_ticks: AtomicI32,
     pub active_effects: std::sync::Mutex<FxHashMap<&'static StatusEffect, Effect>>,
     pub entity_equipment: Arc<std::sync::Mutex<EntityEquipment>>,
     pub equipment_drop_chances: Arc<std::sync::Mutex<FxHashMap<EquipmentSlot, f32>>>,
@@ -330,6 +335,8 @@ impl LivingEntity {
             last_damage_taken: AtomicCell::new(0.0),
             absorption: AtomicCell::new(0.0),
             fall_distance: AtomicCell::new(0.0),
+            current_impulse_impact_y: AtomicCell::new(None),
+            impulse_grace_ticks: AtomicI32::new(0),
             death_time: AtomicU8::new(0),
             dead: AtomicBool::new(false),
             item_use_time: AtomicI32::new(0),
@@ -1982,6 +1989,14 @@ impl LivingEntity {
         }
         if ground {
             let fall_distance = self.fall_distance.swap(0.0);
+            if fall_distance > 0.0
+                && let Some(player) = caller.get_player()
+                && player
+                    .spawn_extra_particles_on_fall
+                    .swap(false, Ordering::Relaxed)
+            {
+                crate::item::items::mace::spawn_extra_fall_particles(player, fall_distance);
+            }
             if fall_distance > 0.0 {
                 self.on_changed_block(caller, self.entity.block_pos.load());
                 if let Some(player) = caller.get_player() {
@@ -2028,12 +2043,38 @@ impl LivingEntity {
         }
     }
 
+    /// Vanilla `LivingEntity.setIgnoreFallDamageFromCurrentImpulse`.
+    pub fn set_ignore_fall_damage_from_current_impulse(&self, ignore: bool, impact_y: f64) {
+        if ignore {
+            self.apply_post_impulse_grace_time(IMPULSE_IMPACT_GRACE_TICKS);
+            self.current_impulse_impact_y.store(Some(impact_y));
+        } else {
+            self.impulse_grace_ticks.store(0, Relaxed);
+        }
+    }
+
+    /// Vanilla `LivingEntity.applyPostImpulseGraceTime`.
+    pub fn apply_post_impulse_grace_time(&self, ticks: i32) {
+        self.impulse_grace_ticks.fetch_max(ticks, Relaxed);
+    }
+
     pub fn handle_fall_damage(
         &self,
         caller: &dyn EntityBase,
         fall_distance: f32,
         damage_per_distance: f32,
     ) {
+        let fall_distance =
+            self.current_impulse_impact_y
+                .load()
+                .map_or(fall_distance, |impact_y| {
+                    let adjusted = fall_distance.min((impact_y - self.entity.pos.load().y) as f32);
+                    if adjusted <= 0.0 || self.impulse_grace_ticks.load(Relaxed) == 0 {
+                        self.current_impulse_impact_y.store(None);
+                        self.impulse_grace_ticks.store(0, Relaxed);
+                    }
+                    adjusted
+                });
         let may_fly = caller.get_player().is_some_and(|player| {
             player
                 .abilities
@@ -2220,6 +2261,7 @@ impl LivingEntity {
             };
 
             let should_drop_loot = dyn_self.should_drop_loot();
+            let mod_drops = crate::neoforge::DeathDrops::capture();
             if should_drop_loot {
                 self.drop_loot(&*dyn_self, &params);
             }
@@ -2241,6 +2283,15 @@ impl LivingEntity {
             }
             if let Some(mob) = dyn_self.get_mob() {
                 mob.drop_inventory();
+            }
+            if let Some(drops) = mod_drops {
+                drops.finish(
+                    dyn_self.as_ref(),
+                    damage_type,
+                    source,
+                    cause,
+                    has_player_kill,
+                );
             }
 
             // Broadcast death message if it's a player and the gamerule is enabled
@@ -3151,6 +3202,13 @@ impl LivingEntity {
             return false;
         }
 
+        let Some(incoming) =
+            crate::neoforge::incoming_damage(caller, amount, damage_type, source, cause)
+        else {
+            return false;
+        };
+        amount = incoming;
+
         let mut damage_event =
             crate::plugin::api::events::entity::entity_damage::EntityDamageEvent::new(
                 self.entity.entity_id,
@@ -3553,6 +3611,9 @@ impl LivingEntity {
         }
 
         if new_health <= 0.0 {
+            if crate::neoforge::prevent_death(caller, damage_type, source, cause) {
+                return true;
+            }
             let mut death_event =
                 crate::plugin::api::events::entity::entity_death::EntityDeathEvent::new(
                     self.entity.entity_id,
@@ -3602,6 +3663,9 @@ impl EntityBase for LivingEntity {
     #[allow(clippy::too_many_lines)]
     fn tick(&self, caller: &dyn EntityBase, server: &Server) {
         self.entity.tick(caller, server);
+        let _ = self
+            .impulse_grace_ticks
+            .fetch_update(Relaxed, Relaxed, |ticks| Some((ticks - 1).max(0)));
         self.tick_last_hurt_by_mob();
         if let Some(mob) = caller.get_mob() {
             mob.tick_ambient_sound();

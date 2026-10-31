@@ -237,6 +237,7 @@ impl PendingConnection {
                 self.version.load(),
                 self.connection_state.load(),
                 payload,
+                &super::compatibility::HiddenEntities::default(),
             ) {
                 Ok(Some(payload)) => payload,
                 Ok(None) => return,

@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.*;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.*;
@@ -31,13 +32,24 @@ public final class RustLevel extends ServerLevel {
     private static final Map<String,RustLevel> LEVELS = new java.util.concurrent.ConcurrentHashMap<>();
     private static final RegistryAccess REGISTRIES = BridgeContent.worldRegistries;
     private Map<BlockPos,Entry> entities;
+    /** Block entities whose setChanged fired since the last batch reply. */
+    private Set<BlockPos> changed;
+    private int sweepCountdown;
     private int minimumY;
     private int levelHeight;
     private RandomSource rustRandom;
     private RustChunkSource chunks;
     private String worldId;
+    /** Rust's handle for this world on typed calls, and values Rust pushes with each request instead of per call. */
+    private int handle;
+    private long seed, gameTime, dayTime;
+    private int seaLevel;
+    /** Rust's world folder for mod saved data, {@code <world>/data/neoforge}. */
+    private java.nio.file.Path dataFolder;
+    private net.minecraft.core.Holder<?>[] biomes;
     private String dimensionName;
     private EntityBridge.Getter entityGetter;
+    private Map<ChunkPos,RustChunk> loadedViews;
 
     static {
         try {
@@ -52,6 +64,10 @@ public final class RustLevel extends ServerLevel {
     private static RustLevel create() throws Exception {
         var level = (RustLevel) UNSAFE.allocateInstance(RustLevel.class);
         level.entities = new LinkedHashMap<>();
+        level.changed = new LinkedHashSet<>();
+        level.biomes = new net.minecraft.core.Holder<?>[256];
+        level.sweepCountdown = SAVE_INTERVAL_BATCHES;
+        level.loadedViews = new LinkedHashMap<>();
         level.chunks = (RustChunkSource) UNSAFE.allocateInstance(RustChunkSource.class);
         level.chunks.owner = level;
         level.entityGetter = new EntityBridge.Getter(level);
@@ -59,8 +75,13 @@ public final class RustLevel extends ServerLevel {
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("waypointManager")),new net.minecraft.server.waypoints.ServerWaypointManager());
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("dragonParts")),new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>());
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("navigatingMobs")),new java.util.HashSet<>());
+        // ServerLevel.explode and others read the field directly; it must show the players Rust has in this world.
+        UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("players")),new java.util.AbstractList<net.minecraft.server.level.ServerPlayer>() {
+            @Override public net.minecraft.server.level.ServerPlayer get(int index) { return PlayerBridge.playersIn(level).get(index); }
+            @Override public int size() { return PlayerBridge.playersIn(level).size(); }
+        });
         level.rustRandom = new LegacyRandomSource(0) {
-            @Override public int next(int bits) { return request("random",null).getAsInt() >>> (32-bits); }
+            @Override public int next(int bits) { return BridgeRuntime.random() >>> (32-bits); }
         };
         var random = Level.class.getDeclaredField("random");
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(random),level.rustRandom);
@@ -71,6 +92,8 @@ public final class RustLevel extends ServerLevel {
             }
         }
         initConstructorState(level);
+        // Biomes come from Rust chunk sections through the "biome" world op.
+        put(level,Level.class,"biomeManager",new net.minecraft.world.level.biome.BiomeManager(level::getUncachedNoiseBiome,0L));
         var capabilities = ServerLevel.class.getDeclaredField("capListenerHolder");
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(capabilities),new net.neoforged.neoforge.capabilities.CapabilityListenerHolder());
         var serverField = ServerLevel.class.getDeclaredField("server");
@@ -128,7 +151,13 @@ public final class RustLevel extends ServerLevel {
             });
     }
 
+    private static final java.util.Set<String> FAILED_TICKS = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private static final int SAVE_INTERVAL_BATCHES = 1200;
+    private static net.minecraft.world.level.levelgen.WorldDimensions defaultDimensions;
+    private static synchronized net.minecraft.world.level.levelgen.WorldDimensions defaultDimensions() {
+        if (defaultDimensions == null) defaultDimensions = net.minecraft.world.level.levelgen.presets.WorldPresets.createNormalWorldDimensions(REGISTRIES);
+        return defaultDimensions;
+    }
     private static net.minecraft.server.MinecraftServer standIn;
 
     /** Constructor-less server so mod code that asks its level for a server finds mixin-added state instead of null. */
@@ -150,6 +179,19 @@ public final class RustLevel extends ServerLevel {
             put(server,MinecraftServer.class,"registries",BridgeContent.layeredRegistries);
             put(server,MinecraftServer.class,"resources",BridgeContent.serverResources);
             put(server,MinecraftServer.class,"levels",new java.util.concurrent.ConcurrentHashMap<>());
+            // Entity.checkInsideBlocks asks it for block debug listeners; nobody subscribes here.
+            put(server,MinecraftServer.class,"debugSubscribers",new net.minecraft.util.debug.ServerDebugSubscribers(server));
+            // Entity and mob ticks read these through their level (teams, tick rate, weather, brewing, fuel).
+            try {
+            put(server,MinecraftServer.class,"scoreboard",new net.minecraft.server.ServerScoreboard(server));
+            put(server,MinecraftServer.class,"tickRateManager",new net.minecraft.server.ServerTickRateManager(server));
+            put(server,MinecraftServer.class,"weatherData",new net.minecraft.world.level.saveddata.WeatherData());
+            put(server,MinecraftServer.class,"random",RandomSource.create());
+            put(server,MinecraftServer.class,"customBossEvents",new net.minecraft.server.bossevents.CustomBossEvents());
+            put(server,MinecraftServer.class,"suppressedExceptions",new net.minecraft.server.SuppressedExceptionCollector());
+            put(server,MinecraftServer.class,"potionBrewing",net.minecraft.world.item.alchemy.PotionBrewing.bootstrap(net.minecraft.world.level.WorldDataConfiguration.DEFAULT.enabledFeatures()));
+            put(server,MinecraftServer.class,"fuelValues",BridgeContent.fuels);
+            } catch (RuntimeException error) { LOGGER.error("Cannot fill the bridge server's gameplay state", error); }
             standIn = server;
             // NeoForge's server lifecycle: the hook records the current server, mods see it on the start events.
             try {
@@ -157,7 +199,6 @@ public final class RustLevel extends ServerLevel {
                 current.setAccessible(true);
                 current.set(null,server);
             } catch (ReflectiveOperationException error) { LOGGER.error("Cannot register the bridge server with NeoForge",error); }
-            if (System.getenv("FERRUM_AUDIT") != null) audit(server,MinecraftServer.class);
             postLifecycle(new net.neoforged.neoforge.event.server.ServerAboutToStartEvent(server));
             postLifecycle(new net.neoforged.neoforge.event.server.ServerStartingEvent(server));
         }
@@ -165,24 +206,10 @@ public final class RustLevel extends ServerLevel {
     }
 
     private static void postLifecycle(net.neoforged.bus.api.Event event) {
-        try { net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event); }
-        catch (RuntimeException | LinkageError error) { LOGGER.error("A mod failed on {}",event.getClass().getSimpleName(),error); }
+        SafeEvents.post(event);
     }
 
     private static boolean serverStarted;
-
-    // TEMP-AUDIT
-    static void audit(Object target,Class<?> stop) {
-        for (var method : target.getClass().getMethods()) {
-            if (method.getParameterCount() != 0 || java.lang.reflect.Modifier.isStatic(method.getModifiers()) || method.getDeclaringClass() == Object.class) continue;
-            if (!stop.isAssignableFrom(method.getDeclaringClass())) continue;
-            String n = method.getName();
-            if (n.startsWith("set") || n.startsWith("save") || n.startsWith("stop") || n.startsWith("tick") || n.startsWith("halt") || n.startsWith("run") || n.equals("close") || n.startsWith("wait") || n.startsWith("notify") || n.startsWith("reload") || n.startsWith("start") || n.startsWith("init") || n.startsWith("clear") || n.startsWith("remove") || n.startsWith("exit") || n.startsWith("shutdown") || n.startsWith("kick") || n.startsWith("create") || n.startsWith("load") || n.startsWith("spin") || n.startsWith("prepare") || n.startsWith("update") || n.startsWith("sync") || n.startsWith("restore") || n.startsWith("pause") || n.startsWith("resume") || n.startsWith("tryAdd") || n.startsWith("explode") || n.startsWith("nextSub") || n.startsWith("block") || n.startsWith("get") == false && n.startsWith("is") == false && n.startsWith("has") == false && !n.equals("overworld") && !n.equals("registryAccess") && !n.equals("dimension") && !n.equals("players")) continue;
-            try { method.invoke(target); }
-            catch (java.lang.reflect.InvocationTargetException e) { LOGGER.warn("AUDIT {}.{} -> {}",target.getClass().getSimpleName(),n,e.getCause().toString()); }
-            catch (Throwable e) { }
-        }
-    }
 
     /** Rust has no blocking world load: the server counts as started once the overworld exists, as in vanilla's loadLevel. */
     private static void levelLoaded(RustLevel level) {
@@ -217,12 +244,20 @@ public final class RustLevel extends ServerLevel {
         @Override public boolean isSameThread() { return true; }
         @Override public void execute(Runnable task) { task.run(); }
         @Override public void executeIfPossible(Runnable task) { task.run(); }
+        @Override public void schedule(net.minecraft.server.TickTask task) { task.run(); }
         @Override public boolean isRunning() { return true; }
         @Override public boolean isStopped() { return false; }
         @Override public boolean isDedicatedServer() { return true; }
         @Override public int getTickCount() { var level = LEVELS.values().stream().findFirst(); return level.isPresent() ? (int) level.get().getGameTime() : 0; }
         @Override public Iterable<ServerLevel> getAllLevels() { return new ArrayList<ServerLevel>(LEVELS.values()); }
+        // Loot contexts ask for a named random sequence; Rust is the only randomness source.
+        @Override public RandomSource getRandomSequence(net.minecraft.resources.Identifier id) { return LEVELS.values().iterator().next().rustRandom; }
         @Override public int getPlayerCount() { return PlayerBridge.all().size(); }
+        @Override public net.minecraft.world.level.storage.SavedDataStorage getDataStorage() { return overworld().getDataStorage(); }
+        @Override public boolean isHardcore() { return false; }
+        // Rust applies spawn protection before any Java break or placement runs.
+        @Override public boolean isUnderSpawnProtection(ServerLevel level, BlockPos pos, net.minecraft.world.entity.player.Player player) { return false; }
+        @Override public net.minecraft.world.level.GameType getDefaultGameType() { return net.minecraft.world.level.GameType.SURVIVAL; }
         @Override public net.minecraft.world.level.gamerules.GameRules getGameRules() { return GAME_RULES; }
         // Weather and time belong to Rust's world.
         @Override public void setWeatherParameters(int clear,int rain,boolean raining,boolean thundering) { }
@@ -233,11 +268,45 @@ public final class RustLevel extends ServerLevel {
 
     static JsonElement call(JsonObject request) { return JsonParser.parseString(BridgeRuntime.world(request.toString())); }
 
-    private static JsonElement request(String operation, BlockPos pos) {
+    JsonElement bridgeCall(JsonObject request) {
+        request.addProperty("handle",handle);
+        return call(request);
+    }
+
+    private JsonElement request(String operation, BlockPos pos) {
         var request = new JsonObject();
         request.addProperty("op",operation);
         if (pos != null) { request.addProperty("x",pos.getX()); request.addProperty("y",pos.getY()); request.addProperty("z",pos.getZ()); }
-        return call(request);
+        return bridgeCall(request);
+    }
+
+    private static final int ATTACHMENT_SWEEP_TICKS = 20;
+    private int attachmentCountdown = ATTACHMENT_SWEEP_TICKS;
+
+    void syncChunks(com.google.gson.JsonArray chunks) {
+        var alive = new java.util.HashSet<ChunkPos>();
+        for (var element : chunks) {
+            var coordinates = element.getAsJsonArray();
+            var pos = new ChunkPos(coordinates.get(0).getAsInt(),coordinates.get(1).getAsInt());
+            alive.add(pos);
+            if (!loadedViews.containsKey(pos)) {
+                var chunk = RustChunk.create(this,pos.x(),pos.z());
+                loadedViews.put(pos,chunk);
+                postLifecycle(new net.neoforged.neoforge.event.level.ChunkEvent.Load(chunk,false));
+            }
+        }
+        for (var pos : new ArrayList<>(loadedViews.keySet())) {
+            if (!alive.contains(pos)) {
+                var chunk = loadedViews.remove(pos);
+                chunk.saveAttachments();
+                postLifecycle(new net.neoforged.neoforge.event.level.ChunkEvent.Unload(chunk));
+            }
+        }
+        // Mods change attachment objects in place without telling the chunk, so Rust gets a copy every second.
+        if (--attachmentCountdown <= 0) {
+            attachmentCountdown = ATTACHMENT_SWEEP_TICKS;
+            for (var chunk : loadedViews.values()) chunk.saveAttachments();
+        }
     }
 
     private static CompoundTag decode(String data) throws IOException {
@@ -245,19 +314,27 @@ public final class RustLevel extends ServerLevel {
         if (bytes.length>12*1024*1024) throw new IOException("Block entity NBT exceeds 12 MiB");
         return NbtIo.read(new DataInputStream(new ByteArrayInputStream(bytes)),NbtAccounter.create(12*1024*1024));
     }
-    private static String encode(CompoundTag tag) throws IOException {
+    private static byte[] bytes(CompoundTag tag) throws IOException {
         var bytes = new ByteArrayOutputStream();
         NbtIo.write(tag,new DataOutputStream(bytes));
-        return Base64.getEncoder().encodeToString(bytes.toByteArray());
+        return bytes.toByteArray();
+    }
+    private static String encode(CompoundTag tag) throws IOException {
+        return Base64.getEncoder().encodeToString(bytes(tag));
     }
 
-    private Entry entity(BlockPos pos, BlockState state, String saved) throws Exception {
+    /**
+     * The Java block entity for a Rust one. {@code sent} is data Rust replaced since Java last saw it, or null when
+     * Java's copy is current; a block entity Java does not hold yet is loaded from Rust.
+     */
+    private Entry entity(BlockPos pos, BlockState state, String sent) throws Exception {
         var old = entities.get(pos);
         if (old != null && old.state.getBlock()==state.getBlock()) {
             old.be.setBlockState(state);
             old.state=state;
-            if (!saved.equals(old.saved) && !saved.isEmpty()) {
-                old.be.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING,REGISTRIES,decode(saved)));
+            if (sent != null) {
+                old.be.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING,REGISTRIES,decode(sent)));
+                old.saved = bytes(old.be.saveWithFullMetadata(REGISTRIES));
             }
             return old;
         }
@@ -265,13 +342,29 @@ public final class RustLevel extends ServerLevel {
         if (!(state.getBlock() instanceof EntityBlock block)) { entities.remove(pos); return null; }
         var be = block.newBlockEntity(pos,state);
         if (be == null) { entities.remove(pos); return null; }
+        if (sent == null) {
+            var stored = request("be",pos);
+            if (stored.isJsonNull()) { entities.remove(pos); return null; }
+            sent = stored.getAsString();
+        }
         be.setLevel(this);
-        if (!saved.isEmpty()) be.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING,REGISTRIES,decode(saved)));
-        var entry = new Entry(be,state,saved);
+        if (sent != null) be.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING,REGISTRIES,decode(sent)));
+        var entry = new Entry(be,state,bytes(be.saveWithFullMetadata(REGISTRIES)));
         entities.put(pos.immutable(),entry);
         be.clearRemoved();
         be.onLoad();
         return entry;
+    }
+
+    /** Takes the world values Rust sends with every request that leases this level. */
+    void configure(JsonObject request) throws Exception {
+        handle=request.get("handle").getAsInt();
+        seed=request.get("seed").getAsLong();
+        seaLevel=request.get("seaLevel").getAsInt();
+        gameTime=request.get("time").getAsLong();
+        dayTime=request.get("dayTime").getAsLong();
+        if (dataFolder == null && request.has("dataFolder")) dataFolder=java.nio.file.Path.of(request.get("dataFolder").getAsString());
+        configure(request.get("minY").getAsInt(),request.get("height").getAsInt(),request.get("dimension").getAsString());
     }
 
     void configure(int minY,int height,String dimension) throws Exception {
@@ -288,10 +381,63 @@ public final class RustLevel extends ServerLevel {
                 : dimension.equals("minecraft:the_end") ? net.minecraft.world.level.dimension.BuiltinDimensionTypes.END : net.minecraft.world.level.dimension.BuiltinDimensionTypes.OVERWORLD;
             var type = REGISTRIES.lookupOrThrow(net.minecraft.core.registries.Registries.DIMENSION_TYPE).getOrThrow(typeKey);
             UNSAFE.putObject(this,UNSAFE.objectFieldOffset(Level.class.getDeclaredField("dimensionTypeRegistration")),type);
+            setEnvironmentAttributes(environmentAttributes(this));
             levelLoaded(this);
-            if (System.getenv("FERRUM_AUDIT") != null) audit(this,Level.class);
         }
     }
+    /**
+     * ServerLevel's constructor builds this with addDefaultLayers. Its timeline layers need the server's clock manager,
+     * which Rust owns, so only the dimension and biome layers apply.
+     */
+    private static net.minecraft.world.attribute.EnvironmentAttributeSystem environmentAttributes(RustLevel level) throws ReflectiveOperationException {
+        var type = net.minecraft.world.attribute.EnvironmentAttributeSystem.class;
+        var builder = net.minecraft.world.attribute.EnvironmentAttributeSystem.builder();
+        var dimension = type.getDeclaredMethod("addDimensionLayer",builder.getClass(),net.minecraft.world.level.dimension.DimensionType.class);
+        dimension.setAccessible(true);
+        dimension.invoke(null,builder,level.dimensionType());
+        var biome = type.getDeclaredMethod("addBiomeLayer",builder.getClass(),net.minecraft.core.HolderLookup.class,net.minecraft.world.level.biome.BiomeManager.class);
+        biome.setAccessible(true);
+        biome.invoke(null,builder,REGISTRIES.lookupOrThrow(net.minecraft.core.registries.Registries.BIOME),level.getBiomeManager());
+        return builder.build();
+    }
+
+    /**
+     * Mixin handlers mods inject into ServerLevel.tick (Draconic's world tasks), which Rust never runs. HEAD handlers
+     * run with the level pre-tick event, TAIL and RETURN ones with the post-tick event.
+     */
+    private static List<java.lang.reflect.Method>[] tickHooks;
+
+    @SuppressWarnings("unchecked")
+    private static synchronized List<java.lang.reflect.Method>[] tickHooks() {
+        if (tickHooks != null) return tickHooks;
+        List<java.lang.reflect.Method> head = new ArrayList<>(), tail = new ArrayList<>();
+        for (var method : ServerLevel.class.getDeclaredMethods()) {
+            var types = method.getParameterTypes();
+            // Merged injector handlers keep only @MixinMerged; tick(BooleanSupplier) is ServerLevel's only method with
+            // that parameter, so a handler taking it with a CallbackInfo targets the tick. Their injection point is
+            // not kept, and mods hook the end of the tick, so they run with the post-tick event.
+            if (!method.getName().startsWith("handler$") || types.length != 2 || types[0] != java.util.function.BooleanSupplier.class
+                || !types[1].getName().equals("org.spongepowered.asm.mixin.injection.callback.CallbackInfo")) continue;
+            method.setAccessible(true);
+            tail.add(method);
+        }
+        LOGGER.info("Running {} mod ServerLevel.tick hooks: {} {}", head.size() + tail.size(), head.stream().map(java.lang.reflect.Method::getName).toList(), tail.stream().map(java.lang.reflect.Method::getName).toList());
+        tickHooks = new List[] { head, tail };
+        return tickHooks;
+    }
+
+    void runTickHooks(boolean post) {
+        for (var method : tickHooks()[post ? 1 : 0]) {
+            try { method.invoke(this, (java.util.function.BooleanSupplier) () -> false, method.getParameterTypes()[1].getConstructor(String.class, boolean.class).newInstance("tick", false)); }
+            catch (ReflectiveOperationException | RuntimeException error) {
+                var cause = error instanceof java.lang.reflect.InvocationTargetException wrapped ? wrapped.getCause() : error;
+                if (cause instanceof VirtualMachineError fatal) throw fatal;
+                var id = method.getName() + cause;
+                if (FAILED_TICKS.size() < 4096 && FAILED_TICKS.add(id)) LOGGER.error("Mod level tick hook {} failed (logged once)", method.getName(), cause);
+            }
+        }
+    }
+
     String worldId() { return worldId; }
     String dimensionName() { return dimensionName; }
 
@@ -322,14 +468,14 @@ public final class RustLevel extends ServerLevel {
     @SuppressWarnings({"rawtypes","unchecked"})
     private String tickBatch(JsonObject batch) throws Exception {
         var level = this;
-        level.configure(batch.get("minY").getAsInt(),batch.get("height").getAsInt(),batch.get("dimension").getAsString());
+        level.configure(batch);
         var active = new LinkedHashSet<BlockPos>();
         try {
             for (var element : batch.getAsJsonArray("entities")) {
                 var data=element.getAsJsonObject();
                 var pos = new BlockPos(data.get("x").getAsInt(),data.get("y").getAsInt(),data.get("z").getAsInt());
                 active.add(pos);
-                level.entity(pos,Block.stateById(data.get("state").getAsInt()),data.get("nbt").getAsString());
+                level.entity(pos,Block.stateById(data.get("state").getAsInt()),data.has("nbt") ? data.get("nbt").getAsString() : null);
             }
             // Loaded block entities that Rust did not tick this round (unloaded neighbours) stay alive.
             var retained = new HashSet<BlockPos>();
@@ -353,25 +499,223 @@ public final class RustLevel extends ServerLevel {
                 BlockEntityTicker ticker=current.getTicker(level,entry.be.getType());
                 if (ticker == null) continue;
                 try { ticker.tick(level,pos,current,entry.be); }
-                catch (RuntimeException error) { LOGGER.error("Block entity tick failed at {}",pos,error); }
+                catch (RuntimeException error) {
+                    var id = level.worldId + pos + entry.be.getClass().getName();
+                    if (FAILED_TICKS.size() < 4096 && FAILED_TICKS.add(id)) LOGGER.error("Block entity tick failed at {} (logged once)",pos,error);
+                }
             }
+            // Only data that changed goes back: block entities that called setChanged, and every so often all of
+            // them for mods that change state without it, as a vanilla chunk save would still catch.
             var result = new JsonArray();
+            boolean sweep = --level.sweepCountdown <= 0;
+            if (sweep) level.sweepCountdown = SAVE_INTERVAL_BATCHES;
             for (var entry : level.entities.entrySet()) {
                 var pos=entry.getKey();
                 var be=entry.getValue();
+                if (!sweep && !level.changed.contains(pos)) continue;
+                if (vanilla(be.be)) continue;
                 if (level.getBlockState(pos).getBlock()!=be.state.getBlock()) continue;
-                be.saved=encode(be.be.saveWithFullMetadata(REGISTRIES));
+                var saved=bytes(be.be.saveWithFullMetadata(REGISTRIES));
+                if (Arrays.equals(saved,be.saved)) continue;
+                be.saved=saved;
                 var data=new JsonObject();
                 data.addProperty("x",pos.getX()); data.addProperty("y",pos.getY()); data.addProperty("z",pos.getZ());
-                data.addProperty("nbt",be.saved);
+                data.addProperty("nbt",Base64.getEncoder().encodeToString(saved));
                 result.add(data);
             }
+            level.changed.clear();
+            level.flushVanilla();
             var reply = new JsonObject();
             reply.add("entities",result);
             reply.add("packets",Outbox.drain());
             level.chunks.saveDataSometimes();
             return reply.toString();
-        } catch (Exception | Error error) { level.entities.clear(); throw error; }
+        } catch (Exception | Error error) { level.entities.clear(); level.changed.clear(); throw error; }
+    }
+
+    private static boolean vanilla(BlockEntity be) {
+        var key = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(be.getType());
+        return key != null && key.getNamespace().equals("minecraft");
+    }
+
+    /**
+     * Vanilla block entities belong to Rust; Java only borrows them for a mod's lookup (getBlockEntity, capabilities).
+     * What changed goes back to Rust's block entity now, and the borrowed copy is dropped so the next lookup reads
+     * Rust's current data. One failed entry never stops the others.
+     */
+    void flushVanilla() {
+        var iterator = entities.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            var pos = entry.getKey();
+            var held = entry.getValue();
+            if (!vanilla(held.be)) continue;
+            iterator.remove();
+            changed.remove(pos);
+            try {
+                if (getBlockState(pos).getBlock() == held.state.getBlock()) {
+                    var saved = bytes(held.be.saveWithFullMetadata(REGISTRIES));
+                    if (!Arrays.equals(saved, held.saved)) commitVanilla(pos, held.be, saved);
+                }
+            } catch (Exception error) {
+                LOGGER.warn("Vanilla block entity write-back failed at {}", pos, error);
+            }
+            try { held.be.setRemoved(); } catch (RuntimeException error) { LOGGER.debug("Releasing borrowed block entity at {} failed", pos, error); }
+        }
+    }
+
+    private void commitVanilla(BlockPos pos, BlockEntity be, byte[] saved) throws IOException {
+        var request = new JsonObject();
+        request.addProperty("op", "commit_be");
+        request.addProperty("x", pos.getX()); request.addProperty("y", pos.getY()); request.addProperty("z", pos.getZ());
+        request.addProperty("id", BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(be.getType()).toString());
+        // Container slots travel as Rust-shaped stacks so mod items keep their components.
+        if (be instanceof net.minecraft.world.Container container) {
+            var slots = new JsonArray();
+            for (int slot = 0; slot < container.getContainerSize(); slot++) {
+                var stack = container.getItem(slot);
+                slots.add(stack.isEmpty() ? "" : PlayerBridge.encode(PlayerBridge.stackToRust(stack)));
+            }
+            request.add("slots", slots);
+        }
+        request.addProperty("nbt", Base64.getEncoder().encodeToString(saved));
+        bridgeCall(request);
+    }
+
+    /** Block ticks Java schedules go to Rust's tick queue; Rust calls back with scheduled_tick when one is due. */
+    private final class RustBlockTicks extends net.minecraft.world.ticks.LevelTicks<Block> {
+        RustBlockTicks() { super(chunk -> true); }
+        private JsonObject tick(BlockPos pos, Block block) {
+            var request = new JsonObject();
+            request.addProperty("op", "schedule_tick");
+            request.addProperty("x", pos.getX()); request.addProperty("y", pos.getY()); request.addProperty("z", pos.getZ());
+            request.addProperty("state", Block.getId(block.defaultBlockState()));
+            return request;
+        }
+        @Override public void schedule(net.minecraft.world.ticks.ScheduledTick<Block> tick) {
+            var request = tick(tick.pos(), tick.type());
+            request.addProperty("delay", tick.triggerTick() - getGameTime());
+            request.addProperty("priority", tick.priority().getValue());
+            bridgeCall(request);
+        }
+        @Override public boolean hasScheduledTick(BlockPos pos, Block block) {
+            var request = tick(pos, block);
+            request.addProperty("query", true);
+            return bridgeCall(request).getAsBoolean();
+        }
+        @Override public boolean willTickThisTick(BlockPos pos, Block block) { return false; }
+        @Override public int count() { return 0; }
+    }
+    private RustBlockTicks blockTicks;
+    @Override public net.minecraft.world.ticks.LevelTicks<Block> getBlockTicks() {
+        if (blockTicks == null) blockTicks = new RustBlockTicks();
+        return blockTicks;
+    }
+    private static final net.minecraft.world.ticks.LevelTicks<net.minecraft.world.level.material.Fluid> NO_FLUID_TICKS =
+        new net.minecraft.world.ticks.LevelTicks<>(chunk -> false) {
+            @Override public void schedule(net.minecraft.world.ticks.ScheduledTick<net.minecraft.world.level.material.Fluid> tick) { }
+        };
+    /** Rust simulates fluids. */
+    @Override public net.minecraft.world.ticks.LevelTicks<net.minecraft.world.level.material.Fluid> getFluidTicks() { return NO_FLUID_TICKS; }
+
+    /**
+     * LevelChunk.setBlockState's preRemoveSideEffects for a mod block Rust is replacing. Rust still holds the block
+     * entity's data, so a block entity Java has not loaded yet comes from there.
+     */
+    JsonObject blockRemoving(JsonObject request) throws Exception {
+        var pos = position(request);
+        var old = Block.stateById(request.get("old").getAsInt());
+        var held = entities.remove(pos);
+        changed.remove(pos);
+        BlockEntity be = held == null ? null : held.be;
+        if (be == null && old.getBlock() instanceof EntityBlock block) {
+            var stored = request("be", pos);
+            be = stored.isJsonNull() ? null : block.newBlockEntity(pos, old);
+            if (be != null) {
+                be.setLevel(this);
+                be.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, REGISTRIES, decode(stored.getAsString())));
+            }
+        }
+        if (be != null) {
+            be.preRemoveSideEffects(pos, old);
+            be.setRemoved();
+        }
+        return new JsonObject();
+    }
+
+    /** Level.setBlock's callbacks for a mod block after Rust changed the state: onPlace, then affectNeighborsAfterRemoval. */
+    JsonObject blockChanged(JsonObject request) {
+        var pos = position(request);
+        var old = Block.stateById(request.get("old").getAsInt());
+        var current = Block.stateById(request.get("new").getAsInt());
+        boolean moved = request.get("moved").getAsBoolean();
+        if (request.get("place").getAsBoolean()) current.onPlace(this, pos, old, moved);
+        if (request.get("neighbors").getAsBoolean()) old.affectNeighborsAfterRemoval(this, pos, moved);
+        return new JsonObject();
+    }
+
+    JsonObject neighborChanged(JsonObject request) {
+        var pos = position(request);
+        getBlockState(pos).handleNeighborChanged(this, pos, Block.stateById(request.get("source").getAsInt()).getBlock(), null, false);
+        return new JsonObject();
+    }
+
+    JsonObject scheduledTick(JsonObject request) {
+        var pos = position(request);
+        getBlockState(pos).tick(this, pos, rustRandom);
+        return new JsonObject();
+    }
+
+    /** Rust's random tick samples for mod blocks, as ServerLevel.tickChunk runs them: only randomly ticking states. */
+    JsonObject randomTicks(JsonObject request) {
+        for (var element : request.getAsJsonArray("positions")) {
+            var xyz = element.getAsJsonArray();
+            var pos = new BlockPos(xyz.get(0).getAsInt(), xyz.get(1).getAsInt(), xyz.get(2).getAsInt());
+            try {
+                var state = getBlockState(pos);
+                if (state.isRandomlyTicking()) state.randomTick(this, pos, rustRandom);
+            } catch (Throwable error) {
+                String id = "random_tick:" + getBlockState(pos).getBlock();
+                if (FAILED_TICKS.size() < 4096 && FAILED_TICKS.add(id)) LOGGER.error("Random tick failed at {} (logged once)", pos, error);
+            }
+        }
+        return new JsonObject();
+    }
+
+    private static BlockPos position(JsonObject request) {
+        return new BlockPos(request.get("x").getAsInt(),request.get("y").getAsInt(),request.get("z").getAsInt());
+    }
+
+    /** What BlockItem.place does after the block is set: block entity data and components from the stack, then setPlacedBy. */
+    JsonObject blockPlaced(JsonObject request,net.minecraft.world.entity.LivingEntity placer) throws Exception {
+        var pos = position(request);
+        var stack = PlayerBridge.stackFromRust(decode(request.get("stack").getAsString()));
+        var state = getBlockState(pos);
+        BlockItem.updateCustomBlockEntityTag(this,placer instanceof net.minecraft.world.entity.player.Player player ? player : null,pos,stack);
+        var reply = new JsonObject();
+        var be = getBlockEntity(pos);
+        if (be != null) be.applyComponentsFromItemStack(stack);
+        state.getBlock().setPlacedBy(this,pos,state,placer,stack);
+        var entry = entities.get(pos);
+        if (entry != null) {
+            entry.saved = bytes(entry.be.saveWithFullMetadata(REGISTRIES));
+            reply.addProperty("nbt",Base64.getEncoder().encodeToString(entry.saved));
+        }
+        return reply;
+    }
+
+    /** Block.getDrops against the Rust block entity: loot tables, component copying and mod overrides all apply. */
+    JsonObject blockDrops(JsonObject request) throws Exception {
+        var pos = position(request);
+        var tool = request.has("tool") ? PlayerBridge.stackFromRust(decode(request.get("tool").getAsString())) : net.minecraft.world.item.ItemStack.EMPTY;
+        var drops = new JsonArray();
+        for (var stack : Block.getDrops(getBlockState(pos),this,pos,getBlockEntity(pos),null,tool)) {
+            if (!stack.isEmpty()) drops.add(PlayerBridge.encode(PlayerBridge.stackToRust(stack)));
+        }
+        var reply = new JsonObject();
+        
+        reply.add("drops",drops);
+        return reply;
     }
 
     // Rust owns entity identities, so Java entities take their ids from it.
@@ -408,39 +752,76 @@ public final class RustLevel extends ServerLevel {
     }
     @Override public void gameEvent(net.minecraft.core.Holder<net.minecraft.world.level.gameevent.GameEvent> event,net.minecraft.world.phys.Vec3 pos,net.minecraft.world.level.gameevent.GameEvent.Context context) { }
     @Override public boolean isClientSide() { return false; }
-    @Override public long getGameTime() { return request("time",null).getAsLong(); }
+    @Override public long getGameTime() { return gameTime; }
     @Override public RandomSource getRandom() { return rustRandom; }
     @Override public int getMinY() { return minimumY; }
     @Override public int getHeight() { return levelHeight; }
-    @Override public int getSeaLevel() { return request("seaLevel",null).getAsInt(); }
+    /** Rust keeps the heightmaps; chunk views have none. Ocean floor maps use the motion blocking one. */
+    @Override public int getHeight(net.minecraft.world.level.levelgen.Heightmap.Types type,int x,int z) {
+        return BridgeRuntime.getHeight(handle,switch (type) {
+            case WORLD_SURFACE_WG, WORLD_SURFACE -> 0;
+            case MOTION_BLOCKING_NO_LEAVES -> 2;
+            default -> 1;
+        },x,z);
+    }
+    @Override public long getSeed() { return seed; }
+    @Override public long getDefaultClockTime() { return dayTime; }
+    @Override public long getOverworldClockTime() { return dayTime; }
+    @Override public net.minecraft.server.level.ServerPlayer getRandomPlayer() {
+        var players = players();
+        return players.isEmpty() ? null : players.get(rustRandom.nextInt(players.size()));
+    }
+    @Override public net.minecraft.world.level.gamerules.GameRules getGameRules() { return GAME_RULES; }
+    @Override public int getSeaLevel() { return seaLevel; }
     @Override public RegistryAccess registryAccess() { return REGISTRIES; }
     @Override public net.minecraft.world.item.crafting.RecipeManager recipeAccess() { return BridgeContent.recipes; }
     @Override public FuelValues fuelValues() { return BridgeContent.fuels; }
     @Override public net.minecraft.world.flag.FeatureFlagSet enabledFeatures() { return net.minecraft.world.level.WorldDataConfiguration.DEFAULT.enabledFeatures(); }
-    @Override public BlockState getBlockState(BlockPos pos) { return Block.stateById(request("get",pos).getAsInt()); }
+    @Override public BlockState getBlockState(BlockPos pos) { return Block.stateById(BridgeRuntime.getState(handle,pos.getX(),pos.getY(),pos.getZ())); }
     @Override public net.minecraft.world.level.material.FluidState getFluidState(BlockPos pos) { return getBlockState(pos).getFluidState(); }
     @Override public boolean setBlock(BlockPos pos, BlockState state,int flags,int recursion) {
-        var data=new JsonObject(); data.addProperty("op","set");
-        data.addProperty("x",pos.getX()); data.addProperty("y",pos.getY()); data.addProperty("z",pos.getZ());
-        data.addProperty("state",Block.getId(state)); data.addProperty("flags",flags);
-        return JsonParser.parseString(BridgeRuntime.world(data.toString())).getAsBoolean();
+        return BridgeRuntime.setState(handle,pos.getX(),pos.getY(),pos.getZ(),Block.getId(state),flags);
     }
     @Override public boolean setBlock(BlockPos pos,BlockState state,int flags) { return setBlock(pos,state,flags,512); }
     @Override public BlockEntity getBlockEntity(BlockPos pos) {
         var state=getBlockState(pos);
         var existing=entities.get(pos);
         if (existing != null && existing.state.getBlock()==state.getBlock()) return existing.be;
-        var nbt=request("be",pos);
-        if (nbt.isJsonNull()) return null;
-        try { var entry=entity(pos,state,nbt.getAsString()); return entry==null ? null : entry.be; }
+        try { var entry=entity(pos,state,null); return entry==null ? null : entry.be; }
         catch(Exception error) { throw new IllegalStateException("Cannot load Rust block entity at "+pos,error); }
     }
-    @Override public void blockEntityChanged(BlockPos pos) { request("dirty",pos); }
+    /** Rust commits the block entity's data with the next batch reply, which marks its chunk for saving. */
+    @Override public void blockEntityChanged(BlockPos pos) { changed.add(pos.immutable()); }
     @Override public void updateNeighbourForOutputSignal(BlockPos pos,Block block) { request("comparator",pos); }
     @Override public void sendBlockUpdated(BlockPos pos,BlockState old,BlockState state,int flags) { request("update",pos); }
-    @Override public boolean hasChunk(int x,int z) { return request("loaded",new BlockPos(x<<4,minimumY,z<<4)).getAsBoolean(); }
-    @Override public LevelChunk getChunk(int x,int z) { return RustChunk.create(this,x,z); }
+    /** Rust runs the explosion (blocks, damage, knockback, packets); Java's would only half apply it. */
+    @Override public void explode(net.minecraft.world.entity.Entity source,net.minecraft.world.damagesource.DamageSource damage,net.minecraft.world.level.ExplosionDamageCalculator calculator,double x,double y,double z,float power,boolean fire,Level.ExplosionInteraction interaction,net.minecraft.core.particles.ParticleOptions small,net.minecraft.core.particles.ParticleOptions large,net.minecraft.util.random.WeightedList<net.minecraft.core.particles.ExplosionParticleInfo> blockParticles,net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> sound) {
+        var request = new JsonObject();
+        request.addProperty("op","explode");
+        request.addProperty("ex",x); request.addProperty("ey",y); request.addProperty("ez",z);
+        request.addProperty("power",power);
+        request.addProperty("interaction",interaction.name());
+        bridgeCall(request);
+    }
+    @Override public boolean hasChunk(int x,int z) { return BridgeRuntime.isLoaded(handle,x,z); }
+    @Override public LevelChunk getChunk(int x,int z) { return loadedViews.computeIfAbsent(new ChunkPos(x,z),pos -> RustChunk.create(this,x,z)); }
     @Override public ServerChunkCache getChunkSource() { return chunks; }
+    /** Biomes live in Rust's chunk sections; coordinates are quart positions like vanilla's NoiseBiomeSource. */
+    @SuppressWarnings("unchecked")
+    @Override public net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> getUncachedNoiseBiome(int x,int y,int z) {
+        int id = BridgeRuntime.biome(handle,x << 2,y << 2,z << 2);
+        if (id < 0 || id >= biomes.length) throw new IllegalStateException("Rust biome id out of range: " + id);
+        var cached = (net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>) biomes[id];
+        if (cached != null) return cached;
+        var name = request("biome",new BlockPos(x << 2,y << 2,z << 2)).getAsString();
+        var registry = REGISTRIES.lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+        var holder = registry.get(net.minecraft.resources.Identifier.parse(name.contains(":") ? name : "minecraft:" + name))
+            .<net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>>map(h -> h)
+            .orElseGet(() -> registry.getOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS));
+        biomes[id] = holder;
+        return holder;
+    }
+    @Override public net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> getNoiseBiome(int x,int y,int z) { return getUncachedNoiseBiome(x,y,z); }
     @Override public ChunkAccess getChunk(int x,int z,ChunkStatus status,boolean create) { return hasChunk(x,z) ? getChunk(x,z) : null; }
     @Override public <T,C> T getCapability(BlockCapability<T,C> capability,BlockPos pos,C context) {
         return capability.getCapability(this,pos,getBlockState(pos),getBlockEntity(pos),context);
@@ -450,8 +831,8 @@ public final class RustLevel extends ServerLevel {
     }
 
     private static final class Entry {
-        final BlockEntity be; BlockState state; String saved;
-        Entry(BlockEntity be,BlockState state,String saved) { this.be=be; this.state=state; this.saved=saved; }
+        final BlockEntity be; BlockState state; byte[] saved;
+        Entry(BlockEntity be,BlockState state,byte[] saved) { this.be=be; this.state=state; this.saved=saved; }
     }
     private LevelChunkSection[] sections;
     private LevelChunkSection[] sections() {
@@ -459,8 +840,15 @@ public final class RustLevel extends ServerLevel {
         if (sections == null || sections.length != count) {
             try {
                 sections = new LevelChunkSection[count];
-                for (int i = 0; i < count; i++) sections[i] = (LevelChunkSection) UNSAFE.allocateInstance(RustSection.class);
-            } catch (InstantiationException error) { throw new IllegalStateException(error); }
+                // Containers that mods read straight off a section (radiation, conduit scans) exist but stay empty: block data lives in Rust.
+                var template = new LevelChunkSection(net.minecraft.world.level.chunk.PalettedContainerFactory.create(REGISTRIES));
+                for (int i = 0; i < count; i++) {
+                    var section = (LevelChunkSection) UNSAFE.allocateInstance(RustSection.class);
+                    RustPlayer.set(section,LevelChunkSection.class,"states",template.getStates());
+                    RustPlayer.set(section,LevelChunkSection.class,"biomes",template.getBiomes());
+                    sections[i] = section;
+                }
+            } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
         }
         return sections;
     }
@@ -474,13 +862,54 @@ public final class RustLevel extends ServerLevel {
         private ChunkPos position;
         private RustChunk(RustLevel level,int x,int z) { super(level,new ChunkPos(x,z)); }
         static RustChunk create(RustLevel level,int x,int z) {
-            try { var chunk=(RustChunk)UNSAFE.allocateInstance(RustChunk.class); chunk.owner=level; chunk.position=new ChunkPos(x,z); return chunk; }
-            catch(InstantiationException error) { throw new IllegalStateException(error); }
+            try {
+                var chunk=(RustChunk)UNSAFE.allocateInstance(RustChunk.class); chunk.owner=level; chunk.position=new ChunkPos(x,z);
+                // Mods keep per-chunk data (HBM conductor networks) as attachments; the constructor that makes the holder did not run.
+                chunk.holder=new net.neoforged.neoforge.attachment.AttachmentHolder.AsField(chunk);
+                RustPlayer.set(chunk,ChunkAccess.class,"attachmentHolder",chunk.holder);
+                chunk.loadAttachments();
+                return chunk;
+            }
+            catch(ReflectiveOperationException error) { throw new IllegalStateException(error); }
+        }
+        private net.neoforged.neoforge.attachment.AttachmentHolder.AsField holder;
+        private byte[] savedAttachments;
+        private BlockPos origin() { return new BlockPos(position.x()<<4,owner.minimumY,position.z()<<4); }
+        /** Rust keeps the chunk's attachments in its chunk NBT; Java restores them when it first views the chunk. */
+        private void loadAttachments() {
+            var data = owner.request("chunk_attachments",origin());
+            if (data == null || data.isJsonNull()) return;
+            try {
+                var tag = decode(data.getAsString());
+                holder.deserializeInternal(owner.registryAccess(),net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING,owner.registryAccess(),tag));
+                savedAttachments = bytes(tag);
+            } catch (IOException | RuntimeException error) { LOGGER.warn("Chunk attachments of {} were not restored",position,error); }
+        }
+        /** Hands changed attachments to Rust's chunk, which saves them with the chunk. */
+        void saveAttachments() {
+            if (!holder.hasAttachments()) return;
+            try {
+                var output = net.minecraft.world.level.storage.TagValueOutput.createWithContext(net.minecraft.util.ProblemReporter.DISCARDING,owner.registryAccess());
+                holder.serializeAttachments(output);
+                var tag = output.buildResult();
+                var saved = bytes(tag);
+                if (Arrays.equals(saved,savedAttachments)) return;
+                savedAttachments = saved;
+                var request = new JsonObject();
+                request.addProperty("op","set_chunk_attachments");
+                var at = origin();
+                request.addProperty("x",at.getX()); request.addProperty("y",at.getY()); request.addProperty("z",at.getZ());
+                request.addProperty("nbt",Base64.getEncoder().encodeToString(saved));
+                owner.bridgeCall(request);
+            } catch (IOException | RuntimeException error) { LOGGER.warn("Chunk attachments of {} were not saved",position,error); }
         }
         @Override public Level getLevel() { return owner; }
         @Override public ChunkPos getPos() { return position; }
         @Override public int getMinY() { return owner.minimumY; }
         @Override public int getHeight() { return owner.levelHeight; }
+        @Override public int getHeight(net.minecraft.world.level.levelgen.Heightmap.Types type,int x,int z) {
+            return owner.getHeight(type,(position.x()<<4)+x,(position.z()<<4)+z) - 1;
+        }
         // Sections are not stored; each reports fluid so callers fall back to per-block queries through the Rust world.
         @Override public LevelChunkSection[] getSections() { return owner.sections(); }
         @Override public Map<BlockPos,BlockEntity> getBlockEntities() {
@@ -490,11 +919,12 @@ public final class RustLevel extends ServerLevel {
             });
             return Collections.unmodifiableMap(result);
         }
+        @Override public net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> getNoiseBiome(int x,int y,int z) { return owner.getUncachedNoiseBiome(x,y,z); }
         @Override public BlockState getBlockState(BlockPos pos) { return owner.getBlockState(pos); }
         @Override public BlockState setBlockState(BlockPos pos,BlockState state,int flags) { var old=getBlockState(pos); owner.setBlock(pos,state,flags); return old; }
         @Override public BlockEntity getBlockEntity(BlockPos pos) { return owner.getBlockEntity(pos); }
         @Override public BlockEntity getBlockEntity(BlockPos pos,EntityCreationType type) { return getBlockEntity(pos); }
-        @Override public void markUnsaved() { request("dirty",new BlockPos(position.x()<<4,owner.minimumY,position.z()<<4)); }
+        @Override public void markUnsaved() { saveAttachments(); owner.request("dirty",origin()); }
         @Override public net.minecraft.server.level.FullChunkStatus getFullStatus() { return net.minecraft.server.level.FullChunkStatus.ENTITY_TICKING; }
     }
     /** Entity broadcasts go to Rust's tracker, which knows who sees the entity. */
@@ -510,7 +940,7 @@ public final class RustLevel extends ServerLevel {
         @Override public ChunkAccess getChunk(int x,int z,ChunkStatus status,boolean create) { return owner.getChunk(x,z,status,create); }
         @Override public boolean hasChunk(int x,int z) { return owner.hasChunk(x,z); }
         @Override public Level getLevel() { return owner; }
-        @Override public void blockChanged(BlockPos pos) { request("dirty",pos); }
+        @Override public void blockChanged(BlockPos pos) { owner.request("dirty",pos); }
         @Override public void sendToTrackingPlayers(net.minecraft.world.entity.Entity entity,net.minecraft.network.protocol.Packet<? super net.minecraft.network.protocol.game.ClientGamePacketListener> packet) { Outbox.toTracking(entity.getId(),false,packet); }
         @Override public void sendToTrackingPlayersAndSelf(net.minecraft.world.entity.Entity entity,net.minecraft.network.protocol.Packet<? super net.minecraft.network.protocol.game.ClientGamePacketListener> packet) { Outbox.toTracking(entity.getId(),true,packet); }
         private net.minecraft.world.level.storage.SavedDataStorage dataStorage;
@@ -518,10 +948,28 @@ public final class RustLevel extends ServerLevel {
         /** Mod saved data (not blocks or entities) is the one thing Java persists; Rust owns the world itself. */
         @Override public synchronized net.minecraft.world.level.storage.SavedDataStorage getDataStorage() {
             if (dataStorage == null) {
-                var folder = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get().resolve("ferrum-saveddata").resolve(owner.dimensionName.replace(':','_')).resolve("data");
+                var dimension = owner.dimensionName.replace(':','_');
+                var legacy = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get().resolve("ferrum-saveddata").resolve(dimension).resolve("data");
+                var folder = owner.dataFolder == null ? legacy : owner.dataFolder.resolve(dimension);
+                migrate(legacy, folder);
                 dataStorage = new net.minecraft.world.level.storage.SavedDataStorage(owner,folder,net.minecraft.util.datafix.DataFixers.getDataFixer(),REGISTRIES);
             }
             return dataStorage;
+        }
+        /** Mods read worldgen settings (biomes, features) from the generator; Rust generates, so this is vanilla's default stem for introspection only. */
+        @Override public net.minecraft.world.level.chunk.ChunkGenerator getGenerator() {
+            var key = owner.dimensionName.equals("minecraft:the_nether") ? net.minecraft.world.level.dimension.LevelStem.NETHER
+                : owner.dimensionName.equals("minecraft:the_end") ? net.minecraft.world.level.dimension.LevelStem.END : net.minecraft.world.level.dimension.LevelStem.OVERWORLD;
+            return defaultDimensions().get(key).orElseThrow().generator();
+        }
+        /** Saved data written before it moved into Rust's world folder. */
+        private static void migrate(java.nio.file.Path legacy, java.nio.file.Path folder) {
+            if (legacy.equals(folder) || !java.nio.file.Files.isDirectory(legacy) || java.nio.file.Files.exists(folder)) return;
+            try (var files = java.nio.file.Files.list(legacy)) {
+                java.nio.file.Files.createDirectories(folder);
+                for (var file : files.toList()) java.nio.file.Files.copy(file, folder.resolve(file.getFileName()));
+                LOGGER.info("Moved mod saved data from {} to {}", legacy, folder);
+            } catch (java.io.IOException error) { LOGGER.error("Cannot move mod saved data from {}", legacy, error); }
         }
         synchronized void saveData() { if (dataStorage != null) dataStorage.saveAndJoin(); }
         synchronized void saveDataSometimes() {

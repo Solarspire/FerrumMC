@@ -43,6 +43,8 @@ final class EntityBridge {
     /** Java instances of bridged entities by Rust entity id; ascending ids are the tick order. */
     private static final ConcurrentSkipListMap<Integer, Entity> MOD = new ConcurrentSkipListMap<>();
     private static final Set<Integer> REMOVED = ConcurrentHashMap.newKeySet();
+    /** Bridged entities Rust has listed as alive at least once. */
+    private static final Set<Integer> LISTED = ConcurrentHashMap.newKeySet();
     private static final Set<String> DROPPED = ConcurrentHashMap.newKeySet();
 
     private EntityBridge() {}
@@ -136,6 +138,7 @@ final class EntityBridge {
     private record Callback(int id) implements EntityInLevelCallback {
         @Override public void onMove() { }
         @Override public void onRemove(Entity.RemovalReason reason) {
+            LISTED.remove(id);
             if (MOD.remove(id) != null) REMOVED.add(id);
         }
     }
@@ -147,7 +150,50 @@ final class EntityBridge {
     }
 
     /** Ticks the level's bridged entities in id order and reports what Rust mirrors: state, removals and dirty data. */
+    /** Rebuilds a mod entity Rust loaded from its chunk, with the id Rust gave it. */
+    private static void load(RustLevel level, JsonObject data) {
+        int id = data.get("id").getAsInt();
+        try {
+            var type = BuiltInRegistries.ENTITY_TYPE.getOptional(Identifier.parse(data.get("type").getAsString()));
+            var entity = type.isEmpty() ? null : type.get().create(level, net.minecraft.world.entity.EntitySpawnReason.LOAD);
+            if (entity == null) { REMOVED.add(id); return; }
+            if (data.has("nbt") && !data.get("nbt").isJsonNull()) {
+                entity.load(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING,
+                    level.registryAccess(), PlayerBridge.decode(data.get("nbt").getAsString())));
+            } else {
+                entity.snapTo(data.get("x").getAsDouble(), data.get("y").getAsDouble(), data.get("z").getAsDouble());
+            }
+            entity.setId(id);
+            entity.setUUID(UUID.fromString(data.get("uuid").getAsString()));
+            entity.setLevelCallback(new Callback(id));
+            MOD.put(id, entity);
+            entity.onAddedToLevel();
+        } catch (Exception error) {
+            LOGGER.error("Cannot rebuild saved mod entity {} #{}; it is removed", data.get("type").getAsString(), id, error);
+            REMOVED.add(id);
+        }
+    }
+
+    /** Ticks between saves of one entity's Java data. */
+    private static final int SAVE_INTERVAL = 100;
+
+    private static String save(Entity entity) {
+        try {
+            var output = net.minecraft.world.level.storage.TagValueOutput.createWithContext(net.minecraft.util.ProblemReporter.DISCARDING, entity.registryAccess());
+            entity.saveWithoutId(output);
+            return PlayerBridge.encode(output.buildResult());
+        } catch (Exception error) {
+            LOGGER.warn("Cannot save mod entity #{}", entity.getId(), error);
+            return null;
+        }
+    }
+
     static JsonObject tick(RustLevel level, JsonObject batch) {
+        var fresh = new HashSet<Integer>();
+        if (batch.has("load")) for (var element : batch.getAsJsonArray("load")) {
+            load(level, element.getAsJsonObject());
+            fresh.add(element.getAsJsonObject().get("id").getAsInt());
+        }
         var alive = ids(batch, "alive");
         var ticking = ids(batch, "ticking");
         var result = new JsonObject();
@@ -156,12 +202,16 @@ final class EntityBridge {
             if (entity.level() != level) continue;
             int id = entity.getId();
             if (!alive.contains(id)) {
+                // Rust adds a spawned entity to its world on a later tick; until Rust listed it once, it is not gone.
+                if (!LISTED.contains(id)) continue;
+                LISTED.remove(id);
                 // Rust dropped it (unloaded chunk): no removal report back.
                 MOD.remove(id);
                 entity.setLevelCallback(EntityInLevelCallback.NULL);
                 entity.setRemoved(Entity.RemovalReason.UNLOADED_TO_CHUNK);
                 continue;
             }
+            LISTED.add(id);
             if (!ticking.contains(id) || entity.isRemoved()) continue;
             try {
                 entity.tick();
@@ -185,6 +235,10 @@ final class EntityBridge {
             state.addProperty("yaw", entity.getYRot());
             state.addProperty("pitch", entity.getXRot());
             state.addProperty("ground", entity.onGround());
+            if (fresh.contains(entity.getId()) || (entity.tickCount + entity.getId()) % SAVE_INTERVAL == 0) {
+                var saved = save(entity);
+                if (saved != null) state.addProperty("nbt", saved);
+            }
             var data = entity.getEntityData();
             if (data.isDirty()) {
                 var dirty = data.packDirty();
@@ -216,6 +270,12 @@ final class EntityBridge {
         return RustLevel.call(request).getAsBoolean();
     }
 
+    static boolean isBridged(Entity entity) { return MOD.get(entity.getId()) == entity; }
+
+    /** Views of Rust mobs by entity id, kept so mods that hold a target see one object across ticks. */
+    private static final Map<Integer, RustProxy> PROXIES = new ConcurrentHashMap<>();
+    private static final int MAX_PROXIES = 4096;
+
     private static Entity resolve(RustLevel level, JsonObject snapshot) {
         int id = snapshot.get("id").getAsInt();
         var bridged = MOD.get(id);
@@ -225,7 +285,18 @@ final class EntityBridge {
             try { return PlayerBridge.view(level, uuid, snapshot); }
             catch (Exception error) { throw new IllegalStateException("Cannot view Rust player " + uuid, error); }
         }
-        try { return RustProxy.create(level, snapshot); }
+        try {
+            var cached = PROXIES.get(id);
+            if (cached != null && cached.level() == level && cached.getUUID().equals(uuid)
+                && BuiltInRegistries.ENTITY_TYPE.getKey(cached.getType()).toString().equals(snapshot.get("type").getAsString())) {
+                cached.apply(snapshot);
+                return cached;
+            }
+            var proxy = RustProxy.create(level, snapshot);
+            if (PROXIES.size() >= MAX_PROXIES) PROXIES.clear();
+            PROXIES.put(id, proxy);
+            return proxy;
+        }
         catch (ReflectiveOperationException error) { throw new IllegalStateException("Cannot view Rust entity " + id, error); }
     }
 

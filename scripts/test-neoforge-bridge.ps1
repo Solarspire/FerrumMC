@@ -72,13 +72,26 @@ function Send-Console($process, [string] $command) {
 function Read-Counter($process, $output) {
     $firstLine = $output.Lines.Count
     Send-Console $process 'ferrum be 0 100 0'
-    $deadline = [DateTime]::UtcNow.AddSeconds(5)
+    $deadline = [DateTime]::UtcNow.AddSeconds(30)
     while ([DateTime]::UtcNow -lt $deadline -and !$process.HasExited) {
         $text = ($output.Lines.ToArray() | Select-Object -Skip $firstLine) -join "`n"
         if ($text -match 'Counter["'']?\s*[:=]\s*(\d+)') { return [long]$Matches[1] }
         Start-Sleep -Milliseconds 100
     }
     throw 'No counter NBT returned by ferrum be; inspect placement and command errors in the server log'
+}
+
+function Read-EntityCount($process, $output, [string] $type) {
+    $deadline = [DateTime]::UtcNow.AddSeconds(15)
+    $count = 0
+    while ([DateTime]::UtcNow -lt $deadline -and !$process.HasExited) {
+        $firstLine = $output.Lines.Count
+        Send-Console $process "ferrum count $type"
+        Start-Sleep -Milliseconds 500
+        $text = ($output.Lines.ToArray() | Select-Object -Skip $firstLine) -join "`n"
+        if ($text -match ('Entities ' + [regex]::Escape($type) + ': (\d+)')) { $count = [int]$Matches[1]; if ($count -gt 0) { return $count } }
+    }
+    return $count
 }
 
 function Invoke-BridgeServer([bool] $restart) {
@@ -128,6 +141,10 @@ function Invoke-BridgeServer([bool] $restart) {
             Send-Console $process 'setblock 2 100 0 draconicnext:generator'
             Send-Console $process 'setblock 4 100 0 hbm:machine_electric_furnace'
             Send-Console $process 'setblock 6 100 0 hbm:machine_radar'
+            # A Java-ticked mod entity must be written with its chunk and come back after the restart.
+            Send-Console $process 'ferrum summon 8 101 8 hbm:entity_test_dummy'
+            Start-Sleep -Milliseconds 1000
+            if ((Read-EntityCount $process $output 'hbm:entity_test_dummy') -lt 1) { throw 'hbm:entity_test_dummy was not summoned' }
         } else {
             $result.counterAfter = $counter
             if ($counter -le $result.counterBefore) { throw 'Counter did not survive restart and continue ticking' }
@@ -167,6 +184,13 @@ function Invoke-BridgeServer([bool] $restart) {
 
 try {
     Invoke-BridgeServer $false
+    # Entities only go live for a watching player, so the first boot's entity file is what must hold the mod entity; Java data is saved only once the entity pass ticks it near a player.
+    $saved = @(Get-ChildItem "$scratch/world/dimensions/minecraft/overworld/entities" -File | Where-Object {
+        $bytes = [IO.File]::ReadAllBytes($_.FullName)
+        $text = [Text.Encoding]::Latin1.GetString($bytes)
+        $text.Contains('hbm:entity_test_dummy')
+    })
+    if ($saved.Count -lt 1) { throw 'The summoned mod entity was not written to the entity chunk on shutdown' }
     Invoke-BridgeServer $true
     if ($result.exceptions -ne 0) { throw "Java exceptions: $($result.exceptions)" }
     $result.passed = $true

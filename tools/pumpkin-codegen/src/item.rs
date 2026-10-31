@@ -330,7 +330,7 @@ impl ToTokens for ItemComponents {
                 quote! {
                     Modifier {
                         r#type: &Attributes::#r#type,
-                        id: #id,
+                        id: Cow::Borrowed(#id),
                         amount: #amount,
                         operation: Operation::#operation,
                         slot: #slot,

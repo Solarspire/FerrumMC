@@ -1,9 +1,10 @@
 use crate::chunk::format::LightContainer;
 use crate::tick::scheduler::ChunkTickScheduler;
 use palette::{BiomePalette, BlockPalette, has_random_ticking_fluid};
-use pumpkin_data::block_properties::{blocks_movement, has_random_ticks, is_air};
+use pumpkin_data::block_properties::{blocks_movement, is_air};
 use pumpkin_data::chunk::ChunkStatus;
 use pumpkin_data::fluid::Fluid;
+use pumpkin_data::runtime::has_random_ticks;
 use pumpkin_data::tag::Block::MINECRAFT_LEAVES;
 use pumpkin_data::{Block, BlockState, BlockStateId};
 use pumpkin_nbt::compound::NbtCompound;

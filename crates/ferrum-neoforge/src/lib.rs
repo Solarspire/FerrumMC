@@ -8,6 +8,7 @@ use serde::Deserialize;
 
 pub mod registry;
 pub mod world;
+pub mod worldgen;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -153,6 +154,7 @@ impl Runtime {
             }
         };
         world::install(&vm, &registries)?;
+        worldgen::install(&vm)?;
         tracing::info!(
             states = registries.states.len(),
             items = registries.items.len(),

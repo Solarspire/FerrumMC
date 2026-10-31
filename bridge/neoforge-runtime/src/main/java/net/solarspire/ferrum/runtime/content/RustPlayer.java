@@ -45,12 +45,15 @@ import net.minecraft.world.phys.Vec3;
  */
 final class RustPlayer extends ServerPlayer {
     private static final sun.misc.Unsafe UNSAFE;
+    private static final java.lang.invoke.MethodHandle PLAYER_TICK;
 
     static {
         try {
             var field = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
             field.setAccessible(true);
             UNSAFE = (sun.misc.Unsafe) field.get(null);
+            PLAYER_TICK = java.lang.invoke.MethodHandles.privateLookupIn(ServerPlayer.class, java.lang.invoke.MethodHandles.lookup())
+                .findSpecial(Player.class, "tick", java.lang.invoke.MethodType.methodType(void.class), ServerPlayer.class);
         } catch (ReflectiveOperationException error) { throw new ExceptionInInitializerError(error); }
     }
 
@@ -58,6 +61,13 @@ final class RustPlayer extends ServerPlayer {
     /** The stacks Java held after the last step, by slot; see PlayerBridge.sync. */
     ItemStack[] retained;
     private RustConnection rustConnection;
+    boolean joined;
+    /** Whether this view holds Rust's whole inventory, so syncs may send only the slots that changed. */
+    boolean inventoryBaseline;
+    /** Copies of the stacks Rust holds as of the last sync; a view stack that differs changed outside a sync. */
+    ItemStack[] synced;
+    boolean wasDead;
+    JsonObject pendingImpulse;
 
     private RustPlayer() { super(null, null, null, null); }
 
@@ -104,23 +114,42 @@ final class RustPlayer extends ServerPlayer {
         var player = (RustPlayer) UNSAFE.allocateInstance(RustPlayer.class);
         initEntity(player, net.minecraft.world.entity.EntityTypes.PLAYER, uuid, entityId, level);
         set(player, net.minecraft.world.entity.LivingEntity.class, "attributes", new AttributeMap(DefaultAttributes.getSupplier(net.minecraft.world.entity.EntityTypes.PLAYER)));
+        set(player, net.minecraft.world.entity.LivingEntity.class, "combatTracker", new net.minecraft.world.damagesource.CombatTracker(player));
+        set(player, net.minecraft.world.entity.LivingEntity.class, "walkAnimation", new net.minecraft.world.entity.WalkAnimationState());
+        set(player, net.minecraft.world.entity.LivingEntity.class, "elytraAnimationState", new net.minecraft.world.entity.ElytraAnimationState(player));
+        set(player, net.minecraft.world.entity.Entity.class, "fluidInteraction", new net.minecraft.world.entity.EntityFluidInteraction(java.util.Set.of()));
+        // Mod hooks on collectEquipmentChanges read this map for every slot, as vanilla's constructor guarantees.
+        var lastEquipment = new EnumMap<EquipmentSlot, ItemStack>(EquipmentSlot.class);
+        for (var slot : EquipmentSlot.values()) lastEquipment.put(slot, ItemStack.EMPTY);
+        set(player, net.minecraft.world.entity.LivingEntity.class, "lastEquipmentItems", lastEquipment);
         var equipment = new net.minecraft.world.entity.player.PlayerEquipment(player);
         set(player, net.minecraft.world.entity.LivingEntity.class, "equipment", equipment);
         var inventory = new Inventory(player, equipment);
         set(player, Player.class, "inventory", inventory);
         set(player, Player.class, "abilities", new Abilities());
         set(player, Player.class, "foodData", new FoodData());
-        set(player, Player.class, "cooldowns", new ItemCooldowns());
+        // The server variant tells the client about cooldowns the mod's item sets.
+        set(player, Player.class, "cooldowns", new net.minecraft.world.item.ServerItemCooldowns(player));
         set(player, Player.class, "enderChestInventory", new PlayerEnderChestContainer());
         set(player, Player.class, "gameProfile", new GameProfile(uuid, name));
         set(player, Player.class, "inventoryMenu", new InventoryMenu(inventory, true, player));
         player.containerMenu = player.inventoryMenu;
         var mode = (ServerPlayerGameMode) UNSAFE.allocateInstance(ServerPlayerGameMode.class);
         set(mode, ServerPlayerGameMode.class, "player", player);
+        set(mode, ServerPlayerGameMode.class, "level", level);
         set(player, ServerPlayer.class, "gameMode", mode);
         set(player, ServerPlayer.class, "server", RustLevel.standInServer());
         player.retained = new ItemStack[41];
+        initMixinFields(player);
+        // Mods read statistics (HBM boss spawning); Rust owns them, so the Java counter stays empty.
+        var stats = (net.minecraft.stats.ServerStatsCounter) UNSAFE.allocateInstance(net.minecraft.stats.ServerStatsCounter.class);
+        set(stats, net.minecraft.stats.StatsCounter.class, "stats", new it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap<net.minecraft.stats.Stat<?>>());
+        set(stats, net.minecraft.stats.ServerStatsCounter.class, "dirty", new java.util.HashSet<net.minecraft.stats.Stat<?>>());
+        set(player, ServerPlayer.class, "stats", stats);
         set(player, ServerPlayer.class, "chunkTrackingView", net.minecraft.server.level.ChunkTrackingView.EMPTY);
+        set(player, ServerPlayer.class, "advancements", RustAdvancements.create(player));
+        // ServerPlayer's constructor starts it at zero; sweep and crit checks read it.
+        set(player, ServerPlayer.class, "lastKnownClientMovement", Vec3.ZERO);
         // The menu sync machinery is made by ServerPlayer's constructor; its packets go out through the connection.
         var synchronizer = Class.forName("net.minecraft.server.level.ServerPlayer$1").getDeclaredConstructor(ServerPlayer.class);
         synchronizer.setAccessible(true);
@@ -136,6 +165,89 @@ final class RustPlayer extends ServerPlayer {
     }
 
     RustConnection connection() { return rustConnection; }
+
+    /** The player's NeoForge attachments as the player file stores them; Rust saves the player. */
+    net.minecraft.nbt.CompoundTag saveAttachments() {
+        var output = net.minecraft.world.level.storage.TagValueOutput.createWithContext(net.minecraft.util.ProblemReporter.DISCARDING, registryAccess());
+        serializeAttachments(output);
+        return output.buildResult();
+    }
+
+    void loadAttachments(net.minecraft.nbt.CompoundTag saved) {
+        deserializeAttachments(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, registryAccess(), saved));
+    }
+
+    /** Rust owns advancements: criteria triggers find no listeners here and awards do nothing. */
+    private static final class RustAdvancements extends net.minecraft.server.PlayerAdvancements {
+        private RustAdvancements() { super(null, null, null, null, null); }
+        static RustAdvancements create(ServerPlayer player) throws Exception {
+            var advancements = (RustAdvancements) UNSAFE.allocateInstance(RustAdvancements.class);
+            var owner = net.minecraft.server.PlayerAdvancements.class;
+            set(advancements, owner, "progress", new java.util.HashMap<>());
+            set(advancements, owner, "visible", new java.util.HashSet<>());
+            set(advancements, owner, "progressChanged", new java.util.HashSet<>());
+            set(advancements, owner, "rootsToUpdate", new java.util.HashSet<>());
+            set(advancements, owner, "activeTriggers", new java.util.HashMap<>());
+            set(advancements, owner, "tree", new net.minecraft.advancements.AdvancementTree());
+            set(advancements, owner, "player", player);
+            return advancements;
+        }
+        @Override public boolean award(net.minecraft.advancements.AdvancementHolder advancement, String criterion) { return false; }
+        @Override public boolean revoke(net.minecraft.advancements.AdvancementHolder advancement, String criterion) { return false; }
+        @Override public void flushDirty(ServerPlayer player, boolean showAdvancements) { }
+        @Override public void save() { }
+        @Override public void setSelectedTab(net.minecraft.advancements.AdvancementHolder advancement) { }
+    }
+
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(RustPlayer.class);
+    private static final java.util.Set<String> TICK_FAILURES = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private static final EquipmentSlot[] SLOT_EQUIPMENT = {
+        EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD, EquipmentSlot.OFFHAND };
+
+    /**
+     * Run the transformed Player/LivingEntity tick, bypassing ServerPlayer's network, food and advancement loop.
+     * Items tick first and on their own so a failing mixin hook cannot stop gun or armor timers.
+     */
+    void tickMods() {
+        // Right after login Rust may not have loaded the player's chunk yet; mod hooks read the blocks around them.
+        if (!level().hasChunkAt(blockPosition())) return;
+        tickCount++;
+        tickInventory();
+        try { PLAYER_TICK.invokeExact((ServerPlayer) this); }
+        catch (Throwable error) { tickFailed("player tick", error); }
+    }
+
+    /** Logs the first failure of each kind with its stack and later ones as a count, so a broken hook cannot flood the log. */
+    private void tickFailed(String stage, Throwable error) {
+        if (error instanceof VirtualMachineError fatal) throw fatal;
+        var key = stage + ":" + error;
+        if (TICK_FAILURES.add(key)) LOGGER.error("Mod {} failed for {}", stage, getGameProfile().name(), error);
+        else LOGGER.debug("Mod {} failed again for {}: {}", stage, getGameProfile().name(), error.toString());
+    }
+
+    private void tickInventory() {
+        var inventory = getInventory();
+        for (int slot = 0; slot <= 40; slot++) {
+            var stack = inventory.getItem(slot);
+            if (stack.isEmpty()) continue;
+            EquipmentSlot equipment = slot < 36 ? (slot == inventory.getSelectedSlot() ? EquipmentSlot.MAINHAND : null) : SLOT_EQUIPMENT[slot - 36];
+            try { stack.inventoryTick(level(), this, equipment); }
+            catch (Throwable error) { tickFailed("inventory tick in slot " + slot, error); }
+        }
+    }
+
+    void refreshEquipment() throws ReflectiveOperationException {
+        var method = net.minecraft.world.entity.LivingEntity.class.getDeclaredMethod("detectEquipmentUpdates");
+        method.setAccessible(true);
+        method.invoke(this);
+    }
+
+    // Rust owns movement, effects and survival simulation. LivingEntity.tick still runs mixins and equipment hooks;
+    // items were ticked by tickInventory.
+    @Override public void baseTick() { }
+    @Override public void aiStep() { }
+    @Override protected boolean updateIsUnderwater() { return false; }
+    @Override protected void updatePlayerPose() { }
 
     static Object allocate(Class<?> type) throws InstantiationException { return UNSAFE.allocateInstance(type); }
 
@@ -157,6 +269,22 @@ final class RustPlayer extends ServerPlayer {
         setXRot(state.get("pitch").getAsFloat());
         setYHeadRot(state.get("yaw").getAsFloat());
         rustGameType = GameType.byId(state.get("gamemode").getAsInt());
+        if (state.has("health")) setHealth(state.get("health").getAsFloat());
+        if (state.has("fallDistance")) fallDistance = state.get("fallDistance").getAsFloat();
+        if (state.has("ground")) setOnGround(state.get("ground").getAsBoolean());
+        if (state.has("vx")) {
+            try {
+                var motion = new Vec3(state.get("vx").getAsDouble(),state.get("vy").getAsDouble(),state.get("vz").getAsDouble());
+                set(this,net.minecraft.world.entity.Entity.class,"deltaMovement",motion);
+                // The client reports its own movement; Rust's velocity is the closest Java sees.
+                setKnownMovement(motion);
+            }
+            catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+        }
+        if (state.has("attackTicks")) {
+            try { set(this,net.minecraft.world.entity.LivingEntity.class,"attackStrengthTicker",state.get("attackTicks").getAsInt()); }
+            catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+        }
         if (state.has("sneaking")) setShiftKeyDown(state.get("sneaking").getAsBoolean());
         try {
             set(gameMode, ServerPlayerGameMode.class, "gameModeForPlayer", rustGameType);
@@ -169,6 +297,14 @@ final class RustPlayer extends ServerPlayer {
     @Override public boolean isSpectator() { return rustGameType == GameType.SPECTATOR; }
     // Rust owns statistics; the Java view has no counters.
     @Override public void awardStat(net.minecraft.stats.Stat<?> stat, int count) { }
+    @Override public void causeFoodExhaustion(float amount) { }
+    @Override public void setIgnoreFallDamageFromCurrentImpulse(boolean ignore, Vec3 position) {
+        super.setIgnoreFallDamageFromCurrentImpulse(ignore,position);
+        pendingImpulse = new JsonObject();
+        pendingImpulse.addProperty("ignore",ignore);
+        pendingImpulse.addProperty("y",position.y);
+        pendingImpulse.addProperty("grace",40);
+    }
     @Override public boolean hurtServer(net.minecraft.server.level.ServerLevel level, net.minecraft.world.damagesource.DamageSource source, float amount) { return EntityBridge.damage(this, source, amount); }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -183,7 +319,28 @@ final class RustPlayer extends ServerPlayer {
         long offset = UNSAFE.objectFieldOffset(field);
         if (field.getType() == float.class) UNSAFE.putFloat(target, offset, ((Number) value).floatValue());
         else if (field.getType() == int.class) UNSAFE.putInt(target, offset, ((Number) value).intValue());
+        else if (field.getType() == boolean.class) UNSAFE.putBoolean(target, offset, (Boolean) value);
+        else if (field.getType() == long.class) UNSAFE.putLong(target, offset, ((Number) value).longValue());
+        else if (field.getType() == double.class) UNSAFE.putDouble(target, offset, ((Number) value).doubleValue());
         else UNSAFE.putObject(target, offset, value);
+    }
+
+    /**
+     * Field initializers that mods mixed into LivingEntity's constructor (HBM armor mods and knockback scale);
+     * allocation skips them and the hooks read the fields as non-null.
+     */
+    static void initMixinFields(Object entity) throws ReflectiveOperationException {
+        for (Class<?> type = entity.getClass(); type != Object.class; type = type.getSuperclass()) {
+            for (var field : type.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers()) || !field.getName().startsWith("hbm$")) continue;
+                long offset = UNSAFE.objectFieldOffset(field);
+                if (field.getType().getName().equals("com.hbm.items.armor.ArmorMods")) {
+                    UNSAFE.putObject(entity, offset, field.getType().getField("EMPTY").get(null));
+                } else if (field.getName().equals("hbm$knockbackMultiplier")) {
+                    UNSAFE.putDouble(entity, offset, Double.NaN);
+                }
+            }
+        }
     }
 
     /** Stands in for the constructors that did not run: empty collections and items, nothing else. */

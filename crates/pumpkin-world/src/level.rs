@@ -20,7 +20,7 @@ use dashmap::{DashMap, Entry};
 use pumpkin_config::{chunk::ChunkConfig, lighting::LightingEngineConfig, world::LevelConfig};
 use pumpkin_data::biome::Biome;
 use pumpkin_data::dimension::Dimension;
-use pumpkin_data::{Block, BlockStateId, block_properties::has_random_ticks, fluid::Fluid};
+use pumpkin_data::{Block, BlockStateId, fluid::Fluid, runtime::has_random_ticks};
 use pumpkin_util::math::{position::BlockPos, vector2::Vector2};
 use pumpkin_util::world_seed::Seed;
 use rustc_hash::FxHashSet;

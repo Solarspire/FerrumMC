@@ -169,6 +169,8 @@ impl Server {
         vanilla_data: VanillaData,
         plugin_loaders: Vec<Arc<dyn PluginLoader>>,
     ) -> Result<Arc<Self>, WorldInfoError> {
+        crate::neoforge_worldgen::install()
+            .map_err(|error| WorldInfoError::IoError(std::io::Error::other(error)))?;
         let permission_manager = Arc::new(PermissionManager::new());
         // First register the default commands. After that, plugins can put in their own.
         let command_dispatcher = ArcSwap::from_pointee(default_dispatcher(
@@ -1182,16 +1184,19 @@ impl Server {
             world.flush_synced_block_events();
 
             let players = world.players.load();
-            let perf_t0 = std::time::Instant::now(); // FERRUMPERF
-            players.par_iter().for_each(|player| {
-                player.tick(self);
-            });
-            if perf_t0.elapsed().as_millis() > 10 { tracing::info!("FERRUMPERF players_tick ms={}", perf_t0.elapsed().as_millis()); } // FERRUMPERF
+            if ferrum_neoforge::world::enabled() {
+                for player in players.iter() {
+                    player.tick(self);
+                }
+            } else {
+                players.par_iter().for_each(|player| player.tick(self));
+            }
         }
     }
 
     /// Ticks the game logic for all worlds. This is the part that is affected by `/tick freeze`.
     pub fn tick_worlds(self: &Arc<Self>) {
+        crate::neoforge::server_tick_start(self);
         let source = crate::command::CommandSender::Console
             .into_source(self)
             .with_silent();
@@ -1208,13 +1213,14 @@ impl Server {
         self.sync_game_time();
 
         let worlds = self.worlds.load();
-        let perf_t0 = std::time::Instant::now(); // FERRUMPERF
-        worlds.par_iter().for_each(|world| {
-            world.tick(self);
-        });
-        let perf_t1 = perf_t0.elapsed(); // FERRUMPERF
+        if ferrum_neoforge::world::enabled() {
+            for world in worlds.iter() {
+                world.tick(self);
+            }
+        } else {
+            worlds.par_iter().for_each(|world| world.tick(self));
+        }
         crate::neoforge::server_tick_end(self);
-        if perf_t0.elapsed().as_millis() > 20 { tracing::info!("FERRUMPERF worlds_tick ms={} tick_end_ms={}", perf_t1.as_millis(), (perf_t0.elapsed()-perf_t1).as_millis()); } // FERRUMPERF
 
         // Global tasks
         self.player_data_storage.tick(self);

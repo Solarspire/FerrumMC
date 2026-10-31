@@ -439,6 +439,25 @@ impl GenerationCache for Cache {
         }
     }
 
+    fn get_noise_biome_id(&self, x: i32, y: i32, z: i32) -> u8 {
+        let dx = (x >> 2) - self.x;
+        let dz = (z >> 2) - self.z;
+        if !(0..self.size).contains(&dx) || !(0..self.size).contains(&dz) {
+            return self.get_center_chunk().get_biome_id(x, y, z);
+        }
+        match &self.chunks[(dx * self.size + dz) as usize] {
+            Chunk::Proto(chunk) => chunk.get_biome_id(x, y, z),
+            Chunk::Level(chunk) => chunk
+                .section
+                .get_rough_biome_absolute_y(
+                    ((x << 2) & 15) as usize,
+                    y << 2,
+                    ((z << 2) & 15) as usize,
+                )
+                .unwrap_or(Biome::PLAINS.id),
+        }
+    }
+
     fn get_biome_for_terrain_gen(&self, x: i32, y: i32, z: i32) -> &'static Biome {
         let biome_pos = self.get_center_chunk().get_terrain_gen_biome_pos(x, y, z);
         let dx = (biome_pos.x >> 2) - self.x;

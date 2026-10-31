@@ -70,9 +70,13 @@ impl EnchantmentEntityEffectExt for EnchantmentEntityEffect {
                     position,
                 );
             }
-            Self::PlaySound { sound } => {
+            Self::PlaySound {
+                sounds,
+                volume,
+                pitch,
+            } => {
                 EnchantmentEntityEffectExt::apply(
-                    &PlaySound::new(sound),
+                    &PlaySound::new(sounds, volume.clone(), pitch.clone()),
                     world,
                     enchantment_level,
                     owner,
@@ -239,26 +243,33 @@ impl EnchantmentEntityEffectExt for EnchantmentEntityEffect {
                 );
             }
             Self::Explode {
+                attribute_to_user,
+                damage_type,
+                knockback_multiplier,
+                immune_blocks,
                 offset_x,
                 offset_y,
                 offset_z,
                 radius,
                 create_fire,
-                ..
+                block_interaction,
+                small_particle,
+                large_particle,
+                sound,
             } => {
                 EnchantmentEntityEffectExt::apply(
                     &ExplodeEffect::new(
-                        false,
-                        None,
-                        None,
-                        None,
+                        *attribute_to_user,
+                        *damage_type,
+                        knockback_multiplier.clone(),
+                        *immune_blocks,
                         Vector3::new(*offset_x, *offset_y, *offset_z),
                         radius.clone(),
                         *create_fire,
-                        crate::world::ExplosionInteraction::None,
-                        None,
-                        None,
-                        None,
+                        ExplodeEffect::parse_interaction(block_interaction),
+                        *small_particle,
+                        *large_particle,
+                        *sound,
                     ),
                     world,
                     enchantment_level,

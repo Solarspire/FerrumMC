@@ -1450,6 +1450,10 @@ impl BlockRegistry {
         source_block: &Block,
         notify: bool,
     ) {
+        if pumpkin_data::runtime::block(block.id).is_some() {
+            crate::neoforge::neighbor_changed(world, *position, source_block);
+            return;
+        }
         let pumpkin_block = self.get_pumpkin_block(block.id);
         if let Some(pumpkin_block) = pumpkin_block {
             pumpkin_block.on_neighbor_update(OnNeighborUpdateArgs {

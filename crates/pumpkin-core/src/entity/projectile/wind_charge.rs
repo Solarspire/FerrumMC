@@ -18,11 +18,26 @@ use crate::{
         projectile_deflection::ProjectileDeflectionType,
     },
     server::Server,
-    world::SimpleExplosionDamageCalculator,
+    world::{
+        Explosion, ExplosionInteraction, SimpleExplosionDamageCalculator,
+        explosion::{ExplosionEffects, ExplosionSource},
+    },
 };
 
 const DEFAULT_DEFLECT_COOLDOWN: u8 = 5;
 pub const WIND_CHARGE_GRAVITY: f64 = 0.0;
+/// `AbstractWindCharge.getInertia` and `getLiquidInertia`.
+const WIND_CHARGE_INERTIA: f64 = 1.0;
+/// `WindCharge.RADIUS`.
+const WIND_CHARGE_RADIUS: f32 = 1.2;
+/// `BreezeWindCharge.RADIUS`.
+const BREEZE_WIND_CHARGE_RADIUS: f32 = 3.0;
+/// A block hit explodes this far off the hit face (`AbstractWindCharge.onHitBlock`).
+const BLOCK_HIT_OFFSET: f64 = 0.25;
+/// Charges this far above the build limit burst on their own (`AbstractWindCharge.tick`).
+const MAX_HEIGHT_ABOVE_WORLD: i32 = 30;
+/// Damage of a direct hit (`AbstractWindCharge.onHitEntity`).
+const DIRECT_HIT_DAMAGE: f32 = 1.0;
 
 enum WindChargeKind {
     Normal { deflect_cooldown: AtomicU8 },
@@ -85,17 +100,36 @@ impl WindChargeEntity {
         }
     }
 
+    /// `WindCharge.explode` / `BreezeWindCharge.explode`.
     pub fn create_explosion(&self, position: Vector3<f64>) {
-        let (power, calculator) = match self.kind {
-            WindChargeKind::Normal { .. } => (1.2, WIND_CHARGE_EXPLOSION_DAMAGE_CALCULATOR.clone()),
-            WindChargeKind::Breeze => (3.0, BREEZE_WIND_CHARGE_EXPLOSION_DAMAGE_CALCULATOR.clone()),
-        };
-        self.get_entity().world.load().explode_with_calculator(
+        let entity = self.get_entity();
+        let (radius, calculator, effects): (_, Arc<SimpleExplosionDamageCalculator>, _) =
+            match self.kind {
+                WindChargeKind::Normal { .. } => (
+                    WIND_CHARGE_RADIUS,
+                    WIND_CHARGE_EXPLOSION_DAMAGE_CALCULATOR.clone(),
+                    ExplosionEffects::WIND_CHARGE,
+                ),
+                WindChargeKind::Breeze => (
+                    BREEZE_WIND_CHARGE_RADIUS,
+                    BREEZE_WIND_CHARGE_EXPLOSION_DAMAGE_CALCULATOR.clone(),
+                    ExplosionEffects::BREEZE_WIND_CHARGE,
+                ),
+            };
+        let world = entity.world.load_full();
+        Explosion::new(
+            radius,
             position,
-            power,
-            crate::world::ExplosionInteraction::Trigger,
-            Some(calculator),
-        );
+            world.get_block_interaction(ExplosionInteraction::Trigger),
+        )
+        .with_damage_calculator(calculator)
+        .with_source(ExplosionSource {
+            entity_id: Some(entity.entity_id),
+            entity_type: Some(entity.entity_type),
+            damage_type: DamageType::EXPLOSION,
+            cause_id: self.thrown_item_entity.owner_id,
+        })
+        .explode_with_effects(&world, effects);
     }
 
     pub fn deflect(
@@ -120,7 +154,17 @@ impl EntityBase for WindChargeEntity {
     }
 
     fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        self.thrown_item_entity.process_tick(caller);
+        let entity = self.get_entity();
+        if entity.block_pos.load().0.y > entity.world.load().get_top_y() + MAX_HEIGHT_ABOVE_WORLD {
+            self.create_explosion(entity.pos.load());
+            entity.remove();
+            return;
+        }
+        self.thrown_item_entity.process_tick_with_inertia(
+            caller,
+            WIND_CHARGE_INERTIA,
+            WIND_CHARGE_INERTIA,
+        );
 
         if let Some(cooldown) = self.deflect_cooldown() {
             let cooldown_ticks = cooldown.load(Ordering::Relaxed);
@@ -143,21 +187,42 @@ impl EntityBase for WindChargeEntity {
     }
 
     fn on_hit(&self, hit: ProjectileHit) {
-        let hit_pos = hit.hit_pos();
-        if let ProjectileHit::Entity { ref entity, .. } = hit {
-            let world = self.get_entity().world.load();
-            let owner_id = self.thrown_item_entity.owner_id;
-            let owner = owner_id.and_then(|id| world.get_entity_by_id(id));
-
-            let _ = entity.damage_with_context(
-                entity.as_ref(),
-                1.0,
-                DamageType::WIND_CHARGE,
-                Some(hit_pos),
-                Some(self.get_entity()),
-                owner.as_deref(),
-            );
+        match hit {
+            ProjectileHit::Entity { entity, .. } => {
+                let world = self.get_entity().world.load();
+                let owner = self.thrown_item_entity.owner_id.and_then(|id| {
+                    world.get_player_by_id(id).map_or_else(
+                        || world.get_entity_by_id(id),
+                        |player| Some(player as Arc<dyn EntityBase>),
+                    )
+                });
+                let hurt = entity.damage_with_context(
+                    entity.as_ref(),
+                    DIRECT_HIT_DAMAGE,
+                    DamageType::WIND_CHARGE,
+                    None,
+                    Some(self),
+                    owner.as_deref(),
+                );
+                // `EnchantmentHelper.doPostAttackEffects` runs the owner's weapon effects.
+                if hurt
+                    && entity.get_living_entity().is_some()
+                    && let Some(owner) = owner.as_ref()
+                    && let Some(owner_living) = owner.get_living_entity()
+                {
+                    crate::enchantment::EnchantmentHelper::on_post_attack(
+                        owner.get_entity(),
+                        entity.get_entity(),
+                        &owner_living.held_item(owner.as_ref()),
+                    );
+                }
+                // Vanilla bursts at the charge itself, not at the hit point.
+                self.create_explosion(self.get_entity().pos.load());
+            }
+            ProjectileHit::Block { face, hit_pos, .. } => {
+                let normal = face.to_offset().to_f64();
+                self.create_explosion(hit_pos + normal * BLOCK_HIT_OFFSET);
+            }
         }
-        self.create_explosion(hit_pos);
     }
 }

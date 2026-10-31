@@ -4,6 +4,7 @@ use crate::entity::player::Player;
 use crate::server::Server;
 use pumpkin_data::Block;
 use pumpkin_data::BlockDirection;
+use pumpkin_data::data_component_impl::{KineticWeaponImpl, PiercingWeaponImpl};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_util::Hand;
@@ -55,13 +56,13 @@ impl ItemRegistry {
             return;
         }
 
-        let pumpkin_item = self.get_pumpkin_item(item.id);
+        let pumpkin_item = self.get_stack_behaviour(stack);
         if let Some(pumpkin_item) = pumpkin_item {
             pumpkin_item.normal_use_with_hand(item, player, yaw, pitch, hand);
         }
 
         if let Some(cooldown) = cooldown
-            && self.get_use_duration(item.id).is_none()
+            && pumpkin_item.is_none_or(|b| b.get_use_duration() <= 0)
         {
             player.start_cooldown(cooldown_group, (cooldown.seconds * 20.0) as i32);
         }
@@ -74,15 +75,28 @@ impl ItemRegistry {
     }
 
     pub fn on_spear_jab(&self, stack: &ItemStack, player: &Player) {
-        if let Some(behaviour) = self.get_pumpkin_item(stack.item.id) {
+        if let Some(behaviour) = self.get_stack_behaviour(stack) {
             behaviour.on_spear_jab(stack, player);
         }
     }
 
     pub fn on_use_tick(&self, stack: &ItemStack, player: &Player, remaining_use_ticks: i32) {
-        if let Some(behaviour) = self.get_pumpkin_item(stack.item.id) {
+        if let Some(behaviour) = self.get_stack_behaviour(stack) {
             behaviour.on_use_tick(stack, player, remaining_use_ticks);
         }
+    }
+
+    /// The registered behaviour for the stack's item. Items without one that carry the vanilla
+    /// `kinetic_weapon` or `piercing_weapon` component (mod spears) use the spear behaviour,
+    /// since vanilla drives those mechanics from the components alone.
+    fn get_stack_behaviour(&self, stack: &ItemStack) -> Option<&dyn ItemBehaviour> {
+        self.get_pumpkin_item(stack.item.id)
+            .map(AsRef::as_ref)
+            .or_else(|| {
+                (stack.get_data_component::<KineticWeaponImpl>().is_some()
+                    || stack.get_data_component::<PiercingWeaponImpl>().is_some())
+                .then_some(&super::items::spear::SpearItem as &dyn ItemBehaviour)
+            })
     }
 
     /// Returns the item's use duration in ticks, as defined by its registered behaviour.

@@ -138,6 +138,17 @@ impl ThrownItemEntity {
 impl ThrownItemEntity {
     /// Process a tick for projectile movement and collisions
     pub fn process_tick(&self, caller: &dyn EntityBase) {
+        self.process_tick_with_inertia(caller, 0.99, 0.8);
+    }
+
+    /// [`Self::process_tick`] with the projectile's air and liquid inertia
+    /// (vanilla `getInertia` / `getLiquidInertia`).
+    pub fn process_tick_with_inertia(
+        &self,
+        caller: &dyn EntityBase,
+        air_inertia: f64,
+        liquid_inertia: f64,
+    ) {
         let entity = self.get_entity();
         let world = entity.world.load();
 
@@ -148,9 +159,9 @@ impl ThrownItemEntity {
         velocity.y -= self.get_gravity();
 
         let inertia = if entity.touching_water.load(Ordering::Relaxed) {
-            0.8
+            liquid_inertia
         } else {
-            0.99
+            air_inertia
         };
         velocity = velocity.multiply(inertia, inertia, inertia);
 

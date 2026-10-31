@@ -94,6 +94,15 @@ public final class BridgeRuntime extends Entrypoint {
     }
 
     public static native String world(String request);
+    // Hot world operations without JSON; `world` is the handle Rust names the level by. See ferrum-neoforge world.rs.
+    public static native int getState(int world, int x, int y, int z);
+    public static native boolean setState(int world, int x, int y, int z, int state, int flags);
+    public static native boolean isLoaded(int world, int chunkX, int chunkZ);
+    public static native int getHeight(int world, int heightmap, int x, int z);
+    public static native int biome(int world, int x, int y, int z);
+    public static native int random();
+
+    public static ClassLoader gameClassLoader() { return content.getClassLoader(); }
 
     /** Runs one NeoForge configuration step for a Rust-owned connection on the compatibility thread. */
     public static String configuration(String request) throws Exception {

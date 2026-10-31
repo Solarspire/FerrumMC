@@ -93,6 +93,12 @@ pub trait GenerationCache: HeightLimitView + BlockAccessor {
     }
     fn is_air(&self, local_pos: &Vector3<i32>) -> bool;
     fn get_biome_for_terrain_gen(&self, x: i32, y: i32, z: i32) -> &'static Biome;
+    fn get_noise_biome_id(&self, x: i32, y: i32, z: i32) -> u8 {
+        self.get_chunk(x >> 2, z >> 2).map_or_else(
+            || self.get_biome_for_terrain_gen(x << 2, y << 2, z << 2).id,
+            |chunk| chunk.get_biome_id(x, y, z),
+        )
+    }
     fn get_blending_data(
         &self,
         chunk_x: i32,
@@ -138,6 +144,7 @@ impl FluidLevelSamplerImpl for StandardChunkFluidLevelSampler {
 pub struct ProtoChunk {
     pub x: i32,
     pub z: i32,
+    pub generation_dimension: &'static str,
     pub default_block: &'static BlockState,
     biome_mixer_seed: i64,
     pub(crate) flat_block_map: Vec<BlockStateId>,
@@ -244,6 +251,7 @@ impl ProtoChunk {
         Self {
             x,
             z,
+            generation_dimension: dimension.minecraft_name,
             default_block,
             biome_mixer_seed,
             flat_block_map: Vec::new(),
@@ -717,6 +725,11 @@ impl ProtoChunk {
             .get(Self::local_pos_to_block_index(x, y, z))
             .copied()
             .unwrap_or(BlockStateId::AIR)
+    }
+
+    #[must_use]
+    pub fn generation_block_states(&self) -> &[BlockStateId] {
+        &self.flat_block_map
     }
 
     #[inline]
@@ -1387,6 +1400,7 @@ impl ProtoChunk {
                     );
                 }
             }
+            super::modded::decorate(cache, random_config.seed, step);
         }
 
         cache.get_center_chunk_mut().stage = StagedChunkEnum::Features;

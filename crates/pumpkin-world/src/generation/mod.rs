@@ -10,6 +10,7 @@ mod feature_order;
 pub mod generator;
 pub mod height_limit;
 pub mod height_provider;
+pub mod modded;
 pub mod noise;
 pub mod positions;
 pub mod proto_chunk;

@@ -143,13 +143,8 @@ macro_rules! impl_cooking_block_entity_base {
                     return !is_top_items_empty;
                 }
 
-                if let Some(recipe_output_item) = pumpkin_data::item::Item::from_registry_key(
-                    recipe
-                        .result
-                        .id
-                        .strip_prefix("minecraft:")
-                        .unwrap_or(&recipe.result.id),
-                ) && !is_top_items_empty
+                if let Some(recipe_output_item) = $crate::neoforge::recipe_item(recipe.result.id)
+                    && !is_top_items_empty
                     && recipe_output_item.id == side_item_stack.item.id
                     && side_item_stack.item_count < max_count
                     && side_item_stack.item_count < side_item_stack.get_max_stack_size()
@@ -166,13 +161,8 @@ macro_rules! impl_cooking_block_entity_base {
                         let Ok(mut items) = self.items.try_write() else {
                             return false;
                         };
-                        let Some(output_item) = pumpkin_data::item::Item::from_registry_key(
-                            recipe
-                                .result
-                                .id
-                                .strip_prefix("minecraft:")
-                                .unwrap_or(&recipe.result.id),
-                        ) else {
+                        let Some(output_item) = $crate::neoforge::recipe_item(recipe.result.id)
+                        else {
                             return false;
                         };
                         let output_item_stack = ItemStack::new(recipe.result.count, output_item);
@@ -325,10 +315,9 @@ macro_rules! impl_inventory_for_cooking {
                 items[slot] = stack.clone();
 
                 if slot == 0 && !is_same_item {
-                    if let Some(recipe) = pumpkin_data::recipes::get_cooking_recipe_with_ingredient(
-                        stack.item,
-                        CookingRecipeKind::Smelting,
-                    ) {
+                    if let Some(recipe) =
+                        $crate::neoforge::cooking_recipe(&stack, CookingRecipeKind::Smelting)
+                    {
                         self.set_cooking_total_time(recipe.cookingtime as u16);
                     } else {
                         self.set_cooking_total_time(0);
@@ -375,10 +364,7 @@ macro_rules! impl_block_entity_for_cooking {
 
                 let is_top_items_empty = top_item.is_empty();
 
-                let furnace_recipe = pumpkin_data::recipes::get_cooking_recipe_with_ingredient(
-                    top_item.item,
-                    $recipe_kind,
-                );
+                let furnace_recipe = $crate::neoforge::cooking_recipe(&top_item, $recipe_kind);
 
                 let can_accept_output = self
                     .can_accept_recipe_output(furnace_recipe, self.get_max_count_per_stack());

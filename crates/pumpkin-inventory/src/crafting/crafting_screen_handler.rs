@@ -38,7 +38,24 @@ use pumpkin_data::tag::Taggable;
 use pumpkin_protocol::codec::recipe::{DynamicRecipe, OwnedCraftingRecipe};
 
 /// The result slot in a crafting screen.
+/// A crafting recipe the engine does not know, such as a mod's: its result and what stays in each grid slot.
+pub struct ExternalCraft {
+    pub result: ItemStack,
+    pub remainders: Vec<ItemStack>,
+}
+
+pub type ExternalCrafting = fn(&dyn RecipeInputInventory) -> Option<ExternalCraft>;
+
+static EXTERNAL_CRAFTING: std::sync::OnceLock<ExternalCrafting> = std::sync::OnceLock::new();
+
+/// Installs the lookup used when no engine recipe matches a crafting grid.
+pub fn set_external_crafting(lookup: ExternalCrafting) {
+    let _ = EXTERNAL_CRAFTING.set(lookup);
+}
+
 pub struct ResultSlot {
+    /// Grid remainders of the external recipe the result came from, by grid slot.
+    remainders: Mutex<Option<Vec<ItemStack>>>,
     /// The crafting inventory (grid) that provides recipe input.
     pub inventory: Arc<dyn RecipeInputInventory>,
     /// Protocol ID for this slot (assigned by screen handler).
@@ -439,6 +456,7 @@ impl ResultSlot {
         provider: Option<Arc<dyn RecipeProvider>>,
     ) -> Self {
         Self {
+            remainders: Mutex::new(None),
             inventory,
             id: AtomicU8::new(0),
             result: Arc::new(Mutex::new(ItemStack::EMPTY.clone())),
@@ -451,10 +469,26 @@ impl ResultSlot {
     }
 
     fn refill_output(&self) -> ItemStack {
+        let mut remainders = None;
         let result = self.match_recipe().map_or_else(
-            || ItemStack::EMPTY.clone(),
+            || {
+                EXTERNAL_CRAFTING
+                    .get()
+                    .and_then(|lookup| lookup(&*self.inventory))
+                    .map_or_else(
+                        || ItemStack::EMPTY.clone(),
+                        |craft| {
+                            remainders = Some(craft.remainders);
+                            craft.result
+                        },
+                    )
+            },
             |matched| matched.to_item_stack(),
         );
+        *self
+            .remainders
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = remainders;
         *self
             .result
             .lock()
@@ -483,8 +517,26 @@ impl Slot for ResultSlot {
             stack.item_count as i32,
         );
         player.on_recipe_crafted(stack);
+        let remainders = self
+            .remainders
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take();
         for i in 0..self.inventory.size() {
             self.inventory.remove_stack_specific(i, 1);
+        }
+        // `ResultSlot.onTake`: a remainder fills its emptied slot, or goes to the player.
+        for (i, remainder) in remainders.into_iter().flatten().enumerate() {
+            if remainder.is_empty() || i >= self.inventory.size() {
+                continue;
+            }
+            if self.inventory.get_stack(i).is_empty() {
+                self.inventory.set_stack(i, remainder);
+            } else {
+                player
+                    .get_inventory()
+                    .offer_or_drop_stack(remainder, player);
+            }
         }
         self.mark_dirty();
     }

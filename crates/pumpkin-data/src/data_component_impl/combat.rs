@@ -28,7 +28,7 @@ pub enum Operation {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Modifier {
     pub r#type: &'static Attributes,
-    pub id: &'static str,
+    pub id: Cow<'static, str>,
     pub amount: f64,
     pub operation: Operation,
     pub slot: crate::AttributeModifierSlot,
@@ -48,14 +48,137 @@ pub struct AttributeModifiersImpl {
     pub attribute_modifiers: Cow<'static, [Modifier]>,
 }
 impl AttributeModifiersImpl {
-    pub const fn read_data(_data: &NbtTag) -> Option<Self> {
+    pub fn read_data(data: &NbtTag) -> Option<Self> {
+        use crate::AttributeModifierSlot;
+        let list = data.extract_list()?;
+        if list.len() > 256 {
+            return None;
+        }
+        let mut modifiers = Vec::with_capacity(list.len());
+        for entry in list {
+            let entry = entry.extract_compound()?;
+            let name = entry.get_string("type")?;
+            // Mod-only attributes remain in Java's opaque component copy.
+            let Some(attribute) = Attributes::ALL
+                .iter()
+                .find(|attribute| attribute.name == name)
+            else {
+                continue;
+            };
+            let operation = match entry.get_string("operation")? {
+                "add_value" => Operation::AddValue,
+                "add_multiplied_base" => Operation::AddMultipliedBase,
+                "add_multiplied_total" => Operation::AddMultipliedTotal,
+                _ => return None,
+            };
+            let slot = match entry.get_string("slot").unwrap_or("any") {
+                "any" => AttributeModifierSlot::Any,
+                "mainhand" => AttributeModifierSlot::MainHand,
+                "offhand" => AttributeModifierSlot::OffHand,
+                "hand" => AttributeModifierSlot::Hand,
+                "feet" => AttributeModifierSlot::Feet,
+                "legs" => AttributeModifierSlot::Legs,
+                "chest" => AttributeModifierSlot::Chest,
+                "head" => AttributeModifierSlot::Head,
+                "armor" => AttributeModifierSlot::Armor,
+                "body" => AttributeModifierSlot::Body,
+                "saddle" => AttributeModifierSlot::Saddle,
+                _ => return None,
+            };
+            let amount = entry.get_double("amount")?;
+            if !amount.is_finite() {
+                return None;
+            }
+            modifiers.push(Modifier {
+                r#type: attribute,
+                id: Cow::Owned(entry.get_string("id")?.to_owned()),
+                amount,
+                operation,
+                slot,
+            });
+        }
         Some(Self {
-            attribute_modifiers: Cow::Borrowed(&[]),
+            attribute_modifiers: Cow::Owned(modifiers),
         })
     }
 }
 impl DataComponentImpl for AttributeModifiersImpl {
+    fn write_data(&self) -> NbtTag {
+        use crate::AttributeModifierSlot;
+        NbtTag::List(
+            self.attribute_modifiers
+                .iter()
+                .map(|modifier| {
+                    let mut entry = NbtCompound::new();
+                    entry.put_string("type", modifier.r#type.name.to_owned());
+                    entry.put_string("id", modifier.id.to_string());
+                    entry.put_double("amount", modifier.amount);
+                    entry.put_string(
+                        "operation",
+                        match modifier.operation {
+                            Operation::AddValue => "add_value",
+                            Operation::AddMultipliedBase => "add_multiplied_base",
+                            Operation::AddMultipliedTotal => "add_multiplied_total",
+                        }
+                        .to_owned(),
+                    );
+                    entry.put_string(
+                        "slot",
+                        match modifier.slot {
+                            AttributeModifierSlot::Any => "any",
+                            AttributeModifierSlot::MainHand => "mainhand",
+                            AttributeModifierSlot::OffHand => "offhand",
+                            AttributeModifierSlot::Hand => "hand",
+                            AttributeModifierSlot::Feet => "feet",
+                            AttributeModifierSlot::Legs => "legs",
+                            AttributeModifierSlot::Chest => "chest",
+                            AttributeModifierSlot::Head => "head",
+                            AttributeModifierSlot::Armor => "armor",
+                            AttributeModifierSlot::Body => "body",
+                            AttributeModifierSlot::Saddle => "saddle",
+                        }
+                        .to_owned(),
+                    );
+                    NbtTag::Compound(entry)
+                })
+                .collect(),
+        )
+    }
     default_impl!(AttributeModifiers);
+}
+
+#[cfg(test)]
+mod attribute_tests {
+    use super::*;
+
+    #[test]
+    fn mod_attribute_modifiers_survive_nbt() {
+        let mut entry = NbtCompound::new();
+        entry.put_string("type", "minecraft:attack_damage".to_owned());
+        entry.put_string("id", "draconicnext:tool_attack_damage".to_owned());
+        entry.put_double("amount", 42.0);
+        entry.put_string("operation", "add_value".to_owned());
+        entry.put_string("slot", "mainhand".to_owned());
+        let known = NbtTag::List(vec![NbtTag::Compound(entry.clone())]);
+        let Some(decoded) = AttributeModifiersImpl::read_data(&known) else {
+            panic!("valid modifier rejected");
+        };
+        assert_eq!(decoded.attribute_modifiers.len(), 1);
+        assert_eq!(
+            decoded.attribute_modifiers[0].r#type,
+            &Attributes::ATTACK_DAMAGE
+        );
+        assert_eq!(decoded.attribute_modifiers[0].amount, 42.0);
+        assert_eq!(decoded.write_data(), known);
+        entry.put_double("amount", f64::NAN);
+        assert!(
+            AttributeModifiersImpl::read_data(&NbtTag::List(vec![NbtTag::Compound(entry)]))
+                .is_none()
+        );
+        assert!(
+            AttributeModifiersImpl::read_data(&NbtTag::List(vec![NbtTag::Int(0); 257])).is_none()
+        );
+    }
 }
 
 #[derive(Clone, Hash, PartialEq, Eq, Default)]

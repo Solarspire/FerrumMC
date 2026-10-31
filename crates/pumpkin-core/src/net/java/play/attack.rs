@@ -29,11 +29,8 @@ impl JavaClient {
             .as_ref()
             .map(|p| Arc::clone(p) as Arc<dyn EntityBase>)
             .or_else(|| world.get_entity_by_id(entity_id.0));
+        // Vanilla ignores attacks on entities that no longer exist.
         let Some(target) = target else {
-            self.try_kick(&TextComponent::translate(
-                translation::java::MULTIPLAYER_DISCONNECT_INVALID_ENTITY_ATTACKED,
-                [],
-            ));
             return;
         };
         if !player.can_interact_with_entity(target.as_ref(), 1.0) {

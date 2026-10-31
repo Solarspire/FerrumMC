@@ -467,40 +467,46 @@ pub fn drop_loot(
     experience: bool,
     params: &LootContextParameters,
 ) {
-    if let Some(loot_table) = block.loot_table.and_then(|key| world.get_loot_table(key)) {
-        let seed: i64 = rand::random();
-        let params = LootContextParameters {
-            world: Some(world),
-            tool: Some(
-                params
-                    .tool
-                    .clone()
-                    .unwrap_or_else(|| ItemStack::EMPTY.clone()),
-            ),
-            ..params.clone()
-        };
-        let items = crate::world::loot::generate_loot_from_handle(&loot_table, seed, &params);
-        if !items.is_empty() {
-            let mut event = crate::plugin::block::block_drop_item::BlockDropItemEvent {
-                block_pos: *pos,
-                world: world.clone(),
-                player: None,
-                items,
-                cancelled: false,
+    let items =
+        crate::neoforge::block_drops(world, block, pos, params.tool.as_ref()).or_else(|| {
+            let loot_table = block.loot_table.and_then(|key| world.get_loot_table(key))?;
+            let seed: i64 = rand::random();
+            let params = LootContextParameters {
+                world: Some(world),
+                tool: Some(
+                    params
+                        .tool
+                        .clone()
+                        .unwrap_or_else(|| ItemStack::EMPTY.clone()),
+                ),
+                ..params.clone()
             };
-            if let Some(server) = world.server.upgrade() {
-                server.plugin_manager.fire_blocking(&server, &mut event);
-            }
-            if !event.cancelled {
-                let block_entity = world.get_block_entity(pos);
-                for mut stack in event.items {
-                    if let Some(block_entity) = &block_entity
-                        && Block::from_item_id(stack.item.id) == Some(block)
-                    {
-                        block_entity.collect_item_components(&mut stack);
-                    }
-                    world.drop_stack(pos, stack);
+            Some(crate::world::loot::generate_loot_from_handle(
+                &loot_table,
+                seed,
+                &params,
+            ))
+        });
+    if let Some(items) = items.filter(|items| !items.is_empty()) {
+        let mut event = crate::plugin::block::block_drop_item::BlockDropItemEvent {
+            block_pos: *pos,
+            world: world.clone(),
+            player: None,
+            items,
+            cancelled: false,
+        };
+        if let Some(server) = world.server.upgrade() {
+            server.plugin_manager.fire_blocking(&server, &mut event);
+        }
+        if !event.cancelled {
+            let block_entity = world.get_block_entity(pos);
+            for mut stack in event.items {
+                if let Some(block_entity) = &block_entity
+                    && Block::from_item_id(stack.item.id) == Some(block)
+                {
+                    block_entity.collect_item_components(&mut stack);
                 }
+                world.drop_stack(pos, stack);
             }
         }
     }
@@ -545,7 +551,7 @@ pub fn calc_block_breaking(player: &Player, state: &BlockState, block: &'static 
         100.0
     };
 
-    player.get_mining_speed(block) / hardness / i
+    player.get_mining_speed(state, block) / hardness / i
 }
 
 #[derive(PartialEq, Eq, Debug)]

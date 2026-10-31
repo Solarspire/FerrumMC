@@ -256,6 +256,9 @@ impl JavaClient {
                     player.drop_held_item(true);
                 }
                 Status::ReleaseItemInUse => {
+                    if crate::neoforge::player_release(player) {
+                        return;
+                    }
                     let item_in_use = player
                         .living_entity
                         .item_in_use
@@ -278,6 +281,7 @@ impl JavaClient {
 
                     let stack = player.inventory().held_item();
                     server.item_registry.on_spear_jab(&stack, player);
+                    crate::neoforge::player_piercing_attack(player);
                 }
                 // The block being mined does not change, so there is nothing to update
                 Status::ChangeDestroyDirection => {}

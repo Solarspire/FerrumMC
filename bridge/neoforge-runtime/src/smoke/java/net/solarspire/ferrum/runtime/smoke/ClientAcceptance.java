@@ -20,9 +20,9 @@ public final class ClientAcceptance {
                 var thread = Thread.currentThread();
                 thread.setContextClassLoader(loader);
                 var probe = Class.forName("net.solarspire.ferrum.runtime.probe.client.ClientProbe", true, loader);
-                String report = (String) probe.getMethod("run", String.class, int.class, String.class, int.class, int.class, int.class, int.class, String.class, String.class)
+                String report = (String) probe.getMethod("run", String.class, int.class, String.class, int.class, int.class, int.class, int.class, String.class, String.class, String.class)
                     .invoke(null, args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]), Integer.parseInt(args[6]),
-                        Integer.parseInt(args[7]), 60000, args.length > 9 ? args[9] : "", args.length > 10 ? args[10] : "");
+                        Integer.parseInt(args[7]), 60000, args.length > 9 ? args[9] : "", args.length > 10 ? args[10] : "", args.length > 11 ? args[11] : "");
                 Files.writeString(Path.of(args[8]), report);
                 System.out.println("CLIENT PROBE PASS " + report);
             }

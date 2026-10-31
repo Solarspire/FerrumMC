@@ -2,6 +2,7 @@ use std::any::Any;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
+use crate::enchantment::EnchantmentHelper;
 use crate::entity::combat;
 use crate::entity::player::Player;
 use crate::entity::{Entity, EntityBase};
@@ -56,9 +57,11 @@ impl ItemBehaviour for SpearItem {
 
         let inventory = player.inventory();
         let stack = inventory.get_stack_in_hand(hand);
-        let sound = stack
-            .get_data_component::<KineticWeaponImpl>()
-            .and_then(|weapon| weapon.sound.clone());
+        // `Item.use` only starts using an item that carries `kinetic_weapon`.
+        let Some(weapon) = stack.get_data_component::<KineticWeaponImpl>() else {
+            return;
+        };
+        let sound = weapon.sound.clone();
         player
             .living_entity
             .set_active_hand(hand, stack, Self::USE_DURATION);
@@ -116,6 +119,7 @@ impl ItemBehaviour for SpearItem {
             );
         }
         player.last_attacked_ticks.store(0, Ordering::Relaxed);
+        EnchantmentHelper::do_post_piercing_attack_effects(player);
 
         let position = player.position();
         if hit_something && let Some(sound) = piercing.hit_sound.as_ref() {

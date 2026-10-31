@@ -365,6 +365,9 @@ fn create_entity(
     nbt: &NbtCompound,
     world: &Arc<World>,
 ) -> Arc<dyn EntityBase> {
+    if pumpkin_data::runtime::entity_type_by_name(entity_type.resource_name).is_some() {
+        return crate::neoforge::load_mod_entity(entity_type, position, nbt, world);
+    }
     let uuid = nbt.get_uuid("UUID").unwrap_or_else(Uuid::new_v4);
     let entity = from_type(entity_type, position, world, uuid);
     entity.read_nbt_non_mut(nbt);
@@ -376,7 +379,8 @@ fn entity_type_from_nbt(nbt: &NbtCompound) -> Option<&'static EntityType> {
         debug!("Entity has no ID");
         return None;
     };
-    let entity_type = EntityType::from_name(id.strip_prefix("minecraft:").unwrap_or(id));
+    let entity_type = EntityType::from_name(id.strip_prefix("minecraft:").unwrap_or(id))
+        .or_else(|| pumpkin_data::runtime::entity_type_by_name(id));
     if entity_type.is_none() {
         warn!("Entity has no valid Entity Type {id}");
     }

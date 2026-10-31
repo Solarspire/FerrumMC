@@ -10,7 +10,7 @@ use rustyline::validate::Validator;
 use rustyline::{Editor, Helper};
 use std::borrow::Cow;
 use std::fs::File;
-use std::io::{self, BufWriter, Write};
+use std::io::{self, BufWriter, Seek, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
 use time::{Duration, OffsetDateTime};
@@ -253,16 +253,14 @@ impl GzipRollingLogger {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
 
+        // Mark the day first so a failed rotation is reported once, not on every later line.
+        data.current_day_of_month = now.day();
+        data.last_rotate_time = now;
+
         let new_gz_path = Self::new_filename(true)?;
         let latest_path = PathBuf::from(LOG_DIR).join(&data.latest_filename);
 
-        // Flush and drop the current file
         data.file.flush()?;
-        drop(std::mem::replace(
-            &mut data.file,
-            BufWriter::new(File::create("/dev/null")?),
-        ));
-
         let mut file = File::open(&latest_path)?;
         let mut encoder = GzEncoder::new(
             BufWriter::new(File::create(&new_gz_path)?),
@@ -271,9 +269,10 @@ impl GzipRollingLogger {
         io::copy(&mut file, &mut encoder)?;
         encoder.finish()?;
 
-        data.current_day_of_month = now.day();
-        data.last_rotate_time = now;
-        data.file = BufWriter::new(File::create(&latest_path)?);
+        // Truncate in place; there is no portable null file to swap in while copying.
+        let latest = data.file.get_mut();
+        latest.set_len(0)?;
+        latest.rewind()?;
         Ok(())
     }
 }

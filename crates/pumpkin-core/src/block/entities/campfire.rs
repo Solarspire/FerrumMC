@@ -5,9 +5,8 @@ use crate::world::World;
 use pumpkin_data::Block;
 use pumpkin_data::block_properties::CampfireLikeProperties;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::recipes::{CookingRecipeKind, get_cooking_recipe_with_ingredient};
+use pumpkin_data::recipes::CookingRecipeKind;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::math::position::BlockPos;
@@ -98,7 +97,7 @@ impl BlockEntity for CampfireBlockEntity {
             }
 
             let Some(recipe) =
-                get_cooking_recipe_with_ingredient(stack.item, CookingRecipeKind::CampfireCooking)
+                crate::neoforge::cooking_recipe(&stack, CookingRecipeKind::CampfireCooking)
             else {
                 continue;
             };
@@ -141,7 +140,7 @@ impl BlockEntity for CampfireBlockEntity {
                 continue;
             }
 
-            let Some(result_item) = Item::from_registry_key(recipe.result.id) else {
+            let Some(result_item) = crate::neoforge::recipe_item(recipe.result.id) else {
                 continue;
             };
 

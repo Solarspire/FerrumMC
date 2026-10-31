@@ -807,3 +807,4 @@ fn adjust_file_descriptor_limit() {
 }
 
 pub mod neoforge;
+mod neoforge_worldgen;

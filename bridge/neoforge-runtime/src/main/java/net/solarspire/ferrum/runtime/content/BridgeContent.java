@@ -34,13 +34,26 @@ public final class BridgeContent {
     private static final Map<String, String> MIXIN_PACKAGES = new TreeMap<>();
     private static final JsonArray SKIPPED_CLIENTS = new JsonArray();
     private static Path reportPath;
+
+    /** The default-state shape as AABBs; states whose shape needs a real level are left out so Rust keeps its fallback. */
+    private static void shapes(JsonObject entry, String key, java.util.function.Supplier<net.minecraft.world.phys.shapes.VoxelShape> shape) {
+        try {
+            JsonArray boxes = new JsonArray();
+            for (var box : shape.get().toAabbs()) {
+                JsonArray b = new JsonArray();
+                for (double v : new double[] {box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ}) b.add(v);
+                boxes.add(b);
+            }
+            entry.add(key, boxes);
+        } catch (Throwable ignored) { }
+    }
     static net.minecraft.core.RegistryAccess.Frozen worldRegistries;
     static net.minecraft.core.LayeredRegistryAccess<net.minecraft.server.RegistryLayer> layeredRegistries;
     static java.util.List<net.minecraft.server.packs.repository.KnownPack> serverKnownPacks = java.util.List.of();
     static net.minecraft.world.item.crafting.RecipeManager recipes;
     static net.minecraft.world.level.block.entity.FuelValues fuels;
     static net.minecraft.server.MinecraftServer.ReloadableResources serverResources;
-    private static net.minecraft.server.packs.resources.CloseableResourceManager resources;
+    static net.minecraft.server.packs.resources.CloseableResourceManager resources;
 
     public BridgeContent() {}
 
@@ -76,6 +89,7 @@ public final class BridgeContent {
         var gameDirectory = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get();
         net.neoforged.fml.config.ConfigTracker.INSTANCE.loadConfigs(net.neoforged.fml.config.ModConfig.Type.SERVER,
             gameDirectory.resolve("serverconfig"), gameDirectory.resolve("defaultconfigs"));
+        WorldgenBridge.applyBiomeModifiers();
         try {
             MixinEnvironment.getCurrentEnvironment().audit();
         } catch (LinkageError | RuntimeException error) {
@@ -212,6 +226,10 @@ public final class BridgeContent {
                 else entry.addProperty("hardness",Float.toString(hardness));
                 entry.addProperty("luminance", Math.clamp(state.getLightEmission(net.minecraft.world.level.EmptyBlockGetter.INSTANCE,net.minecraft.core.BlockPos.ZERO),0,15));
                 entry.addProperty("solid", state.isSolidRender());
+                entry.addProperty("toolRequired", state.requiresCorrectToolForDrops());
+                entry.addProperty("randomTicks", state.isRandomlyTicking());
+                shapes(entry, "collision", () -> state.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, net.minecraft.core.BlockPos.ZERO));
+                shapes(entry, "outline", () -> state.getShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, net.minecraft.core.BlockPos.ZERO));
                 if (block instanceof net.minecraft.world.level.block.EntityBlock entityBlock) {
                     var be = entityBlock.newBlockEntity(net.minecraft.core.BlockPos.ZERO,state);
                     if (be != null) entry.addProperty("blockEntity", BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(be.getType()).toString());

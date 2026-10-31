@@ -125,6 +125,8 @@ pub struct JavaClient {
     ///
     /// Whether we are waiting for a response after sending a keep alive packet.
     pub wait_for_keep_alive: AtomicBool,
+    /// Entities this 26.2 client never saw spawn, see `compatibility::HiddenEntities`.
+    hidden_entities: compatibility::HiddenEntities,
     /// Set to `true` when any movement packet is received this tick.
     /// On `SClientTickEnd` (≥1.21.4), if still `false`, the player's known
     /// movement is zeroed (they stood still). Matches vanilla's `receivedMovementThisTick`.
@@ -173,6 +175,7 @@ impl JavaClient {
             brand: ArcSwap::from_pointee(pending.brand),
             player: ArcSwap::from_pointee(None),
             wait_for_keep_alive: AtomicBool::new(false),
+            hidden_entities: compatibility::HiddenEntities::default(),
             received_movement_this_tick: AtomicBool::new(false),
             keep_alive_id: AtomicCell::new(0),
             last_keep_alive_time: AtomicCell::new(Instant::now()),
@@ -472,11 +475,15 @@ impl JavaClient {
             self.version.load(),
             self.connection_state.load(),
             packet_data,
+            &self.hidden_entities,
         ) {
             Ok(data) => data,
             Err(error) => {
                 warn!("26.2 packet translation failed: {error}");
-                self.close();
+                // A bad play packet is dropped; only handshake-critical phases end the connection.
+                if !matches!(self.connection_state.load(), ConnectionState::Play) {
+                    self.close();
+                }
                 None
             }
         }
@@ -828,12 +835,27 @@ impl JavaClient {
         let translated_packet = if rewritten {
             observed_packet
         } else {
-            compatibility::incoming(
+            match compatibility::incoming(
                 self.version.load(),
                 self.connection_state.load(),
                 &observed_packet,
-            )
-            .map_err(|error| pumpkin_protocol::ser::ReadingError::Message(error.to_string()))?
+            ) {
+                Ok(packet) => packet,
+                Err(error) => {
+                    let id = compatibility::engine_play_id(self.version.load(), packet.id);
+                    if compatibility::carries_item(id) {
+                        // A client stack the engine cannot read is dropped, as vanilla ignores a bad creative slot.
+                        warn!(
+                            "Ignoring unreadable item packet {id} from {}: {error}",
+                            player.gameprofile.name
+                        );
+                        return Ok(());
+                    }
+                    return Err(
+                        pumpkin_protocol::ser::ReadingError::Message(error.to_string()).into(),
+                    );
+                }
+            }
         };
         let packet_id = translated_packet.id;
         let mut payload = &translated_packet.payload[..];
@@ -1085,7 +1107,13 @@ impl JavaClient {
                 if crate::neoforge::player_menu_packet(player, packet) {
                     return Ok(());
                 }
-                player.on_slot_click(SClickSlot::read(&mut payload, &version)?, server);
+                match SClickSlot::read(&mut payload, &version) {
+                    Ok(click) => player.on_slot_click(click, server),
+                    Err(error) => warn!(
+                        "Ignoring unreadable container click from {}: {error}",
+                        player.gameprofile.name
+                    ),
+                }
             }
             id if id == SContainerButtonClick::to_id(version) => {
                 if crate::neoforge::player_menu_packet(player, packet) {
@@ -1104,10 +1132,13 @@ impl JavaClient {
                 );
             }
             id if id == SSetCreativeSlot::to_id(version) => {
-                self.handle_set_creative_slot(
-                    player,
-                    SSetCreativeSlot::read(&mut payload, &version)?,
-                )?;
+                match SSetCreativeSlot::read(&mut payload, &version) {
+                    Ok(slot) => self.handle_set_creative_slot(player, slot)?,
+                    Err(error) => warn!(
+                        "Ignoring unreadable creative slot from {}: {error}",
+                        player.gameprofile.name
+                    ),
+                }
             }
             id if id == SSwingArm::to_id(version) => {
                 self.handle_swing_arm(

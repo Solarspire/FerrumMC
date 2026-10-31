@@ -1,7 +1,10 @@
 use std::{
     any::Any,
     collections::{HashMap, HashSet},
-    sync::{Arc, LazyLock, Mutex, atomic::Ordering},
+    sync::{
+        Arc, LazyLock, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use base64::{Engine, prelude::BASE64_STANDARD};
@@ -37,6 +40,8 @@ pub struct ModBlockEntity {
     id: &'static str,
     position: BlockPos,
     nbt: Mutex<NbtCompound>,
+    /// Whether Java's block entity holds this entity's current data, so tick batches need not send it.
+    java_synced: AtomicBool,
 }
 
 impl ModBlockEntity {
@@ -47,6 +52,7 @@ impl ModBlockEntity {
             id,
             position,
             nbt: Mutex::new(nbt.clone()),
+            java_synced: AtomicBool::new(false),
         })
     }
     #[must_use]
@@ -60,7 +66,20 @@ impl ModBlockEntity {
             id,
             position,
             nbt: Mutex::new(nbt),
+            java_synced: AtomicBool::new(false),
         }
+    }
+}
+
+impl ModBlockEntity {
+    /// Takes data Java produced: Java already holds it, and the chunk saves it.
+    fn commit(&self, world: &World, nbt: NbtCompound) {
+        world.add_block_entity_nbt(self.position, &nbt);
+        *self
+            .nbt
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = nbt;
+        self.java_synced.store(true, Ordering::Relaxed);
     }
 }
 
@@ -79,6 +98,7 @@ impl BlockEntity for ModBlockEntity {
                 .unwrap_or("ferrum:unknown"),
             position,
             nbt: Mutex::new(nbt.clone()),
+            java_synced: AtomicBool::new(false),
         }
     }
     fn resource_location(&self) -> &'static str {
@@ -92,7 +112,99 @@ impl BlockEntity for ModBlockEntity {
     }
 }
 
-struct RustWorld(Arc<World>);
+struct RustWorld {
+    world: Arc<World>,
+    handle: i32,
+}
+
+/// Small integer ids Java uses to name a world on typed calls, in order of first use.
+static WORLD_HANDLES: LazyLock<Mutex<Vec<uuid::Uuid>>> = LazyLock::new(|| Mutex::new(Vec::new()));
+
+fn world_handle(world: &World) -> i32 {
+    let mut handles = WORLD_HANDLES
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let index = handles
+        .iter()
+        .position(|id| *id == world.uuid)
+        .unwrap_or_else(|| {
+            handles.push(world.uuid);
+            handles.len() - 1
+        });
+    i32::try_from(index).unwrap_or(i32::MAX)
+}
+
+impl RustWorld {
+    fn leased(world: &Arc<World>) -> Arc<dyn WorldAccess> {
+        Arc::new(Self {
+            world: world.clone(),
+            handle: world_handle(world),
+        })
+    }
+
+    /// The world a call names, which may be another dimension than the leased one.
+    fn resolve(&self, handle: i32) -> Result<std::borrow::Cow<'_, Arc<World>>, String> {
+        if handle == self.handle {
+            return Ok(std::borrow::Cow::Borrowed(&self.world));
+        }
+        let id = usize::try_from(handle)
+            .ok()
+            .and_then(|index| {
+                WORLD_HANDLES
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .get(index)
+                    .copied()
+            })
+            .ok_or("unknown bridge world handle")?;
+        let server = self.world.server.upgrade().ok_or("server has stopped")?;
+        server
+            .worlds
+            .load()
+            .iter()
+            .find(|world| world.uuid == id)
+            .cloned()
+            .map(std::borrow::Cow::Owned)
+            .ok_or_else(|| "unknown bridge world".to_owned())
+    }
+}
+
+/// Adds what Java caches on its level view: the world's identity, fixed dimension values and this tick's clocks.
+fn with_world(world: &World, request: &mut Value) {
+    let day_time = world
+        .level_time
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .time_of_day;
+    request["world"] = json!(world.uuid.to_string());
+    request["handle"] = json!(world_handle(world));
+    request["minY"] = json!(world.dimension.min_y);
+    request["height"] = json!(world.dimension.height);
+    request["dimension"] = json!(world.dimension.minecraft_name);
+    request["seed"] = json!(world.level.seed.0 as i64);
+    request["seaLevel"] = json!(world.sea_level);
+    request["time"] = json!(world.get_world_age());
+    request["dayTime"] = json!(day_time);
+    request["dataFolder"] = json!(
+        world
+            .level
+            .level_folder
+            .root_folder
+            .join("data")
+            .join("neoforge")
+            .to_string_lossy()
+    );
+}
+
+/// Runs a world request on the calling tick thread with the world leased to Java.
+fn play_in(world: &Arc<World>, mut request: Value) -> Result<Value, ferrum_neoforge::Error> {
+    with_world(world, &mut request);
+    bridge::play(RustWorld::leased(world), &request)
+}
+
+/// Chunk custom data holding Java's data attachments, saved as `neoforge:attachments`.
+const CHUNK_ATTACHMENTS_NAMESPACE: &str = "neoforge";
+const CHUNK_ATTACHMENTS_KEY: &str = "attachments";
 
 #[derive(Deserialize)]
 struct Request {
@@ -103,52 +215,79 @@ struct Request {
     y: i32,
     #[serde(default)]
     z: i32,
-    #[serde(default)]
-    state: u32,
-    #[serde(default)]
-    flags: u32,
 }
 
 impl WorldAccess for RustWorld {
     fn call(&self, request: Value) -> Result<Value, String> {
-        if let Some(result) = entity_op(&self.0, &request) {
+        let handle = request["handle"]
+            .as_i64()
+            .and_then(|handle| i32::try_from(handle).ok())
+            .unwrap_or(self.handle);
+        let world = self.resolve(handle)?;
+        let world: &Arc<World> = &world;
+        if let Some(result) = entity_op(world, &request) {
             return result;
         }
-        let request: Request = serde_json::from_value(request).map_err(|e| e.to_string())?;
-        let world = &self.0;
+        let raw = request;
+        let request = Request::deserialize(&raw).map_err(|e| e.to_string())?;
         let pos = BlockPos::new(request.x, request.y, request.z);
         match request.op.as_str() {
-            "get" => {
-                let state = if world.is_in_height_limit(pos.0.y) {
-                    world.get_block_state_id_if_loaded(&pos).ok_or_else(|| {
-                        format!("NeoForge accessed unloaded Rust chunk at {pos:?}")
-                    })?
-                } else {
-                    BlockStateId::AIR
-                };
-                Ok(json!(bridge::java_state(state)?))
-            }
-            "set" => {
-                let state =
-                    bridge::rust_state(request.state).ok_or("Java state has no Rust mapping")?;
-                let flags = translate_flags(request.flags);
-                if !world.is_in_build_limit(pos)
-                    || !world.level.is_chunk_loaded(&pos.chunk_position())
-                {
-                    return Ok(json!(false));
-                }
-                let old = world.set_block_state(&pos, state, flags);
-                Ok(json!(old != state))
-            }
             "be" => Ok(world.get_block_entity(&pos).map_or(Value::Null, |entity| {
                 let mut nbt = NbtCompound::new();
                 entity.write_internal(&mut nbt);
+                // Java builds its block entity from this, so later batches need not resend it.
+                if let Some(be) = entity.as_any().downcast_ref::<ModBlockEntity>() {
+                    be.java_synced.store(true, Ordering::Relaxed);
+                }
                 json!(bridge::encode_nbt(&nbt))
             })),
+            "commit_be" => {
+                commit_vanilla_block_entity(world, pos, &raw);
+                Ok(Value::Null)
+            }
             "dirty" => {
                 world
                     .level
                     .read_chunk_sync(&pos.chunk_position(), |c| c.mark_dirty(true));
+                Ok(Value::Null)
+            }
+            "chunk_attachments" => Ok(world
+                .level
+                .read_chunk_sync(&pos.chunk_position(), |chunk| {
+                    chunk
+                        .get_custom_data(CHUNK_ATTACHMENTS_NAMESPACE, CHUNK_ATTACHMENTS_KEY)
+                        .and_then(|tag| tag.extract_compound().map(bridge::encode_nbt))
+                })
+                .flatten()
+                .map_or(Value::Null, |nbt| json!(nbt))),
+            "set_chunk_attachments" => {
+                let nbt = bridge::decode_nbt(raw["nbt"].as_str().unwrap_or_default())
+                    .map_err(|e| e.to_string())?;
+                world.level.read_chunk_sync(&pos.chunk_position(), |chunk| {
+                    chunk.set_custom_data(
+                        CHUNK_ATTACHMENTS_NAMESPACE,
+                        CHUNK_ATTACHMENTS_KEY,
+                        pumpkin_nbt::tag::NbtTag::Compound(nbt.clone()),
+                    );
+                });
+                Ok(Value::Null)
+            }
+            // `Level.explode`: Rust's vanilla explosion damages entities and removes blocks, so Java's own would double up.
+            "explode" => {
+                use crate::world::explosion::ExplosionInteraction;
+                let f = |key: &str| f64_of(&raw, key);
+                let interaction = match raw["interaction"].as_str().unwrap_or_default() {
+                    "NONE" => ExplosionInteraction::None,
+                    "BLOCK" => ExplosionInteraction::Block,
+                    "MOB" => ExplosionInteraction::Mob,
+                    "TRIGGER" => ExplosionInteraction::Trigger,
+                    _ => ExplosionInteraction::Tnt,
+                };
+                world.explode(
+                    Vector3::new(f("ex")?, f("ey")?, f("ez")?),
+                    f("power")? as f32,
+                    interaction,
+                );
                 Ok(Value::Null)
             }
             "comparator" => {
@@ -160,15 +299,71 @@ impl WorldAccess for RustWorld {
                 world.send_block_updated(&pos, state, state);
                 Ok(Value::Null)
             }
-            "loaded" => Ok(json!(world.level.is_chunk_loaded(&pos.chunk_position()))),
-            "time" => Ok(json!(world.get_world_age())),
-            "seaLevel" => Ok(json!(world.sea_level)),
-            "random" => Ok(json!(rand::random::<i32>())),
+            // Java resolves a biome's name once per Rust biome id, then caches it.
+            "biome" => Ok(json!(world.get_biome(&pos).registry_id)),
             _ => Err(format!(
                 "unsupported NeoForge world operation: {}",
                 request.op
             )),
         }
+    }
+
+    fn block_state(&self, world: i32, x: i32, y: i32, z: i32) -> Result<i32, String> {
+        let world = self.resolve(world)?;
+        let pos = BlockPos::new(x, y, z);
+        let state = if world.is_in_height_limit(y) {
+            world
+                .get_block_state_id_if_loaded(&pos)
+                .ok_or_else(|| format!("NeoForge accessed unloaded Rust chunk at {pos:?}"))?
+        } else {
+            BlockStateId::AIR
+        };
+        bridge::java_state_raw(state.as_u16())
+            .ok_or_else(|| format!("state has no 26.2 mapping: {state}"))
+    }
+
+    fn set_block_state(
+        &self,
+        world: i32,
+        (x, y, z): (i32, i32, i32),
+        state: i32,
+        flags: i32,
+    ) -> Result<bool, String> {
+        let world = self.resolve(world)?;
+        let pos = BlockPos::new(x, y, z);
+        let state = u32::try_from(state)
+            .ok()
+            .and_then(bridge::rust_state)
+            .ok_or("Java state has no Rust mapping")?;
+        if !world.is_in_build_limit(pos) || !world.level.is_chunk_loaded(&pos.chunk_position()) {
+            return Ok(false);
+        }
+        let flags = translate_flags(u32::try_from(flags).unwrap_or(0));
+        Ok(world.set_block_state(&pos, state, flags) != state)
+    }
+
+    fn chunk_loaded(&self, world: i32, x: i32, z: i32) -> Result<bool, String> {
+        let world = self.resolve(world)?;
+        Ok(world
+            .level
+            .is_chunk_loaded(&pumpkin_util::math::vector2::Vector2::new(x, z)))
+    }
+
+    fn height(&self, world: i32, heightmap: i32, x: i32, z: i32) -> Result<i32, String> {
+        let world = self.resolve(world)?;
+        let map = pumpkin_world::chunk::ChunkHeightmapType::try_from(
+            usize::try_from(heightmap).map_err(|e| e.to_string())?,
+        )?;
+        Ok(world.get_heightmap_height(map, x, z) + 1)
+    }
+
+    fn biome(&self, world: i32, x: i32, y: i32, z: i32) -> Result<i32, String> {
+        let world = self.resolve(world)?;
+        Ok(i32::from(world.get_biome(&BlockPos::new(x, y, z)).id))
+    }
+
+    fn random(&self) -> i32 {
+        rand::random::<i32>()
     }
 }
 
@@ -249,46 +444,30 @@ fn tick_inner(
         }
         let state = bridge::java_state(world.get_block_state_id(&pos))
             .map_err(ferrum_neoforge::Error::Runtime)?;
-        let mut nbt = NbtCompound::new();
-        be.write_internal(&mut nbt);
-        batch.push(json!({"x":pos.0.x,"y":pos.0.y,"z":pos.0.z,"state":state,"nbt":bridge::encode_nbt(&nbt)}));
+        let mut entry = json!({"x":pos.0.x,"y":pos.0.y,"z":pos.0.z,"state":state});
+        // Java keeps its block entity between batches; it only needs data Rust replaced since.
+        if let Some(be) = be.as_any().downcast_ref::<ModBlockEntity>()
+            && !be.java_synced.swap(true, Ordering::Relaxed)
+        {
+            let mut nbt = NbtCompound::new();
+            be.write_internal(&mut nbt);
+            entry["nbt"] = json!(bridge::encode_nbt(&nbt));
+        }
+        batch.push(entry);
     }
-    let result = bridge::tick(
-        Arc::new(RustWorld(world.clone())),
-        &json!({"world":world.uuid.to_string(),"minY":world.dimension.min_y,"height":world.dimension.height,"dimension":world.dimension.minecraft_name,"entities":batch,"retained":retained}),
-    )?;
+    let mut request = json!({"entities":batch,"retained":retained});
+    with_world(world, &mut request);
+    let result = bridge::tick(RustWorld::leased(world), &request)?;
     deliver(
         world,
         result["packets"].as_array().map_or(&[][..], Vec::as_slice),
     );
+    // Only block entities whose data changed in Java come back.
     let result: Vec<Snapshot> = serde_json::from_value(result["entities"].clone())?;
-    let mut commits = Vec::new();
     for snapshot in result {
         let pos = BlockPos::new(snapshot.x, snapshot.y, snapshot.z);
         let nbt = bridge::decode_nbt(&snapshot.nbt)?;
-        let Some(entity) = world.get_block_entity(&pos) else {
-            continue;
-        };
-        if entity.as_any().is::<ModBlockEntity>()
-            && nbt.get_string("id") == Some(entity.resource_location())
-            && nbt.get_int("x") == Some(pos.0.x)
-            && nbt.get_int("y") == Some(pos.0.y)
-            && nbt.get_int("z") == Some(pos.0.z)
-        {
-            commits.push((entity, nbt));
-        } else {
-            return Err(ferrum_neoforge::Error::Runtime(
-                "invalid block entity snapshot identity".into(),
-            ));
-        }
-    }
-    for (entity, nbt) in commits {
-        if let Some(be) = entity.as_any().downcast_ref::<ModBlockEntity>() {
-            *be.nbt
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = nbt.clone();
-            world.add_block_entity_nbt(be.position, &nbt);
-        }
+        commit_block_entity(world, pos, nbt);
     }
     Ok(())
 }
@@ -301,7 +480,180 @@ struct Snapshot {
     nbt: String,
 }
 
-const MAIN_SLOTS: usize = 36;
+/// Bound on cached mod crafting lookups; the cache starts over when full.
+const MAX_RECIPE_CACHE: usize = 1024;
+
+type CraftReply = Option<(String, Vec<String>)>;
+
+static CRAFTS: LazyLock<Mutex<HashMap<String, CraftReply>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// A grid no engine recipe matches goes to Java's `RecipeManager`, where mod recipes live.
+pub fn external_craft(
+    grid: &dyn pumpkin_inventory::crafting::recipes::RecipeInputInventory,
+) -> Option<pumpkin_inventory::crafting::crafting_screen_handler::ExternalCraft> {
+    if !bridge::enabled() {
+        return None;
+    }
+    let slots: Vec<String> = (0..grid.size())
+        .map(|slot| {
+            slot_nbt(&grid.get_stack(slot)).map_or_else(String::new, |nbt| bridge::encode_nbt(&nbt))
+        })
+        .collect();
+    if slots.iter().all(String::is_empty) {
+        return None;
+    }
+    let key = format!("{}|{}", grid.get_width(), slots.join(","));
+    let cached = CRAFTS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .get(&key)
+        .cloned();
+    let reply = if let Some(reply) = cached {
+        reply
+    } else {
+        let request = json!({"op": "craft", "width": grid.get_width(), "height": grid.get_height(), "grid": slots});
+        let reply = match bridge::play_unleased(&request) {
+            Ok(reply) => reply,
+            Err(error) => {
+                warn!("NeoForge recipe lookup failed: {error}");
+                return None;
+            }
+        };
+        let entry = reply["result"].as_str().map(|result| {
+            let remainders = reply["remainders"]
+                .as_array()
+                .map_or(&[][..], Vec::as_slice)
+                .iter()
+                .map(|slot| slot.as_str().unwrap_or_default().to_owned())
+                .collect();
+            (result.to_owned(), remainders)
+        });
+        let mut cache = CRAFTS
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if cache.len() >= MAX_RECIPE_CACHE {
+            cache.clear();
+        }
+        cache.insert(key, entry.clone());
+        entry
+    };
+    let (result, remainders) = reply?;
+    let stack = |encoded: &str| {
+        bridge::decode_nbt(encoded).map_or_else(
+            |_| ItemStack::EMPTY.clone(),
+            |nbt| merged_stack(ItemStack::EMPTY.clone(), &nbt),
+        )
+    };
+    let result = stack(&result);
+    if result.is_empty() {
+        return None;
+    }
+    Some(
+        pumpkin_inventory::crafting::crafting_screen_handler::ExternalCraft {
+            result,
+            remainders: remainders
+                .iter()
+                .map(|slot| {
+                    if slot.is_empty() {
+                        ItemStack::EMPTY.clone()
+                    } else {
+                        stack(slot)
+                    }
+                })
+                .collect(),
+        },
+    )
+}
+
+/// The item a recipe result names, including mod items.
+#[must_use]
+pub fn recipe_item(id: &str) -> Option<&'static Item> {
+    Item::from_registry_key(id.strip_prefix("minecraft:").unwrap_or(id))
+        .or_else(|| pumpkin_data::runtime::item_by_name(id))
+}
+
+type CookingCache = HashMap<(u16, u8), Option<&'static pumpkin_data::recipes::CookingRecipe>>;
+
+static COOKING: LazyLock<Mutex<CookingCache>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// `RecipeManager.getRecipeFor` for one furnace kind: the engine's recipes, then mods' from Java, once per item.
+#[must_use]
+pub fn cooking_recipe(
+    stack: &ItemStack,
+    kind: pumpkin_data::recipes::CookingRecipeKind,
+) -> Option<&'static pumpkin_data::recipes::CookingRecipe> {
+    use pumpkin_data::recipes::CookingRecipeKind as Kind;
+    let (index, name) = match kind {
+        Kind::Blasting => (0, "blasting"),
+        Kind::Smelting => (1, "smelting"),
+        Kind::Smoking => (2, "smoking"),
+        Kind::CampfireCooking => (3, "campfire_cooking"),
+    };
+    if let Some(recipe) =
+        pumpkin_data::recipes::get_cooking_recipe_with_ingredient(stack.item, kind)
+    {
+        return Some(recipe);
+    }
+    if !bridge::enabled() || stack.is_empty() {
+        return None;
+    }
+    let key = (stack.item.id, index);
+    if let Some(cached) = COOKING
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .get(&key)
+    {
+        return *cached;
+    }
+    let request = json!({"op": "cook", "kind": name, "stack": slot_nbt(stack).map(|nbt| bridge::encode_nbt(&nbt))});
+    let reply = match bridge::play_unleased(&request) {
+        Ok(reply) => reply,
+        Err(error) => {
+            warn!("NeoForge cooking recipe lookup failed: {error}");
+            return None;
+        }
+    };
+    // Made once per item and kind, so what is leaked is bounded by the item registry.
+    let recipe = reply["result"]
+        .as_str()
+        .filter(|id| recipe_item(id).is_some())
+        .map(|result| {
+            &*Box::leak(Box::new(pumpkin_data::recipes::CookingRecipe {
+                recipe_id: Box::leak(
+                    reply["id"]
+                        .as_str()
+                        .unwrap_or(result)
+                        .to_owned()
+                        .into_boxed_str(),
+                ),
+                category: pumpkin_data::recipes::RecipeCategoryTypes::Misc,
+                group: None,
+                ingredient: pumpkin_data::recipes::RecipeIngredientTypes::Simple(
+                    stack.item.registry_key,
+                ),
+                cookingtime: reply["time"]
+                    .as_i64()
+                    .and_then(|time| i32::try_from(time).ok())
+                    .unwrap_or(200)
+                    .max(1),
+                experience: reply["experience"].as_f64().unwrap_or(0.0) as f32,
+                result: pumpkin_data::recipes::RecipeResultStruct {
+                    id: Box::leak(result.to_owned().into_boxed_str()),
+                    count: reply["count"]
+                        .as_u64()
+                        .and_then(|count| u8::try_from(count).ok())
+                        .unwrap_or(1),
+                },
+            }))
+        });
+    COOKING
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .insert(key, recipe);
+    recipe
+}
+
 const OFF_HAND_SLOT: usize = 40;
 /// Bound on mod payload packets one player step may return.
 const MAX_PLAYER_PACKETS: usize = 256;
@@ -315,15 +667,6 @@ fn is_modded(stack: &ItemStack) -> bool {
 #[must_use]
 pub fn modded_item_in_hand(player: &Player, hand: Hand) -> bool {
     bridge::enabled() && is_modded(&player.inventory().get_stack_in_hand(hand))
-}
-
-fn holds_modded_items(player: &Player) -> bool {
-    let inventory = player.inventory();
-    let main = inventory
-        .main_inventory
-        .read()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    main.iter().any(is_modded) || is_modded(&inventory.off_hand_item())
 }
 
 fn hand_id(hand: Hand) -> i32 {
@@ -350,6 +693,16 @@ pub fn player_use(player: &Player, hand: Hand) -> bool {
     ))
 }
 
+/// `ServerPlayerGameMode.releaseUsingItem` for an item Java started using; true when Java had one in use.
+pub fn player_release(player: &Player) -> bool {
+    if !bridge::enabled() {
+        return false;
+    }
+    player_events(player, &[json!({"type": "release"})])
+        .first()
+        .is_some_and(|result| result["using"] == true)
+}
+
 /// Runs the held modded item's `useOn`; block items stay with Rust placement.
 pub fn player_use_on(
     player: &Player,
@@ -364,6 +717,57 @@ pub fn player_use_on(
         "face": face, "cx": cursor.x, "cy": cursor.y, "cz": cursor.z, "inside": inside,
     });
     consumed(&player_events(player, &[event]))
+}
+
+pub fn right_click(
+    player: &Player,
+    hand: Hand,
+    position: BlockPos,
+    face: i32,
+    cursor: Vector3<f32>,
+    inside: bool,
+) -> (bool, bool) {
+    if !bridge::enabled() {
+        return (true, true);
+    }
+    let results = player_events(
+        player,
+        &[
+            json!({"type":"right_click", "hand":hand_id(hand), "x":position.0.x,"y":position.0.y,"z":position.0.z,
+        "face":face,"cx":cursor.x,"cy":cursor.y,"cz":cursor.z,"inside":inside}),
+        ],
+    );
+    let Some(result) = results.first() else {
+        return (true, true);
+    };
+    if result["canceled"] == true {
+        return (false, false);
+    }
+    (result["block"] != false, result["item"] != false)
+}
+
+pub fn toss_item(player: &Player, stack: &ItemStack) -> Option<ItemStack> {
+    if !bridge::enabled() {
+        return Some(stack.clone());
+    }
+    let mut nbt = NbtCompound::new();
+    stack.write_item_stack(&mut nbt);
+    let results = player_events(
+        player,
+        &[json!({"type":"toss","stack":bridge::encode_nbt(&nbt)})],
+    );
+    let Some(result) = results.first() else {
+        return Some(stack.clone());
+    };
+    if result["canceled"] == true {
+        return None;
+    }
+    Some(
+        result["stack"]
+            .as_str()
+            .and_then(|encoded| bridge::decode_nbt(encoded).ok())
+            .map_or_else(|| stack.clone(), |nbt| merged_stack(stack.clone(), &nbt)),
+    )
 }
 
 /// Whether the block belongs to a mod; vanilla blocks never leave Rust.
@@ -387,6 +791,209 @@ pub fn player_use_block(
         "face": face, "cx": cursor.x, "cy": cursor.y, "cz": cursor.z, "inside": inside,
     });
     consumed(&player_events(player, &[event]))
+}
+
+/// Bound on the container slots one vanilla block entity write-back may carry.
+const MAX_CONTAINER_SLOTS: usize = 256;
+
+/// Takes what a mod changed in a vanilla block entity Java borrowed. Container slots are written into Rust's own
+/// inventory, which open screens share; other data replaces the block entity. A type mismatch is skipped.
+fn commit_vanilla_block_entity(world: &Arc<World>, position: BlockPos, request: &Value) {
+    let Some(entity) = world.get_block_entity(&position) else {
+        return;
+    };
+    let id = request["id"].as_str().unwrap_or_default();
+    if entity.resource_location() != id || entity.as_any().is::<ModBlockEntity>() {
+        warn!(
+            "Ignoring NeoForge write to a {id} block entity at {position:?}; Rust holds another type"
+        );
+        return;
+    }
+    if let Some(slots) = request["slots"].as_array()
+        && slots.len() <= MAX_CONTAINER_SLOTS
+        && let Some(inventory) = entity.clone().get_inventory()
+        && inventory.size() == slots.len()
+    {
+        let mut changed = false;
+        for (slot, encoded) in slots.iter().enumerate() {
+            let encoded = encoded.as_str().unwrap_or_default();
+            let current = inventory.get_stack(slot);
+            let stack = if encoded.is_empty() {
+                ItemStack::EMPTY.clone()
+            } else {
+                match bridge::decode_nbt(encoded) {
+                    Ok(nbt) => merged_stack(current.clone(), &nbt),
+                    Err(error) => {
+                        warn!("Skipping a NeoForge container slot at {position:?}: {error}");
+                        continue;
+                    }
+                }
+            };
+            if slot_nbt(&stack) != slot_nbt(&current) {
+                inventory.set_stack(slot, stack);
+                changed = true;
+            }
+        }
+        if changed {
+            inventory.mark_dirty();
+            world.update_neighbour_for_output_signal(&position, world.get_block(&position));
+            world
+                .level
+                .read_chunk_sync(&position.chunk_position(), |c| c.mark_dirty(true));
+        }
+        return;
+    }
+    let Some(nbt) = request["nbt"]
+        .as_str()
+        .and_then(|nbt| bridge::decode_nbt(nbt).ok())
+    else {
+        return;
+    };
+    if nbt.get_string("id") != Some(id) {
+        return;
+    }
+    match crate::block::entities::block_entity_from_nbt(&nbt) {
+        Some(replacement) if replacement.get_position() == position => {
+            world.add_block_entity(replacement);
+        }
+        _ => warn!("NeoForge wrote {id} data Rust cannot load at {position:?}"),
+    }
+}
+
+/// Replaces a Rust block entity's data with what Java holds after it changed it.
+fn commit_block_entity(world: &World, position: BlockPos, nbt: NbtCompound) {
+    let Some(entity) = world.get_block_entity(&position) else {
+        return;
+    };
+    let Some(be) = entity.as_any().downcast_ref::<ModBlockEntity>() else {
+        return;
+    };
+    if nbt.get_string("id") == Some(be.id)
+        && nbt.get_int("x") == Some(position.0.x)
+        && nbt.get_int("y") == Some(position.0.y)
+        && nbt.get_int("z") == Some(position.0.z)
+    {
+        be.commit(world, nbt);
+    } else {
+        warn!("Ignoring NeoForge block entity data for another identity at {position:?}");
+    }
+}
+
+/// `BlockItem.place` for a modded block Rust just set: the stack's block entity data and components reach the Java
+/// block entity, and the block's `setPlacedBy` runs.
+pub fn block_placed(player: &Player, position: BlockPos, stack: &ItemStack) {
+    let world = player.world();
+    if !modded_block_at(&world, &position) {
+        return;
+    }
+    let mut nbt = NbtCompound::new();
+    stack.write_item_stack(&mut nbt);
+    let request = json!({
+        "op": "block_placed", "uuid": player.gameprofile.id.to_string(),
+        "x": position.0.x, "y": position.0.y, "z": position.0.z, "stack": bridge::encode_nbt(&nbt),
+    });
+    match play_in(&world, request) {
+        Ok(reply) => {
+            if let Some(nbt) = reply["nbt"]
+                .as_str()
+                .and_then(|nbt| bridge::decode_nbt(nbt).ok())
+            {
+                commit_block_entity(&world, position, nbt);
+            }
+        }
+        Err(error) => warn!("NeoForge block placement failed at {position:?}: {error}"),
+    }
+}
+
+/// Tool rules of a mod item (or any tool on a modded block) live in Java: its `isCorrectToolForDrops` and
+/// `getDestroySpeed` overrides do not need a tool component. `None` when Rust decides.
+fn tool_rules(
+    world: &Arc<World>,
+    state: &pumpkin_data::BlockState,
+    tool: &ItemStack,
+) -> Option<Value> {
+    if !bridge::enabled()
+        || tool.is_empty()
+        || !(is_modded(tool) || pumpkin_data::runtime::state_block(state.id).is_some())
+    {
+        return None;
+    }
+    let java_state = bridge::java_state(state.id).ok()?;
+    let mut nbt = NbtCompound::new();
+    tool.write_item_stack(&mut nbt);
+    let request = json!({
+        "op": "correct_tool",
+        "state": java_state, "tool": bridge::encode_nbt(&nbt),
+    });
+    match play_in(world, request) {
+        Ok(reply) => Some(reply),
+        Err(error) => {
+            warn!("NeoForge tool check failed: {error}");
+            None
+        }
+    }
+}
+
+/// Whether the tool is the right one for the block: `None` for vanilla tools on vanilla blocks.
+pub fn correct_tool_for_drops(
+    world: &Arc<World>,
+    state: &pumpkin_data::BlockState,
+    tool: &ItemStack,
+) -> Option<bool> {
+    tool_rules(world, state, tool)?["correct"].as_bool()
+}
+
+/// Mining speed of a mod tool on a block, from its Java `getDestroySpeed`.
+pub fn destroy_speed(
+    world: &Arc<World>,
+    state: &pumpkin_data::BlockState,
+    tool: &ItemStack,
+) -> Option<f32> {
+    if !is_modded(tool) {
+        return None;
+    }
+    tool_rules(world, state, tool)?["speed"]
+        .as_f64()
+        .map(|speed| speed as f32)
+}
+
+/// The items a modded block drops when broken, computed by Java from the block, its block entity and the tool;
+/// `None` for blocks Rust drops itself.
+pub fn block_drops(
+    world: &Arc<World>,
+    block: &pumpkin_data::Block,
+    position: &BlockPos,
+    tool: Option<&ItemStack>,
+) -> Option<Vec<ItemStack>> {
+    if !bridge::enabled() || pumpkin_data::runtime::block(block.id).is_none() {
+        return None;
+    }
+    let mut request = json!({
+        "op": "block_drops",
+        "x": position.0.x, "y": position.0.y, "z": position.0.z,
+    });
+    if let Some(tool) = tool {
+        let mut nbt = NbtCompound::new();
+        tool.write_item_stack(&mut nbt);
+        request["tool"] = json!(bridge::encode_nbt(&nbt));
+    }
+    let reply = match play_in(world, request) {
+        Ok(reply) => reply,
+        Err(error) => {
+            warn!("NeoForge block drops failed at {position:?}: {error}");
+            return None;
+        }
+    };
+    Some(
+        reply["drops"]
+            .as_array()
+            .map_or(&[][..], Vec::as_slice)
+            .iter()
+            .filter_map(|encoded| bridge::decode_nbt(encoded.as_str()?).ok())
+            .map(|nbt| merged_stack(ItemStack::EMPTY.clone(), &nbt))
+            .filter(|stack| !stack.is_empty())
+            .collect(),
+    )
 }
 
 /// Container ids of the menus Java has open, by player; absent when only the inventory is open.
@@ -451,6 +1058,24 @@ fn tracking_event(player: &Player) -> Option<Value> {
 
 /// Runs the end-of-tick network flush mods do on `NeoForge`'s server tick event.
 pub fn server_tick_end(server: &Server) {
+    server_tick_event(server, "tick_post");
+}
+
+pub fn server_tick_start(server: &Server) {
+    if !bridge::enabled() {
+        return;
+    }
+    pumpkin_inventory::crafting::crafting_screen_handler::set_external_crafting(external_craft);
+    for world in server.worlds.load().iter() {
+        let request = json!({"op":"world",});
+        if let Err(error) = play_in(world, request) {
+            error!("NeoForge world initialization failed: {error}");
+        }
+    }
+    server_tick_event(server, "tick_pre");
+}
+
+fn server_tick_event(server: &Server, op: &str) {
     if !bridge::enabled() {
         return;
     }
@@ -458,13 +1083,36 @@ pub fn server_tick_end(server: &Server) {
     let Some(world) = worlds.first() else {
         return;
     };
-    let request = json!({"op": "tick_post"});
-    match bridge::play(Arc::new(RustWorld(world.clone())), &request) {
+    let request = json!({"op": op});
+    match play_in(world, request) {
         Ok(reply) => deliver(
             world,
             reply["packets"].as_array().map_or(&[][..], Vec::as_slice),
         ),
         Err(error) => error!("NeoForge server tick failed: {error}"),
+    }
+}
+
+pub fn level_tick_event(world: &Arc<World>, pre: bool) {
+    if !bridge::enabled() {
+        return;
+    }
+    let mut request = json!({"op": if pre { "level_pre" } else { "level_post" },});
+    if pre {
+        let chunks: Vec<_> = world
+            .level
+            .loaded_chunks
+            .iter()
+            .map(|entry| [entry.key().x, entry.key().y])
+            .collect();
+        request["chunks"] = json!(chunks);
+    }
+    match play_in(world, request) {
+        Ok(reply) => deliver(
+            world,
+            reply["packets"].as_array().map_or(&[][..], Vec::as_slice),
+        ),
+        Err(error) => error!("NeoForge level tick failed: {error}"),
     }
 }
 
@@ -504,36 +1152,72 @@ pub fn tick_player(player: &Player) {
     if !bridge::enabled() {
         return;
     }
-    let perf_t0 = std::time::Instant::now(); // FERRUMPERF
     let mut events = Vec::new();
     events.extend(tracking_event(player));
-    let perf_tracking = events.len(); // FERRUMPERF
-    if holds_modded_items(player) {
-        events.push(json!({"type": "tick"}));
-    }
+    events.push(json!({"type": "tick"}));
     if menu_open(player) {
         events.push(json!({"type": "menu_tick"}));
     }
     if !events.is_empty() {
         player_events(player, &events);
     }
-    if perf_t0.elapsed().as_micros() > 2000 { tracing::info!("FERRUMPERF tick_player ms={:.2} tracking={}", perf_t0.elapsed().as_secs_f64()*1e3, perf_tracking); } // FERRUMPERF
+}
+
+/// Rust opens its own screen: the menu Java has open closes first, as vanilla's `openMenu` closes the current one.
+pub fn close_java_menu(player: &Player) {
+    if bridge::enabled() && menu_open(player) {
+        player_events(player, &[json!({"type": "close_menu"})]);
+    }
 }
 
 pub fn player_left(player: &Player) {
     if !bridge::enabled() {
         return;
     }
+    // `ServerPlayer.disconnect`: the open menu closes, returning carried and crafting items to the inventory Rust
+    // saves next, and mods see the logout.
+    player_events(player, &[json!({"type": "leave"})]);
     open_menus().remove(&player.gameprofile.id);
+    SYNCED_SLOTS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .remove(&player.gameprofile.id);
     WATCHED
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .remove(&player.gameprofile.id);
     let request = json!({"op": "leave", "uuid": player.gameprofile.id.to_string()});
     // Mods' chunk watcher hooks query the world while the player's tracked chunks are released.
-    if let Err(error) = bridge::play(Arc::new(RustWorld(player.world())), &request) {
+    if let Err(error) = bridge::play(RustWorld::leased(&player.world()), &request) {
         warn!("Failed to release NeoForge player view: {error}");
     }
+}
+
+/// `NeoForge` data attachments of players (mod state such as radiation), as Java last saved them, by player.
+static PLAYER_ATTACHMENTS: LazyLock<Mutex<HashMap<uuid::Uuid, NbtCompound>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Key of `AttachmentHolder.ATTACHMENTS_NBT_KEY` in Java's entity data and in the player file.
+const ATTACHMENTS_KEY: &str = "neoforge:attachments";
+
+fn player_attachments() -> std::sync::MutexGuard<'static, HashMap<uuid::Uuid, NbtCompound>> {
+    PLAYER_ATTACHMENTS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+pub fn write_player_attachments(player: uuid::Uuid, nbt: &mut NbtCompound) {
+    if let Some(attachments) = player_attachments().get(&player) {
+        nbt.put_compound(ATTACHMENTS_KEY, attachments.clone());
+    }
+}
+
+pub fn read_player_attachments(player: uuid::Uuid, nbt: &NbtCompound) {
+    let mut attachments = player_attachments();
+    match nbt.get_compound(ATTACHMENTS_KEY) {
+        Some(saved) => attachments.insert(player, saved.clone()),
+        None => attachments.remove(&player),
+    };
 }
 
 /// One synchronous snapshot-in, delta-out exchange with the player's Java view.
@@ -550,41 +1234,165 @@ fn player_events(player: &Player, events: &[Value]) -> Vec<Value> {
     }
 }
 
+/// One player step at a time: network threads (mod payloads, item use) and the tick thread each snapshot the
+/// inventory, run Java and write the result back, and interleaved steps would overwrite each other with stale stacks.
+static EXCHANGE: Mutex<()> = Mutex::new(());
+
+thread_local! {
+    static IN_EXCHANGE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
 fn exchange(player: &Player, events: &[Value]) -> Result<Vec<Value>, String> {
+    struct Reset;
+    impl Drop for Reset {
+        fn drop(&mut self) {
+            IN_EXCHANGE.set(false);
+        }
+    }
+    if IN_EXCHANGE.get() {
+        return exchange_locked(player, events);
+    }
+    let _guard = EXCHANGE
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    IN_EXCHANGE.set(true);
+    let _reset = Reset;
+    exchange_locked(player, events)
+}
+
+/// Per player, each inventory slot's NBT as Java last saw it (`None` when empty); absent until Java holds a full
+/// copy. Compared as NBT because a compound's encoding has no stable key order.
+static SYNCED_SLOTS: LazyLock<Mutex<HashMap<uuid::Uuid, Vec<Option<NbtCompound>>>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+fn slot_nbt(stack: &ItemStack) -> Option<NbtCompound> {
+    if stack.is_empty() {
+        return None;
+    }
+    let mut nbt = NbtCompound::new();
+    stack.write_item_stack(&mut nbt);
+    Some(nbt)
+}
+
+/// The inventory slots Java does not hold yet, by slot, with "" for an empty slot. `full` sends every non-empty
+/// slot for a Java view that has no copy; either way Java holds the current inventory afterwards.
+fn inventory_delta(player: &Player, full: bool) -> Map<String, Value> {
+    let inventory = player.inventory();
+    let mut synced = SYNCED_SLOTS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let known = synced
+        .entry(player.gameprofile.id)
+        .or_insert_with(|| vec![None; OFF_HAND_SLOT + 1]);
+    let mut delta = Map::new();
+    for (slot, known) in known.iter_mut().enumerate() {
+        let nbt = slot_nbt(&inventory.get_slot(slot));
+        if (full && nbt.is_some()) || nbt != *known {
+            let data = nbt.as_ref().map_or_else(String::new, bridge::encode_nbt);
+            delta.insert(slot.to_string(), json!(data));
+            *known = nbt;
+        }
+    }
+    delta
+}
+
+/// Full inventory for a Java player view that lost its copy, see `PlayerBridge.sync`.
+fn player_inventory(world: &Arc<World>, request: &Value) -> Result<Value, String> {
+    let id = request["uuid"]
+        .as_str()
+        .and_then(|id| uuid::Uuid::parse_str(id).ok())
+        .ok_or("player inventory request without a player")?;
+    let player = player_by_uuid(world, id).ok_or("unknown player")?;
+    Ok(Value::Object(inventory_delta(&player, true)))
+}
+
+fn exchange_locked(player: &Player, events: &[Value]) -> Result<Vec<Value>, String> {
     let world = player.world();
     let inventory = player.inventory();
-    let mut snapshot = Map::new();
-    for slot in (0..MAIN_SLOTS).chain([OFF_HAND_SLOT]) {
-        let stack = inventory.get_slot(slot);
-        if stack.is_empty() {
-            continue;
-        }
-        let mut nbt = NbtCompound::new();
-        stack.write_item_stack(&mut nbt);
-        snapshot.insert(slot.to_string(), json!(bridge::encode_nbt(&nbt)));
-    }
+    let full = !SYNCED_SLOTS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .contains_key(&player.gameprofile.id);
+    let snapshot = inventory_delta(player, full);
     let (yaw, pitch) = player.rotation();
     let position = player.position();
     let request = json!({
         "op": "sync", "uuid": player.gameprofile.id.to_string(), "name": player.gameprofile.name,
-        "entityId": player.entity_id(), "world": world.uuid.to_string(),
-        "minY": world.dimension.min_y, "height": world.dimension.height,
-        "dimension": world.dimension.minecraft_name,
+        "entityId": player.entity_id(),
         "x": position.x, "y": position.y, "z": position.z, "yaw": yaw, "pitch": pitch,
         "gamemode": player.gamemode.load() as i32, "selected": inventory.get_selected_slot(),
         "sneaking": player.get_entity().is_sneaking(),
-        "inventory": snapshot, "events": events,
+        "health": player.living_entity.health.load(), "fallDistance":player.living_entity.fall_distance.load(),
+        "ground": player.get_entity().on_ground.load(Ordering::Relaxed),
+        "attackTicks": player.last_attacked_ticks.load(Ordering::Relaxed),
+        "vx": player.get_entity().velocity.load().x, "vy":player.get_entity().velocity.load().y, "vz":player.get_entity().velocity.load().z,
+        "inventory": snapshot, "full": full, "events": events,
     });
-    let reply = bridge::play(Arc::new(RustWorld(world)), &request).map_err(|e| e.to_string())?;
+    let mut request = request;
+    if full && let Some(attachments) = player_attachments().get(&player.gameprofile.id) {
+        // A new Java view starts with the attachments the player file holds.
+        let mut wrapped = NbtCompound::new();
+        wrapped.put_compound(ATTACHMENTS_KEY, attachments.clone());
+        request["attachments"] = json!(bridge::encode_nbt(&wrapped));
+    }
+    let reply = play_in(&world, request).map_err(|e| {
+        // Java may not have taken the slots sent; the next step sends all of them.
+        SYNCED_SLOTS
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .remove(&player.gameprofile.id);
+        e.to_string()
+    })?;
+    if let Some(saved) = reply["attachments"]
+        .as_str()
+        .and_then(|saved| bridge::decode_nbt(saved).ok())
+    {
+        read_player_attachments(player.gameprofile.id, &saved);
+    }
+    if let Some(velocity) = reply["velocity"]
+        .as_array()
+        .filter(|velocity| velocity.len() == 3)
+    {
+        let values: Option<Vec<_>> = velocity
+            .iter()
+            .map(|value| value.as_f64().filter(|value| value.is_finite()))
+            .collect();
+        if let Some(values) = values {
+            player.set_velocity(Vector3::new(values[0], values[1], values[2]));
+        }
+    }
+    if let Some(ignore) = reply["impulse"]["ignore"].as_bool() {
+        player
+            .living_entity
+            .current_impulse_impact_y
+            .store(if ignore {
+                reply["impulse"]["y"].as_f64().filter(|y| y.is_finite())
+            } else {
+                None
+            });
+        player.living_entity.impulse_grace_ticks.store(
+            reply["impulse"]["grace"].as_i64().unwrap_or(0).clamp(0, 40) as i32,
+            Ordering::Relaxed,
+        );
+    }
     if let Some(changes) = reply["inventory"].as_object() {
         for (slot, encoded) in changes {
             let slot: usize = slot.parse().map_err(|_| "bad inventory slot".to_owned())?;
-            if slot >= MAIN_SLOTS && slot != OFF_HAND_SLOT {
+            if slot > OFF_HAND_SLOT {
                 return Err(format!("Java changed unsupported inventory slot {slot}"));
             }
             let nbt = bridge::decode_nbt(encoded.as_str().unwrap_or_default())
                 .map_err(|e| e.to_string())?;
-            inventory.set_slot(slot, merged_stack(inventory.get_slot(slot), &nbt));
+            let stack = merged_stack(inventory.get_slot(slot), &nbt);
+            // Java holds its own copy of the changed stack, so this is not news to it next step.
+            if let Some(known) = SYNCED_SLOTS
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .get_mut(&player.gameprofile.id)
+            {
+                known[slot] = slot_nbt(&stack);
+            }
+            inventory.set_slot(slot, stack);
         }
     }
     let packets = reply["packets"].as_array().map_or(&[][..], Vec::as_slice);
@@ -600,6 +1408,363 @@ fn exchange(player: &Player, events: &[Value]) -> Result<Vec<Value>, String> {
     drop(menus);
     deliver(&player.world(), packets);
     Ok(reply["results"].as_array().cloned().unwrap_or_default())
+}
+
+/// Run the transformed Java attack for mod weapons, including their item hooks and damage source.
+pub fn player_attack(player: &Player, target: &dyn EntityBase) -> bool {
+    if !bridge::enabled() {
+        return false;
+    }
+    // Mod weapons, and any hit on a mod entity, whose health only Java holds.
+    let modded = modded_item_in_hand(player, Hand::Right) || as_mod_entity(target).is_some();
+    let results = player_events(
+        player,
+        &[
+            json!({"type": if modded { "attack" } else { "attack_event" }, "target":target.get_entity().entity_id}),
+        ],
+    );
+    modded
+        || results
+            .first()
+            .is_some_and(|result| result["canceled"] == true)
+}
+
+/// Runs vanilla's `LivingEntity.postPiercingAttack` after a mod spear's jab, where mods hook their lunge.
+pub fn player_piercing_attack(player: &Player) {
+    if modded_item_in_hand(player, Hand::Right) {
+        player_events(player, &[json!({"type": "piercing"})]);
+    }
+}
+
+fn living_event(caller: &dyn EntityBase, mut event: Value) -> Option<Value> {
+    if !bridge::enabled() {
+        return None;
+    }
+    if !bridge::in_lease()
+        && let Some(player) = caller.get_player()
+    {
+        return player_events(player, &[event]).into_iter().next();
+    }
+    let world = caller.get_entity().world.load_full();
+    event["event"] = event["type"].clone();
+    event["op"] = json!("living_event");
+    event["entity"] = json!(caller.get_entity().entity_id);
+    with_world(&world, &mut event);
+    let result = if bridge::in_lease() {
+        bridge::play_unleased(&event)
+    } else {
+        bridge::play(RustWorld::leased(&world), &event)
+    };
+    match result {
+        Ok(reply) => {
+            deliver(
+                &world,
+                reply["packets"].as_array().map_or(&[][..], Vec::as_slice),
+            );
+            Some(reply)
+        }
+        Err(error) => {
+            error!("NeoForge living event failed: {error}");
+            None
+        }
+    }
+}
+
+fn damage_event(
+    kind: &str,
+    damage_type: pumpkin_data::damage::DamageType,
+    source: Option<&dyn EntityBase>,
+    cause: Option<&dyn EntityBase>,
+) -> Value {
+    let name = pumpkin_data::registry::REGISTRY_V_26_3
+        .iter()
+        .find(|registry| registry.registry_id == "damage_type")
+        .and_then(|registry| registry.entries.get(usize::from(damage_type.id)))
+        .map_or("generic", |entry| entry.name);
+    json!({"type":kind,"damageType":format!("minecraft:{name}"),
+        "direct":source.map_or(-1,|entity|entity.get_entity().entity_id),
+        "attacker":cause.map_or(-1,|entity|entity.get_entity().entity_id)})
+}
+
+thread_local! {
+    static DEATH_DROPS: std::cell::RefCell<Vec<Vec<Arc<dyn EntityBase>>>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+pub struct DeathDrops;
+
+impl DeathDrops {
+    #[must_use]
+    pub fn capture() -> Option<Self> {
+        if !bridge::enabled() {
+            return None;
+        }
+        DEATH_DROPS.with(|drops| drops.borrow_mut().push(Vec::new()));
+        Some(Self)
+    }
+
+    pub fn finish(
+        self,
+        caller: &dyn EntityBase,
+        damage_type: pumpkin_data::damage::DamageType,
+        source: Option<&dyn EntityBase>,
+        cause: Option<&dyn EntityBase>,
+        recently_hit: bool,
+    ) {
+        let drops = DEATH_DROPS.with(|drops| drops.borrow_mut().pop().unwrap_or_default());
+        std::mem::forget(self);
+        let mut event = damage_event("drops", damage_type, source, cause);
+        let items: Vec<_> = drops.iter().filter_map(|entity| {
+            let item = entity.cast_any().downcast_ref::<ItemEntity>()?;
+            let mut nbt = NbtCompound::new();
+            item.get_item_stack().lock().unwrap_or_else(std::sync::PoisonError::into_inner).write_item_stack(&mut nbt);
+            let position = entity.get_entity().pos.load();
+            let velocity = entity.get_entity().velocity.load();
+            Some(json!({"stack":bridge::encode_nbt(&nbt), "x":position.x,"y":position.y,"z":position.z,
+                "vx":velocity.x,"vy":velocity.y,"vz":velocity.z,"delay":item.get_pickup_delay()}))
+        }).collect();
+        event["drops"] = json!(items);
+        event["recentlyHit"] = json!(recently_hit);
+        let world = caller.get_entity().world.load_full();
+        if let Some(reply) = living_event(caller, event)
+            && let Some(changes) = reply["drops"].as_array()
+        {
+            for drop in changes {
+                if let Err(error) = spawn_item(&world, drop) {
+                    warn!("NeoForge death drop failed: {error}");
+                }
+            }
+        } else {
+            for drop in drops {
+                world.spawn_entity(drop);
+            }
+        }
+    }
+}
+
+impl Drop for DeathDrops {
+    fn drop(&mut self) {
+        DEATH_DROPS.with(|drops| {
+            drops.borrow_mut().pop();
+        });
+    }
+}
+
+pub fn capture_death_drop(entity: &Arc<dyn EntityBase>) -> bool {
+    if !entity.cast_any().is::<ItemEntity>() {
+        return false;
+    }
+    DEATH_DROPS.with(|drops| {
+        let mut drops = drops.borrow_mut();
+        drops.last_mut().is_some_and(|capture| {
+            capture.push(entity.clone());
+            true
+        })
+    })
+}
+
+pub fn incoming_damage(
+    caller: &dyn EntityBase,
+    amount: f32,
+    damage_type: pumpkin_data::damage::DamageType,
+    source: Option<&dyn EntityBase>,
+    cause: Option<&dyn EntityBase>,
+) -> Option<f32> {
+    let mut event = damage_event("hurt", damage_type, source, cause);
+    event["amount"] = json!(amount);
+    let Some(result) = living_event(caller, event) else {
+        return Some(amount);
+    };
+    if result["canceled"] == true {
+        return None;
+    }
+    Some(
+        result["amount"]
+            .as_f64()
+            .filter(|amount| amount.is_finite() && *amount >= 0.0)
+            .unwrap_or(f64::from(amount)) as f32,
+    )
+}
+
+pub fn prevent_death(
+    caller: &dyn EntityBase,
+    damage_type: pumpkin_data::damage::DamageType,
+    source: Option<&dyn EntityBase>,
+    cause: Option<&dyn EntityBase>,
+) -> bool {
+    let Some(result) = living_event(caller, damage_event("death", damage_type, source, cause))
+    else {
+        return false;
+    };
+    if result["canceled"] != true {
+        return false;
+    }
+    if let Some(living) = caller.get_living_entity() {
+        living.set_health(result["health"].as_f64().unwrap_or(1.0).max(1.0) as f32);
+    }
+    true
+}
+
+pub fn player_break(player: &Player, position: BlockPos, state: BlockStateId, pre: bool) -> bool {
+    if !bridge::enabled() {
+        return false;
+    }
+    let Ok(state) = bridge::java_state(state) else {
+        return false;
+    };
+    let results = player_events(
+        player,
+        &[
+            json!({"type":if pre { "break_pre" } else { "mine" }, "x":position.0.x,"y":position.0.y,"z":position.0.z,"state":state}),
+        ],
+    );
+    results
+        .first()
+        .is_some_and(|result| result["canceled"] == true)
+}
+
+/// Runs a mod block callback in Java, nested in the lease when one is active.
+fn mod_block_op(world: &Arc<World>, mut request: Value) -> Option<Value> {
+    with_world(world, &mut request);
+    let result = if bridge::in_lease() {
+        bridge::play_unleased(&request)
+    } else {
+        bridge::play(RustWorld::leased(world), &request)
+    };
+    match result {
+        Ok(reply) => {
+            deliver(
+                world,
+                reply["packets"].as_array().map_or(&[][..], Vec::as_slice),
+            );
+            Some(reply)
+        }
+        Err(error) => {
+            warn!("NeoForge block callback {} failed: {error}", request["op"]);
+            None
+        }
+    }
+}
+
+fn block_request(op: &str, position: BlockPos) -> Value {
+    json!({"op": op, "x": position.0.x, "y": position.0.y, "z": position.0.z})
+}
+
+fn modded_state(state: BlockStateId) -> bool {
+    pumpkin_data::runtime::state_block(state).is_some()
+}
+
+/// `LevelChunk.setBlockState`: `BlockEntity.preRemoveSideEffects` of a mod block that is being replaced, such as a
+/// machine dropping its inventory, while Rust still holds the block entity's data.
+pub fn block_replacing(
+    world: &Arc<World>,
+    position: BlockPos,
+    old: BlockStateId,
+    flags: BlockFlags,
+) {
+    if !bridge::enabled()
+        || !modded_state(old)
+        || flags.contains(BlockFlags::SKIP_BLOCK_ENTITY_REPLACED_CALLBACK)
+        || pumpkin_data::Block::from_state_id(old)
+            == pumpkin_data::Block::from_state_id(world.get_block_state_id(&position))
+    {
+        return;
+    }
+    let Ok(old) = bridge::java_state(old) else {
+        return;
+    };
+    let mut request = block_request("block_removing", position);
+    request["old"] = json!(old);
+    mod_block_op(world, request);
+}
+
+/// What `Level.setBlock` runs for a mod block after the block changed: `onPlace` of the new one and
+/// `affectNeighborsAfterRemoval` of the old one.
+pub fn block_replaced(
+    world: &Arc<World>,
+    position: BlockPos,
+    old: BlockStateId,
+    new: BlockStateId,
+    flags: BlockFlags,
+) {
+    if !bridge::enabled()
+        || pumpkin_data::Block::from_state_id(old) == pumpkin_data::Block::from_state_id(new)
+    {
+        return;
+    }
+    let moved = flags.contains(BlockFlags::MOVED);
+    let neighbors = modded_state(old) && (flags.contains(BlockFlags::NOTIFY_NEIGHBORS) || moved);
+    let place = modded_state(new) && !flags.contains(BlockFlags::SKIP_BLOCK_ADDED_CALLBACK);
+    if !(neighbors || place) {
+        return;
+    }
+    let (Ok(old), Ok(new)) = (bridge::java_state(old), bridge::java_state(new)) else {
+        return;
+    };
+    let mut request = block_request("block_changed", position);
+    request["old"] = json!(old);
+    request["new"] = json!(new);
+    request["neighbors"] = json!(neighbors);
+    request["place"] = json!(place);
+    request["moved"] = json!(moved);
+    mod_block_op(world, request);
+}
+
+/// `BlockState.handleNeighborChanged` of a mod block.
+pub fn neighbor_changed(world: &Arc<World>, position: BlockPos, source: &pumpkin_data::Block) {
+    if !bridge::enabled() {
+        return;
+    }
+    let Ok(source) = bridge::java_state(source.default_state.id) else {
+        return;
+    };
+    let mut request = block_request("neighbor_changed", position);
+    request["source"] = json!(source);
+    mod_block_op(world, request);
+}
+
+/// `BlockState.tick` of a mod block whose scheduled tick came due.
+pub fn scheduled_tick(world: &Arc<World>, position: BlockPos) {
+    if bridge::enabled() {
+        mod_block_op(world, block_request("scheduled_tick", position));
+    }
+}
+
+/// Random tick samples that landed on mod blocks; Java runs them in one call.
+pub fn random_ticks(world: &Arc<World>, positions: &[BlockPos]) {
+    if bridge::enabled() && !positions.is_empty() {
+        let positions: Vec<_> = positions
+            .iter()
+            .map(|p| json!([p.0.x, p.0.y, p.0.z]))
+            .collect();
+        mod_block_op(world, json!({"op": "random_ticks", "positions": positions}));
+    }
+}
+
+/// A block tick Java code scheduled, kept in Rust's tick queue.
+fn schedule_tick(world: &Arc<World>, request: &Value) -> Result<Value, String> {
+    let position = BlockPos::new(
+        i32::try_from(request["x"].as_i64().unwrap_or_default()).map_err(|e| e.to_string())?,
+        i32::try_from(request["y"].as_i64().unwrap_or_default()).map_err(|e| e.to_string())?,
+        i32::try_from(request["z"].as_i64().unwrap_or_default()).map_err(|e| e.to_string())?,
+    );
+    let state = request["state"]
+        .as_u64()
+        .and_then(|state| u32::try_from(state).ok())
+        .and_then(bridge::rust_state)
+        .ok_or("scheduled tick for a block Rust does not know")?;
+    let block = pumpkin_data::Block::from_state_id(state);
+    if request["query"] == true {
+        return Ok(json!(world.is_block_tick_scheduled(&position, block)));
+    }
+    // Rust's queue holds delays up to 255 ticks.
+    let delay =
+        u8::try_from(request["delay"].as_i64().unwrap_or(1).clamp(1, 255)).unwrap_or(u8::MAX);
+    let priority = pumpkin_world::tick::TickPriority::values()
+        .into_iter()
+        .find(|priority| *priority as i64 == request["priority"].as_i64().unwrap_or(0))
+        .unwrap_or(pumpkin_world::tick::TickPriority::Normal);
+    world.schedule_block_tick(block, position, delay, priority);
+    Ok(Value::Null)
 }
 
 /// Applies the parts of a Java stack Rust shares (item, count, custom data, damage) onto Rust's stack.
@@ -619,12 +1784,14 @@ fn merged_stack(current: ItemStack, java: &NbtCompound) -> ItemStack {
         warn!("Java returned an item Rust does not know: {id}");
         return current;
     };
+    if count <= 0 {
+        return ItemStack::EMPTY.clone();
+    }
     let mut stack = if current.item.id == item.id && !current.is_empty() {
         current
     } else {
         ItemStack::new(0, item)
     };
-    stack.item_count = u8::try_from(count).unwrap_or(u8::MAX);
     let components = java.get_compound("components");
     match components.and_then(|c| c.get_compound("minecraft:custom_data")) {
         Some(data) => stack.set_data_component(CustomDataImpl::new(data.clone())),
@@ -635,6 +1802,27 @@ fn merged_stack(current: ItemStack, java: &NbtCompound) -> ItemStack {
             .and_then(|c| c.get_int("minecraft:damage"))
             .unwrap_or(0),
     );
+    if let Some(components) = components {
+        for (name, data) in &components.child_tags {
+            let removed = name.starts_with('!');
+            let name = name.trim_start_matches('!');
+            let Some(id) = DataComponent::try_from_name(name) else {
+                continue;
+            };
+            if matches!(id, DataComponent::CustomData | DataComponent::Damage) {
+                continue;
+            }
+            if removed {
+                stack.remove_data_component(id);
+            } else if let Some(value) = pumpkin_data::data_component_impl::read_data(id, data) {
+                stack.patch.retain(|(existing, _)| *existing != id);
+                stack.patch.push((id, Some(value)));
+            }
+        }
+    }
+    stack.item_count = u8::try_from(count)
+        .unwrap_or(u8::MAX)
+        .min(stack.get_max_stack_size());
     stack
 }
 
@@ -643,6 +1831,32 @@ pub struct ModEntity {
     entity: Entity,
     /// Encoded 26.2 set-entity-data packet with the entity's non-default synched data, for new viewers.
     metadata: Mutex<Option<Vec<u8>>>,
+    /// Java's latest save of the entity (`saveWithoutId`), written into the chunk with Rust's own fields.
+    java_nbt: Mutex<Option<NbtCompound>>,
+    /// Whether Java holds an instance; an entity loaded from a chunk gets one on its first entity pass.
+    in_java: AtomicBool,
+}
+
+/// Where a mod entity's Java data sits in its chunk NBT.
+const JAVA_ENTITY_DATA: &str = "neoforge:java";
+
+/// A mod entity read from chunk NBT; Java rebuilds its instance from the saved data on the next entity pass.
+#[must_use]
+pub fn load_mod_entity(
+    entity_type: &'static EntityType,
+    position: Vector3<f64>,
+    nbt: &NbtCompound,
+    world: &Arc<World>,
+) -> Arc<dyn EntityBase> {
+    let uuid = nbt.get_uuid("UUID").unwrap_or_else(uuid::Uuid::new_v4);
+    let entity = Entity::from_uuid(uuid, world.clone(), position, entity_type);
+    entity.read_nbt_non_mut(nbt);
+    Arc::new(ModEntity {
+        entity,
+        metadata: Mutex::new(None),
+        java_nbt: Mutex::new(nbt.get_compound(JAVA_ENTITY_DATA).cloned()),
+        in_java: AtomicBool::new(false),
+    })
 }
 
 impl ModEntity {
@@ -655,6 +1869,19 @@ impl ModEntity {
 }
 
 impl EntityBase for ModEntity {
+    fn write_nbt(&self, nbt: &mut NbtCompound) {
+        self.entity.write_nbt(nbt);
+        nbt.put_string("id", self.entity.entity_type.resource_name.to_owned());
+        if let Some(java) = self
+            .java_nbt
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+        {
+            nbt.put_compound(JAVA_ENTITY_DATA, java);
+        }
+    }
+
     // Java ticks bridged entities in one serial pass, see `tick_entities`.
     fn tick(&self, _caller: &dyn EntityBase, _server: &Server) {}
 
@@ -680,16 +1907,40 @@ impl EntityBase for ModEntity {
         false
     }
 
+    /// Java owns the entity's health and hurt logic: `hurtServer` runs on its instance.
     fn damage_with_context(
         &self,
         _caller: &dyn EntityBase,
-        _amount: f32,
-        _damage_type: pumpkin_data::damage::DamageType,
+        amount: f32,
+        damage_type: pumpkin_data::damage::DamageType,
         _position: Option<Vector3<f64>>,
-        _source: Option<&dyn EntityBase>,
-        _cause: Option<&dyn EntityBase>,
+        source: Option<&dyn EntityBase>,
+        cause: Option<&dyn EntityBase>,
     ) -> bool {
-        false
+        let world = self.entity.world.load_full();
+        let mut request = damage_event("hurt_entity", damage_type, source, cause);
+        request["op"] = json!("hurt_entity");
+        request["entity"] = json!(self.entity.entity_id);
+        request["amount"] = json!(amount);
+        with_world(&world, &mut request);
+        let result = if bridge::in_lease() {
+            bridge::play_unleased(&request)
+        } else {
+            bridge::play(RustWorld::leased(&world), &request)
+        };
+        match result {
+            Ok(reply) => {
+                deliver(
+                    &world,
+                    reply["packets"].as_array().map_or(&[][..], Vec::as_slice),
+                );
+                reply["hurt"] == true
+            }
+            Err(error) => {
+                warn!("NeoForge entity damage failed: {error}");
+                false
+            }
+        }
     }
 
     fn send_java_spawn_packet(&self, client: &JavaClient) {
@@ -727,6 +1978,8 @@ fn entity_op(world: &Arc<World>, request: &Value) -> Option<Result<Value, String
         "damage" => damage_entity(world, request),
         "spawn_item" => spawn_item(world, request),
         "spawn_experience" => spawn_experience(world, request),
+        "player_inventory" => player_inventory(world, request),
+        "schedule_tick" => schedule_tick(world, request),
         _ => return None,
     })
 }
@@ -766,6 +2019,8 @@ fn spawn_mod_entity(world: &Arc<World>, request: &Value) -> Result<Value, String
     Ok(json!(world.spawn_entity(Arc::new(ModEntity {
         entity,
         metadata: Mutex::new(metadata),
+        java_nbt: Mutex::new(None),
+        in_java: AtomicBool::new(true),
     }))))
 }
 
@@ -775,6 +2030,21 @@ fn position_of(request: &Value) -> Result<Vector3<f64>, String> {
         f64_of(request, "y")?,
         f64_of(request, "z")?,
     ))
+}
+
+/// Creates a mod entity through its Java type, as `/summon` would; the entity id when it spawned.
+pub fn summon(
+    world: &Arc<World>,
+    entity_type: &str,
+    position: Vector3<f64>,
+) -> Result<Option<i32>, String> {
+    let request = json!({"op": "summon", "type": entity_type, "x": position.x, "y": position.y, "z": position.z});
+    let reply = play_in(world, request).map_err(|error| error.to_string())?;
+    deliver(
+        world,
+        reply["packets"].as_array().map_or(&[][..], Vec::as_slice),
+    );
+    Ok(reply["id"].as_i64().and_then(|id| i32::try_from(id).ok()))
 }
 
 /// Mod code dropped an item: Rust spawns the real item entity with the stack Java built.
@@ -930,12 +2200,28 @@ fn tick_entities_inner(world: &Arc<World>) -> Result<(), String> {
         .clone();
     let mut alive = Vec::new();
     let mut ticking = Vec::new();
+    let mut load = Vec::new();
     for entity in world.entities.load().iter() {
         let Some(modded) = as_mod_entity(entity.as_ref()) else {
             continue;
         };
         let base = &modded.entity;
         let chunk = base.chunk_pos.load();
+        if !modded.in_java.load(Ordering::Relaxed) {
+            let java = modded
+                .java_nbt
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .as_ref()
+                .map(bridge::encode_nbt);
+            let position = base.pos.load();
+            load.push(
+                json!({"id": base.entity_id, "uuid": base.entity_uuid.to_string(),
+                "type": base.entity_type.resource_name, "nbt": java,
+                "x": position.x, "y": position.y, "z": position.z}),
+            );
+            modded.in_java.store(true, Ordering::Relaxed);
+        }
         alive.push(base.entity_id);
         if active.contains(&chunk) && world.level.is_chunk_loaded(&chunk) {
             ticking.push(base.entity_id);
@@ -947,13 +2233,10 @@ fn tick_entities_inner(world: &Arc<World>) -> Result<(), String> {
     alive.sort_unstable();
     ticking.sort_unstable();
     let request = json!({
-        "op": "entities", "world": world.uuid.to_string(),
-        "minY": world.dimension.min_y, "height": world.dimension.height,
-        "dimension": world.dimension.minecraft_name,
-        "alive": alive, "ticking": ticking,
+        "op": "entities",
+        "alive": alive, "ticking": ticking, "load": load,
     });
-    let reply = bridge::play(Arc::new(RustWorld(world.clone())), &request)
-        .map_err(|error| error.to_string())?;
+    let reply = play_in(world, request).map_err(|error| error.to_string())?;
     let states = reply["states"].as_array().map_or(&[][..], Vec::as_slice);
     if states.len() > MAX_ENTITY_STATES {
         return Err("Java returned too many entity states".into());
@@ -980,6 +2263,15 @@ fn tick_entities_inner(world: &Arc<World>) -> Result<(), String> {
         );
         if let Some(meta) = state["meta"].as_str() {
             modded.set_metadata(BASE64_STANDARD.decode(meta).ok());
+        }
+        if let Some(java) = state["nbt"]
+            .as_str()
+            .and_then(|nbt| bridge::decode_nbt(nbt).ok())
+        {
+            *modded
+                .java_nbt
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(java);
         }
     }
     for id in reply["removed"].as_array().into_iter().flatten() {

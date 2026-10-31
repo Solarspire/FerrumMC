@@ -105,8 +105,6 @@ fn apply_chunk_tickets(player: &Player, center: Vector2<i32>, view_distance: Non
 }
 
 /// Widens the ticket radius once every chunk inside the current one has finished loading.
-pub fn perf_ms() -> u128 { static T: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new(); T.get_or_init(std::time::Instant::now).elapsed().as_millis() } // FERRUMPERF
-
 pub fn ramp_chunk_tickets(player: &Player) {
     let ramp = player.chunk_ticket_radius.load(Ordering::Relaxed);
     let view_distance = get_view_distance(player);
@@ -123,7 +121,6 @@ pub fn ramp_chunk_tickets(player: &Player) {
         ))
     });
     if loaded {
-        tracing::info!("FERRUMPERF t={} ramp {} -> next", perf_ms(), ramp); // FERRUMPERF
         player.chunk_ticket_radius.store(
             ramp.saturating_add(CHUNK_TICKET_RAMP_STEP),
             Ordering::Relaxed,

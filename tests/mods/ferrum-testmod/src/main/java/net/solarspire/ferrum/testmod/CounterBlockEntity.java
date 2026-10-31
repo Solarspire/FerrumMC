@@ -1,6 +1,10 @@
 package net.solarspire.ferrum.testmod;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -43,6 +47,13 @@ public final class CounterBlockEntity extends BlockEntity {
         entity.setChanged();
         if (entity.counter % SYNC_INTERVAL == 0) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            // Feeds a container above through its capability, as item pipes and machine outputs do.
+            var above = level.getCapability(Capabilities.Item.BLOCK, pos.above(), Direction.DOWN);
+            if (above != null) {
+                try (var transaction = Transaction.openRoot()) {
+                    if (above.insert(ItemResource.of(Items.STICK), 1, transaction) == 1) transaction.commit();
+                }
+            }
         }
     }
 

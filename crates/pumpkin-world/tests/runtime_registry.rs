@@ -20,13 +20,19 @@ fn runtime_palette_persists_names_and_custom_properties() -> Result<(), Box<dyn 
                 hardness: 2.0,
                 luminance: 0,
                 solid: true,
+                tool_required: false,
                 block_entity: Some("probe:machine".into()),
+                random_ticks: true,
+                collision_shapes: Some(vec![[0.0, 0.0, 0.0, 1.0, 0.5, 1.0]]),
+                outline_shapes: None,
             }],
         }],
         vec!["probe:machine".into()],
         vec!["probe:machine".into()],
     )?;
     let state = runtime::resolve("probe:machine", &properties).ok_or("state missing")?;
+    assert!(runtime::resolve("probe:missing", &properties).is_none());
+    assert!(runtime::resolve("probe:machine", &BTreeMap::new()).is_none());
     assert!(state.as_u16() >= BlockStateId::COUNT);
     assert_eq!(
         Block::from_name("probe:machine")
@@ -35,6 +41,13 @@ fn runtime_palette_persists_names_and_custom_properties() -> Result<(), Box<dyn 
             .id,
         state
     );
+    assert!(runtime::has_random_ticks(state));
+    let slab = state
+        .to_state()
+        .get_block_collision_shapes()
+        .collect::<Vec<_>>();
+    assert_eq!(slab.len(), 1);
+    assert!((slab[0].max.y - 0.5).abs() < f64::EPSILON);
     let item = Item::from_registry_key("probe:machine").ok_or("item missing")?;
     assert_eq!(Item::from_id(item.id), Some(item));
     let stack = pumpkin_data::item_stack::ItemStack::new(3, item);

@@ -823,7 +823,11 @@ impl ItemStack {
                 continue;
             }
             if let Some(data) = data {
-                tag.put(id.to_name(), data.write_data());
+                // Components without an NBT form write `End`, which would end the compound early.
+                let value = data.write_data();
+                if !matches!(value, NbtTag::End) {
+                    tag.put(id.to_name(), value);
+                }
             } else {
                 let name = '!'.to_string() + id.to_name();
                 tag.put(name.as_str(), NbtCompound::new());
@@ -896,6 +900,26 @@ mod tests {
     /// Helper: creates a fresh Iron Sword (max_damage 250, damage 0).
     fn iron_sword() -> ItemStack {
         ItemStack::new(1, &Item::IRON_SWORD)
+    }
+
+    #[test]
+    fn stack_nbt_survives_components_without_an_nbt_form() {
+        use crate::data_component_impl::TooltipDisplayImpl;
+
+        let mut stack = ItemStack::new(3, &Item::COAL);
+        stack.patch.push((
+            DataComponent::TooltipDisplay,
+            Some(TooltipDisplayImpl.to_dyn()),
+        ));
+        let mut nbt = NbtCompound::new();
+        stack.write_item_stack(&mut nbt);
+
+        let bytes = Nbt::from(nbt).write();
+        let read = Nbt::read(&mut NbtReadHelperJava::new(Cursor::new(bytes.to_vec())))
+            .expect("stack NBT must be readable")
+            .root_tag;
+        assert_eq!(read.get_string("id"), Some("minecraft:coal"));
+        assert_eq!(read.get_int("count"), Some(3));
     }
 
     #[test]

@@ -23,7 +23,16 @@ pub struct State {
     pub hardness: f32,
     pub luminance: u8,
     pub solid: bool,
+    #[serde(default)]
+    pub tool_required: bool,
     pub block_entity: Option<String>,
+    #[serde(default)]
+    pub random_ticks: bool,
+    /// `[min x, y, z, max x, y, z]` per box; absent when Java could not report one.
+    #[serde(default)]
+    pub collision: Option<Vec<[f64; 6]>>,
+    #[serde(default)]
+    pub outline: Option<Vec<[f64; 6]>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -144,7 +153,11 @@ impl Manifest {
                     hardness: state.hardness,
                     luminance: state.luminance,
                     solid: state.solid,
+                    tool_required: state.tool_required,
                     block_entity: state.block_entity.clone(),
+                    random_ticks: state.random_ticks,
+                    collision_shapes: state.collision.clone(),
+                    outline_shapes: state.outline.clone(),
                 },
             );
         }

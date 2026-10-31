@@ -18,8 +18,26 @@ use crate::{
     registry::{Manifest, StateKey},
 };
 
+/// Rust world access for Java's level views. `world` is the handle Rust gave the level in its requests.
 pub trait WorldAccess: Send + Sync {
+    /// Rare operations, as JSON.
     fn call(&self, request: Value) -> Result<Value, String>;
+    /// The 26.2 state id at a position; air outside the height limit.
+    fn block_state(&self, world: i32, x: i32, y: i32, z: i32) -> Result<i32, String>;
+    /// `Level.setBlock` with Java's update flags; true when the state changed.
+    fn set_block_state(
+        &self,
+        world: i32,
+        position: (i32, i32, i32),
+        state: i32,
+        flags: i32,
+    ) -> Result<bool, String>;
+    fn chunk_loaded(&self, world: i32, x: i32, z: i32) -> Result<bool, String>;
+    /// Vanilla `Level.getHeight` for a heightmap: 0 world surface, 1 motion blocking, 2 motion blocking without leaves.
+    fn height(&self, world: i32, heightmap: i32, x: i32, z: i32) -> Result<i32, String>;
+    /// Rust's numeric biome id at a block position.
+    fn biome(&self, world: i32, x: i32, y: i32, z: i32) -> Result<i32, String>;
+    fn random(&self) -> i32;
 }
 
 struct Bridge {
@@ -106,24 +124,7 @@ pub(crate) fn install(vm: &JavaVM, manifest: &Manifest) -> Result<(), Error> {
             block_entity_types_to_java.insert(rust, *java);
         }
     }
-    vm.attach_current_thread(|env| -> Result<(), Error> {
-        // SAFETY: world_callback has the exact static (String)->String JNI signature.
-        let method = unsafe {
-            NativeMethod::from_raw_parts(
-                jni::jni_str!("world"),
-                jni::jni_str!("(Ljava/lang/String;)Ljava/lang/String;"),
-                world_callback as *mut _,
-            )
-        };
-        // SAFETY: the registered function and descriptor remain valid for the process lifetime.
-        unsafe {
-            env.register_native_methods(
-                jni::jni_str!("net/solarspire/ferrum/runtime/BridgeRuntime"),
-                &[method],
-            )
-        }?;
-        Ok(())
-    })?;
+    register_natives(vm)?;
     BRIDGE
         .set(Bridge {
             vm: vm.clone(),
@@ -139,6 +140,60 @@ pub(crate) fn install(vm: &JavaVM, manifest: &Manifest) -> Result<(), Error> {
             wire_states,
         })
         .map_err(|_| Error::Runtime("world bridge already installed".into()))
+}
+
+/// Registers the world callbacks on `BridgeRuntime`.
+fn register_natives(vm: &JavaVM) -> Result<(), Error> {
+    vm.attach_current_thread(|env| -> Result<(), Error> {
+        // SAFETY: each function has the exact static JNI signature of its descriptor.
+        let methods = unsafe {
+            [
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("world"),
+                    jni::jni_str!("(Ljava/lang/String;)Ljava/lang/String;"),
+                    world_callback as *mut _,
+                ),
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("getState"),
+                    jni::jni_str!("(IIII)I"),
+                    get_state as *mut _,
+                ),
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("setState"),
+                    jni::jni_str!("(IIIIII)Z"),
+                    set_state as *mut _,
+                ),
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("isLoaded"),
+                    jni::jni_str!("(III)Z"),
+                    is_loaded as *mut _,
+                ),
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("getHeight"),
+                    jni::jni_str!("(IIII)I"),
+                    get_height as *mut _,
+                ),
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("biome"),
+                    jni::jni_str!("(IIII)I"),
+                    get_biome as *mut _,
+                ),
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("random"),
+                    jni::jni_str!("()I"),
+                    random as *mut _,
+                ),
+            ]
+        };
+        // SAFETY: the registered functions and descriptors remain valid for the process lifetime.
+        unsafe {
+            env.register_native_methods(
+                jni::jni_str!("net/solarspire/ferrum/runtime/BridgeRuntime"),
+                &methods,
+            )
+        }?;
+        Ok(())
+    })
 }
 
 fn entity_types_to_java(manifest: &Manifest) -> BTreeMap<u16, u32> {
@@ -171,6 +226,12 @@ fn synced_ids(manifest: &Manifest) -> BTreeMap<String, BTreeMap<String, i32>> {
 
 pub fn enabled() -> bool {
     BRIDGE.get().is_some()
+}
+
+/// Whether this thread is currently executing a Java world callback batch.
+#[must_use]
+pub fn in_lease() -> bool {
+    WORLD.with(|world| world.borrow().is_some())
 }
 pub fn java_state(id: BlockStateId) -> Result<u32, String> {
     BRIDGE
@@ -216,6 +277,22 @@ pub fn java_block_entity_type(id: u16) -> Option<u32> {
 }
 pub fn java_entity_type(id: u16) -> Option<u32> {
     BRIDGE.get()?.entity_types_to_java.get(&id).copied()
+}
+
+/// Engine to wire ID pairs of runtime (modded) entries in a registry the frozen registry sync covers.
+#[must_use]
+pub fn runtime_ids(registry: &str) -> Vec<(u16, u32)> {
+    let Some(bridge) = BRIDGE.get() else {
+        return Vec::new();
+    };
+    let ids = match registry {
+        "item" => &bridge.items_to_java,
+        "block" => &bridge.blocks_to_java,
+        "block_entity_type" => &bridge.block_entity_types_to_java,
+        "entity_type" => &bridge.entity_types_to_java,
+        _ => return Vec::new(),
+    };
+    ids.iter().map(|(rust, java)| (*rust, *java)).collect()
 }
 
 /// One step of `NeoForge`'s configuration phase for a connection, see `ConfigBridge.java`.
@@ -342,18 +419,103 @@ extern "system" fn world_callback<'local>(
             if input.len() > 1024 * 1024 {
                 return Err(Error::Runtime("world callback exceeds 1 MiB".into()));
             }
-            let request = serde_json::from_str(&input)?;
-            let world = WORLD
-                .with(|w| w.borrow().clone())
-                .ok_or_else(|| Error::Runtime("world access outside a Rust tick lease".into()))?;
+            let request: Value = serde_json::from_str(&input)?;
+            let world = leased_world()?;
             let value = world.call(request).map_err(Error::Runtime)?;
             Ok(env.new_string(value.to_string())?)
         })
         .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
 
+fn leased_world() -> Result<Arc<dyn WorldAccess>, Error> {
+    WORLD
+        .with(|w| w.borrow().clone())
+        .ok_or_else(|| Error::Runtime("world access outside a Rust tick lease".into()))
+}
+
+/// Runs a typed world call; errors and panics become a Java `RuntimeException`.
+fn typed<T: Default>(
+    mut unowned: EnvUnowned<'_>,
+    call: impl FnOnce(&dyn WorldAccess) -> Result<T, String>,
+) -> T {
+    unowned
+        .with_env(|_| -> Result<T, Error> {
+            let world = leased_world()?;
+            call(world.as_ref()).map_err(Error::Runtime)
+        })
+        .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
+}
+
+extern "system" fn get_state<'local>(
+    unowned: EnvUnowned<'local>,
+    _class: JClass<'local>,
+    world: jni::sys::jint,
+    x: jni::sys::jint,
+    y: jni::sys::jint,
+    z: jni::sys::jint,
+) -> jni::sys::jint {
+    typed(unowned, |access| access.block_state(world, x, y, z))
+}
+
+extern "system" fn set_state<'local>(
+    unowned: EnvUnowned<'local>,
+    _class: JClass<'local>,
+    world: jni::sys::jint,
+    x: jni::sys::jint,
+    y: jni::sys::jint,
+    z: jni::sys::jint,
+    state: jni::sys::jint,
+    flags: jni::sys::jint,
+) -> jni::sys::jboolean {
+    typed(unowned, |access| {
+        access.set_block_state(world, (x, y, z), state, flags)
+    })
+}
+
+extern "system" fn is_loaded<'local>(
+    unowned: EnvUnowned<'local>,
+    _class: JClass<'local>,
+    world: jni::sys::jint,
+    x: jni::sys::jint,
+    z: jni::sys::jint,
+) -> jni::sys::jboolean {
+    typed(unowned, |access| access.chunk_loaded(world, x, z))
+}
+
+extern "system" fn get_height<'local>(
+    unowned: EnvUnowned<'local>,
+    _class: JClass<'local>,
+    world: jni::sys::jint,
+    heightmap: jni::sys::jint,
+    x: jni::sys::jint,
+    z: jni::sys::jint,
+) -> jni::sys::jint {
+    typed(unowned, |access| access.height(world, heightmap, x, z))
+}
+
+extern "system" fn get_biome<'local>(
+    unowned: EnvUnowned<'local>,
+    _class: JClass<'local>,
+    world: jni::sys::jint,
+    x: jni::sys::jint,
+    y: jni::sys::jint,
+    z: jni::sys::jint,
+) -> jni::sys::jint {
+    typed(unowned, |access| access.biome(world, x, y, z))
+}
+
+/// Rust is the only randomness source for Java level views.
+extern "system" fn random<'local>(
+    unowned: EnvUnowned<'local>,
+    _class: JClass<'local>,
+) -> jni::sys::jint {
+    typed(unowned, |access| Ok(access.random()))
+}
+
 /// Custom data key under which a stack carries the components only mods define, as `NeoForge` stores them.
 pub const MOD_COMPONENTS: &str = "ferrum_mod_components";
+/// Custom data key listing the vanilla prototype components of a mod item that Rust holds only for gameplay.
+pub const PROTOTYPE_COMPONENTS: &str = "ferrum_prototype_components";
 /// Bound on distinct mod component sets whose client encoding is kept.
 const MAX_CACHED_COMPONENT_SETS: usize = 1024;
 

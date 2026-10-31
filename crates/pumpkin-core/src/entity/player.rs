@@ -177,6 +177,8 @@ use super::item::ItemEntity;
 use super::living::LivingEntity;
 use super::mob::warden_spawn_tracker::WardenSpawnTracker;
 use super::{Entity, EntityBase, NBTStorage, NBTStorageInit};
+use crate::enchantment::EnchantmentHelper;
+use crate::item::items::mace::MaceItem;
 use pumpkin_data::potion::Effect;
 const MAX_CACHED_SIGNATURES: u8 = 128; // Vanilla: 128
 const MAX_PREVIOUS_MESSAGES: u8 = 20; // Vanilla: 20
@@ -1020,6 +1022,11 @@ impl Player {
             );
         }
 
+        if crate::neoforge::player_attack(self, victim.as_ref()) {
+            self.last_attacked_ticks.store(0, Ordering::Relaxed);
+            return;
+        }
+
         let base_damage = self
             .living_entity
             .get_attribute_value(&Attributes::ATTACK_DAMAGE);
@@ -1032,18 +1039,19 @@ impl Player {
 
         {
             let stack = &item_stack;
-            if stack.is_empty() {
-                // Vanilla fist: base_attack_speed = -2.4
-                add_speed = -2.4;
-            } else if let Some(modifiers) = stack.get_data_component::<AttributeModifiersImpl>() {
+            if let Some(modifiers) = stack.get_data_component::<AttributeModifiersImpl>() {
                 // Only attack speed is read from the item here.
                 // Attack damage is already  part of `base_damage` via the held item's live
                 // ATTACK_DAMAGE modifier, re-adding it here would double it.
                 for item_mod in modifiers.attribute_modifiers.iter() {
                     if item_mod.operation == Operation::AddValue
-                        && item_mod.id == "minecraft:base_attack_speed"
+                        && item_mod.r#type == &Attributes::ATTACK_SPEED
+                        && crate::entity::living::attribute_modifier_slot_matches(
+                            &item_mod.slot,
+                            &EquipmentSlot::MAIN_HAND,
+                        )
                     {
-                        add_speed = item_mod.amount;
+                        add_speed += item_mod.amount;
                     }
                 }
             }
@@ -1092,7 +1100,7 @@ impl Player {
 
         // Modify the added damage based on the multiplier.
         let mut damage = base_damage * damage_multiplier;
-        damage += extra_ench_damage * attack_cooldown_progress;
+        let magic_boost = extra_ench_damage * attack_cooldown_progress;
 
         if let Some(strength) = self
             .living_entity
@@ -1111,32 +1119,37 @@ impl Player {
         let pos = victim_entity.pos.load();
         let attack_type = AttackType::new(self, attack_cooldown_progress as f32);
 
+        // Vanilla `Player.attack`: the item bonus (mace smash) is added before the crit
+        // multiplier, the enchantment boost after it.
+        let can_smash =
+            MaceItem::is_mace(&item_stack) && MaceItem::can_smash_attack(&self.living_entity);
+        if MaceItem::is_mace(&item_stack) {
+            damage += f64::from(MaceItem::get_attack_damage_bonus(
+                &self.living_entity,
+                &item_stack,
+            ));
+        }
         if matches!(attack_type, AttackType::Critical) {
             damage *= 1.5;
         }
+        damage += magic_boost;
 
-        let is_mace_smash = matches!(attack_type, AttackType::MaceSmash);
-        if is_mace_smash {
-            let fall_distance = self.living_entity.fall_distance.load();
-            let mut smash_bonus_per_block = 0.0f64;
-            if let Some(enchantments) = item_stack.get_data_component::<EnchantmentsImpl>() {
-                for (enchantment, level) in enchantments.enchantment.iter() {
-                    enchantment.modify_fall_based_damage(*level, &mut smash_bonus_per_block);
-                }
-            }
-            damage += (1.5 + smash_bonus_per_block) * f64::from(fall_distance);
-        }
+        // `ItemStack.getDamageSource`: the damage_type component wins over `getItemDamageSource`.
+        let damage_type = item_stack
+            .get_data_component::<pumpkin_data::data_component_impl::DamageTypeImpl>()
+            .map_or(
+                if can_smash {
+                    DamageType::MACE_SMASH
+                } else {
+                    DamageType::PLAYER_ATTACK
+                },
+                |dt| dt.damage_type,
+            );
 
         if !victim.damage_with_context(
             victim.as_ref(),
             damage as f32,
-            if is_mace_smash {
-                DamageType::MACE_SMASH
-            } else {
-                item_stack
-                    .get_data_component::<pumpkin_data::data_component_impl::DamageTypeImpl>()
-                    .map_or(DamageType::PLAYER_ATTACK, |dt| dt.damage_type)
-            },
+            damage_type,
             None,
             Some(self),
             Some(self),
@@ -1146,53 +1159,12 @@ impl Player {
                 SoundCategory::Players,
                 &self.living_entity.entity.pos.load(),
             );
+            EnchantmentHelper::do_post_piercing_attack_effects(self);
             return;
         }
 
-        if is_mace_smash && damage >= 100.0 {
+        if can_smash && damage >= 100.0 {
             self.trigger_advancement(crate::entity::player::advancement::trigger::AdvancementTrigger::DealtOverkillDamage);
-        }
-
-        if let Some(enchantments) = item_stack.get_data_component::<EnchantmentsImpl>() {
-            for (enchantment, level) in enchantments.enchantment.iter() {
-                for post_effect in enchantment.get_post_attack_effects() {
-                    if post_effect.affected
-                        == Some(pumpkin_data::enchantment::EnchantmentTarget::Victim)
-                        && let pumpkin_data::enchantment::EnchantmentEntityEffect::Ignite {
-                            duration,
-                        } = &post_effect.effect
-                    {
-                        let duration_seconds = duration.calculate(*level);
-                        victim_entity.set_on_fire_for_ticks((duration_seconds * 20.0) as u32);
-                    }
-                }
-            }
-        }
-
-        if is_mace_smash {
-            let fall_distance = self.living_entity.fall_distance.load();
-            self.living_entity.fall_distance.store(0.0);
-            if let Some(enchantments) = item_stack.get_data_component::<EnchantmentsImpl>() {
-                for (enchantment, level) in enchantments.enchantment.iter() {
-                    if **enchantment == Enchantment::WIND_BURST {
-                        let boost_y = 0.5 + 0.25 * (*level as f64);
-                        let vel = self.living_entity.entity.velocity.load();
-                        self.living_entity
-                            .entity
-                            .velocity
-                            .store(Vector3::new(vel.x, boost_y, vel.z));
-                    }
-                }
-            }
-            world.play_sound(
-                if fall_distance > 5.0 {
-                    Sound::ItemMaceSmashGroundHeavy
-                } else {
-                    Sound::ItemMaceSmashGround
-                },
-                SoundCategory::Players,
-                &pos,
-            );
         }
 
         player_attack_sound(&pos, &world, attack_type);
@@ -1278,12 +1250,25 @@ impl Player {
         // 2. Refactor compute cost as a closure: damage_held_item(self, |stack| -> i32 { ... })
         // 3. In practice, single-player scenarios are safe (this is not multiplayer). Document
         //    as a known limitation if refactoring is deemed too invasive.
-        self.damage_held_item(Self::combat_weapon_durability_cost(&item_stack));
+        // Vanilla `Player.itemAttackInteraction`: `hurtEnemy`, post-attack enchantments,
+        // then `postHurtEnemy` (which wears the weapon) for living targets.
+        let victim_is_living = victim.get_living_entity().is_some();
+        if victim_is_living && MaceItem::is_mace(&item_stack) {
+            MaceItem::hurt_enemy(self, victim.as_ref());
+        }
+        EnchantmentHelper::do_post_attack_effects(self, victim_entity, &item_stack);
+        if victim_is_living {
+            if MaceItem::is_mace(&item_stack) {
+                MaceItem::post_hurt_enemy(self);
+            }
+            self.damage_held_item(Self::combat_weapon_durability_cost(&item_stack));
+        }
 
         // Vanilla `Player#attack` ends the successful-hit branch with
         // `causeFoodExhaustion(0.1F)`. Only landed hits exhaust; the miss/no-damage
         // case returned early above.
         self.add_exhaustion(0.1);
+        EnchantmentHelper::do_post_piercing_attack_effects(self);
     }
 
     /// Returns the durability cost for using the held item as a weapon in combat.
@@ -1495,6 +1480,9 @@ impl Player {
     }
 
     pub fn apply_tool_damage_for_block_break(&self, state: &BlockState) {
+        if crate::neoforge::modded_item_in_hand(self, Hand::Right) {
+            return;
+        }
         if matches!(
             self.gamemode.load(),
             GameMode::Creative | GameMode::Spectator
@@ -2517,16 +2505,13 @@ impl Player {
         });
 
         if let Some(batch) = prepared_batch {
-            let perf_t0 = std::time::Instant::now(); // FERRUMPERF
             let mut per_player_cache = rustc_hash::FxHashMap::default();
             let encoded = crate::net::ChunkSender::encode_batch(&batch, &mut per_player_cache);
-            let perf_t1 = std::time::Instant::now(); // FERRUMPERF
             let current_epoch = self.chunk_send_epoch.load(Ordering::Relaxed);
             let sent = self.chunk_sender.try_lock().map_or_else(
                 |_| Vec::new(),
                 |mut sender| sender.commit_batch(&batch, &encoded, &self.client, current_epoch),
             );
-            tracing::info!("FERRUMPERF t={} batch chunks={} encode_ms={:.2} commit_ms={:.2}", crate::world::chunker::perf_ms(), sent.len(), (perf_t1-perf_t0).as_secs_f64()*1e3, perf_t1.elapsed().as_secs_f64()*1e3); // FERRUMPERF
             self.pair_entities_in_chunks(&world, &sent);
         }
 
@@ -4391,7 +4376,12 @@ impl Player {
     }
 
     pub fn can_harvest(&self, state: &BlockState, block: &'static Block) -> bool {
-        !state.tool_required() || self.inventory().held_item().is_correct_for_drops(block)
+        if !state.tool_required() {
+            return true;
+        }
+        let held = self.inventory().held_item();
+        crate::neoforge::correct_tool_for_drops(&self.world(), state, &held)
+            .unwrap_or_else(|| held.is_correct_for_drops(block))
     }
 
     /// The id under which Pumpkin will store it's `mining_efficiency` modifier value
@@ -4427,10 +4417,11 @@ impl Player {
         );
     }
 
-    pub fn get_mining_speed(&self, block: &'static Block) -> f32 {
+    pub fn get_mining_speed(&self, state: &BlockState, block: &'static Block) -> f32 {
         self.sync_mining_efficiency();
         let held_item = self.inventory.held_item();
-        let mut speed = held_item.get_speed(block);
+        let mut speed = crate::neoforge::destroy_speed(&self.world(), state, &held_item)
+            .unwrap_or_else(|| held_item.get_speed(block));
         // Effi only gets applied if tool's break speed for block is alreadyabove 1 (meaning it's
         // the correct tool)
         if speed > 1.0 {
@@ -4550,6 +4541,9 @@ impl Player {
             }
         }
 
+        let Some(dropped_stack) = crate::neoforge::toss_item(self, &dropped_stack) else {
+            return;
+        };
         item_stack.decrement(drop_amount);
         let updated_stack = item_stack.clone();
         self.inventory().set_held_item(updated_stack.clone());
@@ -5137,6 +5131,7 @@ impl Player {
         screen_handler_factory: &dyn ScreenHandlerFactory,
         block_pos: Option<BlockPos>,
     ) -> Option<u8> {
+        crate::neoforge::close_java_menu(self);
         if !self
             .current_screen_handler
             .lock()
@@ -5207,6 +5202,7 @@ impl Player {
         screen_handler: Arc<std::sync::Mutex<dyn ScreenHandler>>,
         title: &TextComponent,
     ) {
+        crate::neoforge::close_java_menu(self);
         if !self
             .current_screen_handler
             .lock()
@@ -6218,6 +6214,7 @@ impl EntityBase for Player {
 
     fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
         nbt.put_int("DataVersion", DATA_VERSION);
+        crate::neoforge::write_player_attachments(self.gameprofile.id, nbt);
         self.inventory.write_nbt(nbt);
         self.ender_chest_inventory.write_nbt(nbt);
 
@@ -6330,6 +6327,7 @@ impl EntityBase for Player {
 
     #[expect(clippy::too_many_lines)]
     fn read_custom_nbt(&self, nbt: &NbtCompound) {
+        crate::neoforge::read_player_attachments(self.gameprofile.id, nbt);
         self.inventory.read_nbt_non_mut(nbt);
         self.ender_chest_inventory.read_nbt_non_mut(nbt);
         self.living_entity

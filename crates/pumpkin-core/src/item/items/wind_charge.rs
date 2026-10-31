@@ -1,5 +1,8 @@
 use rand::{RngExt, rng};
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
+
+use pumpkin_util::math::vector3::Vector3;
 
 use crate::entity::player::Player;
 use pumpkin_data::entity::EntityType;
@@ -62,6 +65,18 @@ impl ItemBehaviour for WindChargeItem {
         let wind_charge = ThrownItemEntity::new(entity, player.get_entity(), WIND_CHARGE_GRAVITY);
         wind_charge.entity.pos.store(position);
         wind_charge.set_velocity_from(pitch, yaw, 0.0, POWER, 1.0);
+        // `Projectile.shootFromRotation` adds the thrower's known movement.
+        let owner = player.get_entity();
+        let movement = owner.movement.load();
+        let lift = if owner.on_ground.load(Ordering::Relaxed) {
+            0.0
+        } else {
+            movement.y
+        };
+        wind_charge
+            .entity
+            .velocity
+            .store(wind_charge.entity.velocity.load() + Vector3::new(movement.x, lift, movement.z));
 
         world.spawn_entity(Arc::new(WindChargeEntity::new_normal(wind_charge)));
 

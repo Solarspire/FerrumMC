@@ -35,6 +35,7 @@ pub mod doors;
 pub mod fence_gates;
 pub mod fences;
 pub mod trapdoor;
+pub mod wind_trigger;
 
 // Building & structural blocks
 pub mod barrier;

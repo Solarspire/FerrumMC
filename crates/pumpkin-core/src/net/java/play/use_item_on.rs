@@ -35,7 +35,26 @@ impl JavaClient {
             return Err(BlockPlacingError::InvalidHand);
         };
 
+        let (allow_block, allow_item) = crate::neoforge::right_click(
+            player,
+            hand,
+            position,
+            use_item_on.face.0,
+            cursor_pos,
+            use_item_on.inside_block,
+        );
+        if !allow_block && !allow_item {
+            player.try_send_client_packet(&CBlockUpdate::new(
+                position,
+                VarInt(i32::from(
+                    player.world().get_block_state_id(&position).as_u16(),
+                )),
+            ));
+            return Ok(());
+        }
+
         if player.gamemode.load() != GameMode::Spectator
+            && allow_block
             && crate::neoforge::modded_block_at(&player.world(), &position)
             && crate::neoforge::player_use_block(
                 player,
@@ -50,6 +69,7 @@ impl JavaClient {
         }
 
         if player.gamemode.load() != GameMode::Spectator
+            && allow_item
             && crate::neoforge::modded_item_in_hand(player, hand)
             && crate::neoforge::player_use_on(
                 player,
@@ -141,7 +161,7 @@ impl JavaClient {
         let sneaking = player.get_entity().is_sneaking();
 
         // Code based on the java class ServerPlayerInteractionManager
-        if !(sneaking && (!held_item_empty || !off_hand_item_empty)) {
+        if allow_block && !(sneaking && (!held_item_empty || !off_hand_item_empty)) {
             let result = Self::call_use_item_on(
                 player,
                 &position,
@@ -206,7 +226,7 @@ impl JavaClient {
             PlayerInventory::OFF_HAND_SLOT
         };
 
-        if item.is_empty() {
+        if item.is_empty() || !allow_item {
             // TODO item cool down
             // If the hand is empty we stop here
             return Ok(());
@@ -220,8 +240,15 @@ impl JavaClient {
             // Check if the item is a block, because not every item can be placed :D
             let item_id = item.item.id;
             if let Some(block) = Block::from_item_id(item_id) {
-                should_try_decrement =
-                    Self::run_is_block_place(player, block, server, use_item_on, position, face)?;
+                should_try_decrement = Self::run_is_block_place(
+                    player,
+                    block,
+                    server,
+                    use_item_on,
+                    position,
+                    face,
+                    &item,
+                )?;
             }
         }
 
@@ -360,12 +387,14 @@ impl JavaClient {
         use_item_on: &SUseItemOn,
         location: BlockPos,
         face: BlockDirection,
+        item: &ItemStack,
     ) -> Result<bool, BlockPlacingError> {
         match server
             .block_registry
             .place_block(player, block, server, use_item_on, location, face)
         {
             Ok(Some((final_block_pos, new_state))) => {
+                crate::neoforge::block_placed(player, final_block_pos, item);
                 player.try_send_client_packet(&CBlockUpdate::new(
                     final_block_pos,
                     VarInt(i32::from(new_state.as_u16())),

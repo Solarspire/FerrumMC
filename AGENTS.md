@@ -12,7 +12,7 @@ Read [UPSTREAM.md](UPSTREAM.md), [Phase 1](docs/PHASE1.md), and the [Pumpkin/Pat
 
 Things worth knowing before you start:
 
-- FerrumMC targets Java 26.2 clients (protocol 776) while retaining the pinned latest Pumpkin HEAD's 26.3 engine/data (protocol 777). Do not downgrade Pumpkin. `CURRENT_MC_VERSION` and `LOWEST_SUPPORTED_MC_VERSION` describe upstream codecs; FerrumMC's `MINIMUM_CLIENT_VERSION` describes admission. Older multi-version history does not prove this HEAD translates configuration/play. Phase 1 status/login admission is a narrower gate than real-client, registry or gameplay compatibility.
+- FerrumMC is a 26.2-only server (protocol 776). The owner decided (2026-10-31) to remove 26.3 entirely: engine data, registries, packets and codecs move to native 26.2, and the 26.3 to 26.2 translation layer in `compatibility.rs` goes away once that migration lands. Don't add new 26.3-only content or new 26.3 translation code; port against the vanilla 26.2 server jar. Until the migration is done, the engine still runs pinned Pumpkin 26.3 data and translates to 26.2 clients.
 - FerrumMC is Java-only and accepts only NeoForge 26.2 clients. Vanilla clients are rejected at login (`scripts/smoke.ps1` asserts this). Bedrock support, including the Bedrock block-state conversion, has been removed on purpose; don't reintroduce it. Fabric clients may come later through the same loader seam, but nothing targets Fabric yet.
 - Game logic (block, item, entity and AI behaviour) runs synchronously inside the tick. Networking, disk I/O, plugins and events are async on Tokio. CPU-heavy work such as chunk generation and lighting runs on Rayon.
 - Chunk loading, world generation, lighting and saves live in `pumpkin-world`.
@@ -28,6 +28,16 @@ Some directories have their own `AGENTS.md` with details for that area. Read it 
 - `crates/pumpkin-world/AGENTS.md`: chunk loading, world generation and how to check it against vanilla.
 - `tools/pumpkin-codegen/AGENTS.md`: generators, regenerating and generated-file churn.
 
+## Project scope
+
+What the owner wants out of FerrumMC, in priority order:
+
+1. Remove 26.3: native 26.2 engine, no translation layer.
+2. The NeoForge bridge as a real call adapter: mods stay as unmodified jars in the embedded JVM, and their calls are converted into fast typed operations on the Rust world (typed JNI natives, delta sync, dense ID tables), not JSON round trips or per-mod hacks. Everything mods produce becomes canonical Rust state. Fixes must be generic so every mod benefits, not just HBM.
+3. HBM NTM, Draconic-Next and Crankshaft fully playable with a real NeoForge 26.2 client, then other large mods (Create, Mekanism, AE2).
+4. Vanilla 26.2 gameplay parity in core Pumpkin (mace smash and wind burst, wind charge, spear lunge and other combat, particles and sounds), built so mod items that reuse vanilla behaviour or components get the same mechanics.
+5. PatchBukkit plugins sharing the one JVM with the bridge.
+
 ## NeoForge bridge status
 
 The bridge is a bridge, not a Rust rewrite of mods. Real NeoForge plus the mod jars load in an embedded JVM; Rust stays the single authority and Java mod code reads and writes the Rust world through JNI views. The current target is HBM NTM (`hbm-neoforge-1.0.3`), Draconic-Next `1.0.0-alpha.1` and its requirement Crankshaft, tested with a real NeoForge 26.2 client.
@@ -36,7 +46,7 @@ Where the code lives:
 
 - `crates/ferrum-neoforge`: Rust side. `lib.rs` (`Runtime::from_directory`, reads `ferrum-neoforge.json`), `registry.rs` (modded registry entries), `world.rs` (JNI callbacks). Uses `jni` 0.22; `with_env` turns Rust panics into Java `RuntimeException`.
 - `bridge/neoforge-runtime`: Java side (`RustLevel`, `RustPlayer`, `ConfigBridge`, `BridgeContent`, a stand-in `DedicatedServer`). Builds `ferrum-neoforge-runtime-1.0.0.jar`; launch metadata and libraries are cached in `bridge/neoforge-runtime/.cache`.
-- `crates/pumpkin-core/src/neoforge.rs`: engine integration. `crates/pumpkin-core/src/net/java/compatibility.rs`: 26.3 to 26.2 translation and modded ID remaps.
+- `crates/pumpkin-core/src/neoforge.rs`: engine integration. `crates/pumpkin-core/src/net/java/compatibility.rs`: 26.3 to 26.2 translation (to be removed) and modded ID remaps.
 
 How it works:
 
@@ -56,17 +66,21 @@ Working:
 - NeoForge client joins; registry and tag sync; NeoForge-only gate; Bedrock removed.
 - Placing and breaking modded blocks (the old crash came from the Bedrock conversion); ID remaps for dropped items and metadata.
 - Fast terrain loading in the headless client.
+- HBM worldgen: all `hbm:` placed features (ores, deposits, strata, ore caves, vegetation) and all 45 `hbm:` structures (8 `structure_set`s, jigsaw, `hbm:single_piece`, custom `HbmStructureTypes`) run real Java against a Rust generation snapshot (`WorldgenBridge`, `neoforge_worldgen.rs`, `pumpkin-world` `generation/modded.rs`, which builds the 3x3 snapshot at opt-level 3); deterministic per seed (`scripts/test-neoforge-worldgen.ps1`). Java recomputes structure starts from the seed with the real `NoiseBasedChunkGenerator` (cached, not persisted) and places pieces per chunk at the `strongholds` step, clipped to the chunk like vanilla; Rust commits blocks and block entities (generated block entities arrive as pending NBT: vanilla chests keep their loot table, modded ones go through `ModBlockEntity`). Not done: persisting starts/references in chunk data, terrain adaptation (Beardifier) around modded structures, structure mob spawns and entities spawned by pieces.
 - Mod payloads, `RustPlayer`, native mod components, forwarded Java packets (sounds, particles, level and entity events).
 - HBM guns: firing `hbm:gun_greasegun` spawns a moving `hbm:bullet_mk4` and plays the gun sound. Java item stack objects persist across ticks so gun timers work.
+- Mod menus and container sync (HBM radar, furnace, crate); Java `ItemEntity`/XP orbs become native Rust entities; bullets and melee damage mobs.
+- Adapter (2026-10-31): hot world calls (`getState`, `setState`, `isLoaded`, `getHeight`, `biome`, `random`) are registered JNI natives keyed by an int world handle; block entities and player inventories sync only on change; ID remaps use dense tables built once; 26.3-only entities (`cushion`) and their follow-up packets are dropped for 26.2 clients. Mod item components go to the client in Java's own 26.2 encoding.
+- Vanilla block entities written by Java are committed back to Rust; safe leave (Java menu closed, items returned); mod recipes in vanilla crafting/furnace/campfire via Java `RecipeManager`; damage to mod entities through Java `hurtServer`; mod block neighbour/scheduled ticks, `onPlace` and removal side effects; mod entities, player attachments and SavedData (`<world>/data/neoforge`) persist; worldgen runs every non-`minecraft` namespace.
+- Serverbound item components (enchantments, potions) are mapped back to engine IDs; an undecodable creative slot or click is dropped, not a kick.
 
 In progress or open:
 
-- Mod menus: `openMenu` to `OpenScreen` with NeoForge extra data, container sync, click and close routing, `useWithoutItem`/`useItemOn` for modded blocks, and the HBM radar's `SyncBlob`/`PacketWire` path through a netty `EmbeddedChannel`. Mod menu type IDs need remapping.
-- Vanilla-typed entities spawned by Java (`ItemEntity`, XP orbs) are dropped; they should become native Rust entities.
-- Bullet damage to mobs is unverified.
-- Mod entities are not persisted.
-- The stand-in server only fills some fields; calls like `getPlayerList` may return null.
-- Some item components still go out raw (`jukebox_playable`, `instrument`, `trim`, variants). Resolvable-profile metadata errors.
+- Mod block random ticks and collision shapes; chunk attachments not persisted.
+- Many NTM features still don't work in real play; keep closing generic bridge gaps from owner reports.
+- Requests other than the hot natives are still JSON with base64 payloads; a binary envelope is not done.
+- `EnvironmentAttributeSystem` on the stand-in level covers dimension and biome layers only (no day/night).
+- Draconic: mace used in the air works; other Draconic abilities and the spear lunge math need checking against vanilla.
 - PatchBukkit fails with `Failed to create JavaVM: AlreadyCreated` when the bridge is on, so plugins are disabled in `run/server`. The two need to share one JVM.
 - Failing tests: `pumpkin-command` `unknown_command_message_includes_command_name` and the PatchBukkit integration tests.
 - Loading time with a real client is unchecked.
@@ -85,11 +99,11 @@ Read this when you pick the work up in a fresh chat with no history.
 - Before stopping or restarting a server the owner may be playing on, say so in chat.
 - The owner works in T3 Code and usually wants a thin orchestrator that delegates to agents. Model budget:
   - Codex runs on ChatGPT Plus and runs out fast. Use GPT-6.1 Sol for small and medium tasks; there are two Codex accounts, `codex` and `codex_2`, so switch when one hits its limit.
-  - Claude runs on Max 20x. Use Sonnet 5.5 for most heavy work and bug fixing, Opus 5.5 at medium effort for long hard tasks, and Haiku 5.5 for searching.
+  - Claude runs on Max 20x. Use Sonnet 5.5 for bug fixing and smaller work, Opus 5.5 for the bridge adapter, migrations and other long hard tasks (the owner approved Opus for these), and Haiku 5.5 for searching.
   - Every subagent must start by invoking the `caveman:caveman` skill and keep its token use low.
 - Don't let two editing agents work on the same files at once. Concurrent edits broke each other's builds before.
 - Delegated children inherit the parent's runtime mode. When the parent is in `auto`, children get no network, so only use full access when that's available.
-- There is no git repository yet. Don't `git init` until the owner provides the remote (planned: `https://github.com/Solarspire/FerrumMC.git`). Agents never open PRs or post GitHub comments. Write only inside the FerrumMC directory and build caches. Never hand-edit `crates/pumpkin-data/src/generated/`.
+- Git repo on branch `main`, remotes `origin` (`https://github.com/Solarspire/FerrumMC.git`, public) and `solarspire` (`https://code.solarspire.net/Solarspire/FerrumMC.git`). Push to both only when the owner asks. `docs/` is local-only (gitignored). Agents never open PRs or post GitHub comments. Write only inside the FerrumMC directory and build caches. Never hand-edit `crates/pumpkin-data/src/generated/`.
 
 ### Test server
 
@@ -97,20 +111,15 @@ Read this when you pick the work up in a fresh chat with no history.
 - Start it in its own console so it can take input:
   `Start-Process pwsh -WorkingDirectory <repo> -ArgumentList '-NoExit','-Command','$env:RUST_BACKTRACE="full"; & .\scripts\run.ps1'`
   Then confirm port 25565 is listening.
-- Before each relaunch, rebuild the exe and the runtime jar, then copy `ferrum-neoforge-runtime-1.0.0.jar` into `run/server/neoforge/mods`. `run/server/neoforge/libraries` is a junction to `bridge/neoforge-runtime/.cache/server/libraries`.
+- Before each relaunch, rebuild the exe and the runtime jar, then copy `ferrum-neoforge-runtime-1.0.0.jar` into `run/server/neoforge/mods`. The owner server loads its bootstrap from `run/server/neoforge/ferrum-bootstrap.jar` (see `run/server/jvm-owner.json`), not the build output, so also copy `build/libs/ferrum-neoforge-runtime-1.0.0-bootstrap.jar` there. `run/server/neoforge/libraries` is a junction to `bridge/neoforge-runtime/.cache/server/libraries`.
 - Server-side crash evidence: the console output and `run/server/panic.log`.
 - The owner's client is the Prism Launcher instance "NTM Rust Test" (NeoForge 26.2). Its logs are in `C:\Users\andre\AppData\Roaming\PrismLauncher\instances\NTM Rust Test\minecraft\logs\latest.log`, and disconnect reports are in `...\minecraft\debug\disconnect-*.txt`. Read them when the owner reports a client error.
 
-### Where work stopped (2026-10-30)
+### Where work stopped (2026-10-31)
 
-- Stages 1 to 3 of the interaction bridge are done: payloads, `RustPlayer`, mod components, forwarded Java packets, and mod entities and bullets.
-- Stage 4 was running as a Sonnet delegate in T3 Code (task `c11dd2da-64e6-4c1c-b441-5630c3e89d62`). Its scope:
-  - mod menus and container sync, including the HBM radar GUI and its `SyncBlob`/`PacketWire` data;
-  - turning Java-spawned `ItemEntity` and XP orbs into native Rust entities;
-  - checking that bullets damage a zombie in the gun probe.
-  
-  It had to keep the owner's server running (using the exe rename trick) and relaunch it at the end. Its acceptance checks are the headless radar right-click opening the menu, then a slot click and a close; the gun probe showing a damaged zombie; and a mod item drop appearing. The existing probes, the bridge and smoke tests, `cargo fmt` and `clippy` must all be clean.
-- Next session: check whether stage 4 finished (read its thread or look at the code and test results). Restart the server if needed, give the owner the address, and continue with the "In progress or open" list above. Update this section when the state changes.
+- Interaction bridge stages 1 to 4 and the adapter rework are done (see "Working" above). Nothing is committed yet; the whole bridge lives in the working tree.
+- In flight: a bridge agent (random ticks, collision shapes, chunk attachments, attack on a vanished entity, more probes), a vanilla combat agent (mace, wind charge, spear lunge ported from the 26.2 server jar), and a read-only plan for removing 26.3.
+- Next: run the 26.3 removal once the editing agents finish (it touches almost every crate, so nothing else edits in parallel), then keep fixing NTM and Draconic gaps from owner reports. Update this section when the state changes.
 
 ## Vanilla parity
 

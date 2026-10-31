@@ -65,7 +65,7 @@ use border::Worldborder;
 use bytes::BufMut;
 pub use explosion::{
     BlockInteraction, DefaultExplosionDamageCalculator, Explosion, ExplosionDamageCalculator,
-    ExplosionInteraction, SimpleExplosionDamageCalculator,
+    ExplosionEffects, ExplosionInteraction, SimpleExplosionDamageCalculator,
 };
 use pumpkin_config::BasicConfiguration;
 use pumpkin_data::block_properties::{blocks_movement, is_air};
@@ -92,7 +92,7 @@ use pumpkin_inventory::{Clearable, Inventory};
 use pumpkin_nbt::compound::NbtCompound;
 
 use pumpkin_protocol::java::client::play::{
-    CBlockUpdate, CDisguisedChatMessage, CExplosion, CRespawn, CSetBlockDestroyStage, CWorldEvent,
+    CBlockUpdate, CDisguisedChatMessage, CRespawn, CSetBlockDestroyStage, CWorldEvent,
     PlayerSpawnData,
 };
 use pumpkin_protocol::java::client::play::{
@@ -100,7 +100,7 @@ use pumpkin_protocol::java::client::play::{
 };
 use pumpkin_protocol::java::client::play::{CSetEntityMetadata, Metadata};
 use pumpkin_protocol::{
-    ClientPacket, IdOr, SoundEvent,
+    ClientPacket, IdOr,
     codec::var_int::VarInt,
     java::{
         self,
@@ -1282,6 +1282,7 @@ impl World {
         self.flush_block_updates();
         self.flush_synced_block_events();
         self.update_active_chunks();
+        crate::neoforge::level_tick_event(self, true);
         self.tick_environment();
         let mut raids = {
             let mut guard = self
@@ -1324,9 +1325,13 @@ impl World {
             .collect();
 
         let t_players = std::time::Instant::now();
-        players.par_iter().for_each(|player| {
-            player.tick(server);
-        });
+        if ferrum_neoforge::world::enabled() {
+            for player in players.iter() {
+                player.tick(server);
+            }
+        } else {
+            players.par_iter().for_each(|player| player.tick(server));
+        }
         let player_elapsed = t_players.elapsed();
 
         let entities_to_tick = self.entities.load();
@@ -1360,11 +1365,13 @@ impl World {
         // Entities that can affect each other tick in list order; separate islands run in
         // parallel.
         let islands_config = &server.advanced_config.world.entity_islands;
-        let plan_islands = self
-            .island_schedule
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .should_plan(tickable.len());
+        // Mod damage/event handlers can reach any entity; their dependencies are not bounded by native reach reports.
+        let plan_islands = !ferrum_neoforge::world::enabled()
+            && self
+                .island_schedule
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .should_plan(tickable.len());
         let islands = if plan_islands {
             let islands = (|| {
                 let reports: Vec<_> = tickable
@@ -1511,6 +1518,7 @@ impl World {
         if let Some(ref fight_mutex) = self.dragon_fight {
             dragon_fight::DragonFight::tick(fight_mutex, self);
         }
+        crate::neoforge::level_tick_event(self, false);
 
         let total_elapsed = start.elapsed();
         if total_elapsed.as_millis() > 50 {
@@ -1768,6 +1776,8 @@ impl World {
 
         // 1. Parallel Block Ticks via Rayon
         let world = self.clone();
+        // Mod blocks tick in Java, which runs on this thread only.
+        let mod_ticks = std::sync::Mutex::new(Vec::new());
         tick_data
             .block_ticks
             .par_chunks(BATCH_SIZE)
@@ -1776,7 +1786,14 @@ impl World {
                 for scheduled_tick in batch {
                     let pos = scheduled_tick.position;
                     let block = world.get_block(&pos);
-                    if let Some(pumpkin_block) = world.block_registry.get_pumpkin_block(block.id) {
+                    if pumpkin_data::runtime::block(block.id).is_some() {
+                        mod_ticks
+                            .lock()
+                            .unwrap_or_else(std::sync::PoisonError::into_inner)
+                            .push(pos);
+                    } else if let Some(pumpkin_block) =
+                        world.block_registry.get_pumpkin_block(block.id)
+                    {
                         pumpkin_block.on_scheduled_tick(OnScheduledTickArgs {
                             world: &world,
                             block,
@@ -1785,6 +1802,13 @@ impl World {
                     }
                 }
             });
+
+        for pos in mod_ticks
+            .into_inner()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        {
+            crate::neoforge::scheduled_tick(self, pos);
+        }
 
         // 2. Parallel Fluid Ticks via Rayon
         let world = self.clone();
@@ -1804,6 +1828,8 @@ impl World {
 
         // 3. Parallel Random Ticks via Rayon
         let world = self.clone();
+        // Mod blocks random tick in Java, which runs on this thread only.
+        let mod_random_ticks = std::sync::Mutex::new(Vec::new());
         tick_data
             .random_ticks
             .par_chunks(BATCH_SIZE)
@@ -1823,6 +1849,13 @@ impl World {
                         };
 
                     if let Some(block) = block
+                        && pumpkin_data::runtime::block(block.id).is_some()
+                    {
+                        mod_random_ticks
+                            .lock()
+                            .unwrap_or_else(std::sync::PoisonError::into_inner)
+                            .push(pos);
+                    } else if let Some(block) = block
                         && let Some(pumpkin_block) =
                             world.block_registry.get_pumpkin_block(block.id)
                     {
@@ -1841,6 +1874,12 @@ impl World {
                     }
                 }
             });
+
+        let mut mod_random_ticks = mod_random_ticks
+            .into_inner()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        mod_random_ticks.sort_unstable_by_key(|p| (p.0.x, p.0.y, p.0.z));
+        crate::neoforge::random_ticks(self, &mod_random_ticks);
 
         // 4. Calculate Spawn List (Sequential setup)
         let spawn_state = self.spawn_state.load();
@@ -3048,13 +3087,13 @@ impl World {
         if let Some(calc) = damage_calculator {
             explosion = explosion.with_damage_calculator(calc);
         }
-        self.run_explosion(&explosion, position, power);
+        self.run_explosion(&explosion);
     }
 
     pub fn explode_tnt_minecart(self: &Arc<Self>, position: Vector3<f64>, power: f32) {
         let block_interaction = self.get_block_interaction(ExplosionInteraction::Tnt);
         let explosion = Explosion::new(power, position, block_interaction).preserving_rails();
-        self.run_explosion(&explosion, position, power);
+        self.run_explosion(&explosion);
     }
 
     #[must_use]
@@ -3088,37 +3127,8 @@ impl World {
         }
     }
 
-    fn run_explosion(self: &Arc<Self>, explosion: &Explosion, position: Vector3<f64>, power: f32) {
-        let mut event = crate::plugin::api::events::entity::entity_explode::EntityExplodeEvent::new(
-            0, position, power,
-        );
-        if let Some(server) = self.server.upgrade() {
-            server.plugin_manager.fire_blocking(&server, &mut event);
-        }
-        if event.cancelled {
-            return;
-        }
-
-        let block_count = explosion.explode(self);
-        let particle = if power < 2.0 {
-            Particle::Explosion
-        } else {
-            Particle::ExplosionEmitter
-        };
-        let sound = IdOr::<SoundEvent>::Id(Sound::EntityGenericExplode as u16);
-        for player in self.players.load().iter() {
-            if player.position().squared_distance_to_vec(&position) > 4096.0 {
-                continue;
-            }
-            player.try_send_client_packet(&CExplosion::new(
-                position,
-                power,
-                block_count as i32,
-                None,
-                VarInt(particle as i32),
-                sound.clone(),
-            ));
-        }
+    fn run_explosion(self: &Arc<Self>, explosion: &Explosion) {
+        explosion.explode_with_effects(self, ExplosionEffects::DEFAULT);
     }
 
     #[allow(clippy::too_many_lines)]
@@ -4103,6 +4113,9 @@ impl World {
     ///
     /// [`EntitySpawnEvent`]: crate::plugin::api::events::entity::entity_spawn::EntitySpawnEvent
     pub fn spawn_entity(self: &Arc<Self>, entity: Arc<dyn EntityBase>) -> bool {
+        if crate::neoforge::capture_death_drop(&entity) {
+            return true;
+        }
         let mut event = crate::plugin::api::events::entity::entity_spawn::EntitySpawnEvent::new(
             entity.get_entity().entity_id,
             entity.get_entity().entity_type.id.to_string(),
@@ -4333,6 +4346,10 @@ impl World {
 
     /// Everything `set_block_state` does after the chunk write: callbacks, neighbour updates,
     /// client sync, POI and lighting.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "Mirrors Level.setBlock and LevelChunk.setBlockState in one sequence"
+    )]
     fn on_block_state_set(
         self: &Arc<Self>,
         position: &BlockPos,
@@ -4348,6 +4365,7 @@ impl World {
         let new_block = Block::from_state_id(block_state_id);
         let is_new_block = old_block != new_block;
         let block_moved = flags.contains(BlockFlags::MOVED);
+        crate::neoforge::block_replacing(self, *position, replaced_block_state_id, flags);
 
         if is_new_block
             && old_block.default_state.block_entity_type != u16::MAX
@@ -4380,6 +4398,14 @@ impl World {
                 block_moved,
             );
         }
+
+        crate::neoforge::block_replaced(
+            self,
+            *position,
+            replaced_block_state_id,
+            block_state_id,
+            flags,
+        );
 
         // Level.java setBlock
         if self.get_block_state_id(position) == block_state_id {
@@ -4519,6 +4545,20 @@ impl World {
         }
         if event.cancelled {
             return None;
+        }
+
+        if let Some(player) = cause
+            && crate::neoforge::player_break(player, *position, broken_block_state.id, true)
+        {
+            return None;
+        }
+
+        // Vanilla `ServerPlayerGameMode.destroyBlock` runs `Item.mineBlock` before the block is removed.
+        if let Some(player) = cause
+            && player.gamemode.load() != pumpkin_util::GameMode::Creative
+            && crate::neoforge::modded_item_in_hand(player, pumpkin_util::Hand::Right)
+        {
+            crate::neoforge::player_break(player, *position, broken_block_state.id, false);
         }
 
         if event.drop {

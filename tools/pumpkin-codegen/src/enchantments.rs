@@ -338,8 +338,29 @@ fn parse_entity_effect(val: &serde_json::Value) -> TokenStream {
                 }
             }
             "minecraft:play_sound" => {
-                let sound = obj.get("sound").and_then(|s| s.as_str()).unwrap_or("");
-                quote! { EnchantmentEntityEffect::PlaySound { sound: #sound } }
+                // `sound` is a single id or a list indexed by enchantment level.
+                let sounds: Vec<&str> = match obj.get("sound") {
+                    Some(serde_json::Value::Array(list)) => {
+                        list.iter().filter_map(|s| s.as_str()).collect()
+                    }
+                    Some(serde_json::Value::String(s)) => vec![s.as_str()],
+                    _ => Vec::new(),
+                };
+                let volume = obj.get("volume").map_or_else(
+                    || quote! { pumpkin_util::math::float_provider::FloatProvider::Constant(1.0) },
+                    parse_float_provider,
+                );
+                let pitch = obj.get("pitch").map_or_else(
+                    || quote! { pumpkin_util::math::float_provider::FloatProvider::Constant(1.0) },
+                    parse_float_provider,
+                );
+                quote! {
+                    EnchantmentEntityEffect::PlaySound {
+                        sounds: &[#(#sounds),*],
+                        volume: #volume,
+                        pitch: #pitch,
+                    }
+                }
             }
             "minecraft:replace_block" => {
                 let offset_x = obj
@@ -1074,6 +1095,8 @@ pub fn build() -> TokenStream {
             parse_conditional_entity_effects(effects_map.get("minecraft:projectile_spawned"));
         let post_attack =
             parse_targeted_conditional_entity_effects(effects_map.get("minecraft:post_attack"));
+        let post_piercing_attack =
+            parse_conditional_entity_effects(effects_map.get("minecraft:post_piercing_attack"));
         let projectile_count =
             parse_conditional_value_effects(effects_map.get("minecraft:projectile_count"));
         let projectile_spread =
@@ -1120,6 +1143,7 @@ pub fn build() -> TokenStream {
             EnchantmentEffects {
                 projectile_spawned: #projectile_spawned,
                 post_attack: #post_attack,
+                post_piercing_attack: #post_piercing_attack,
                 projectile_count: #projectile_count,
                 projectile_spread: #projectile_spread,
                 projectile_piercing: #projectile_piercing,
@@ -1346,7 +1370,9 @@ pub fn build() -> TokenStream {
                 amount: LevelBasedValue,
             },
             PlaySound {
-                sound: &'static str,
+                sounds: &'static [&'static str],
+                volume: pumpkin_util::math::float_provider::FloatProvider,
+                pitch: pumpkin_util::math::float_provider::FloatProvider,
             },
             ReplaceBlock {
                 offset_x: i32,
@@ -1576,6 +1602,7 @@ pub fn build() -> TokenStream {
         pub struct EnchantmentEffects {
             pub projectile_spawned: &'static [ConditionalEffect<EnchantmentEntityEffect>],
             pub post_attack: &'static [TargetedConditionalEffect<EnchantmentEntityEffect>],
+            pub post_piercing_attack: &'static [ConditionalEffect<EnchantmentEntityEffect>],
             pub projectile_count: &'static [ConditionalEffect<EnchantmentValueEffect>],
             pub projectile_spread: &'static [ConditionalEffect<EnchantmentValueEffect>],
             pub projectile_piercing: &'static [ConditionalEffect<EnchantmentValueEffect>],

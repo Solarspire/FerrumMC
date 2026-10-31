@@ -100,16 +100,85 @@ public final class ClientProbe {
     }
 
     /** Joins the server, waits for chunk 0,0 and checks the state at the given position. */
-    public static String run(String host, int port, String blockName, int x, int y, int z, int timeoutMillis, String placeItem, String gunItem) throws Exception {
+    public static String run(String host, int port, String blockName, int x, int y, int z, int timeoutMillis, String placeItem, String gunItem, String crateItem) throws Exception {
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(host, port), timeoutMillis);
             socket.setSoTimeout(timeoutMillis);
             var probe = new ClientProbe(socket);
             probe.login();
             probe.configuration();
-            probe.play(blockName, x, y, z, placeItem, gunItem);
+            probe.play(blockName, x, y, z, placeItem, gunItem, crateItem);
+            if (!probe.carrying) return probe.report.toString();
+            // The first session ends with the stack on the cursor of the open machine menu; the connection just drops.
+            socket.close();
+            Thread.sleep(2500);
+            rejoin(host, port, timeoutMillis, probe.report, new net.minecraft.core.BlockPos(x, y, z));
             return probe.report.toString();
         }
+    }
+
+    private boolean carrying;
+
+    /** A second login: the stack carried at disconnect is back in the inventory, and breaking a filled machine drops its contents. */
+    private static void rejoin(String host, int port, int timeoutMillis, JsonObject report, net.minecraft.core.BlockPos machine) throws Exception {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, port), timeoutMillis);
+            socket.setSoTimeout(timeoutMillis);
+            var probe = new ClientProbe(socket);
+            probe.login();
+            probe.configuration();
+            probe.rejoinPlay(report, machine);
+        }
+    }
+
+    private void rejoinPlay(JsonObject into, net.minecraft.core.BlockPos machine) throws Exception {
+        RegistryAccess access = gameRegistries != null ? gameRegistries : RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
+        ProtocolInfo<?> clientbound = GameProtocols.CLIENTBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(access, ConnectionType.NEOFORGE));
+        ProtocolInfo<?> serverbound = GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(access, ConnectionType.NEOFORGE), () -> true);
+        var result = new JsonObject();
+        into.add("rejoin", result);
+        int[] cobble = {-1};
+        boolean[] chunk = {false};
+        pump(clientbound, serverbound, 60000, packet -> {
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket set && set.containerId() == 0) {
+                cobble[0] = countOf(set.items(), 0, set.items().size(), net.minecraft.world.item.Items.COBBLESTONE);
+            } else if (packet instanceof ClientboundLevelChunkWithLightPacket loaded && loaded.getX() == (machine.getX() >> 4) && loaded.getZ() == (machine.getZ() >> 4)) {
+                chunk[0] = true;
+            }
+            return cobble[0] >= 0 && chunk[0];
+        });
+        result.addProperty("carriedBack", cobble[0] > 0);
+        result.addProperty("cobblestone", cobble[0]);
+        System.out.println("rejoin: " + result);
+        command(serverbound, "gamemode creative @s");
+        pump(clientbound, serverbound, 1000, packet -> false);
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SAND, 16), new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON, 16));
+        var hit = new net.minecraft.world.phys.BlockHitResult(
+            new net.minecraft.world.phys.Vec3(machine.getX() + 0.5, machine.getY() + 1.0, machine.getZ() + 0.5), net.minecraft.core.Direction.UP, machine, false);
+        var menu = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, hit, ++useSequence));
+        result.addProperty("machineOpened", menu.id() > 0);
+        if (menu.id() <= 0) return;
+        int machineSlots = menu.items().size() - 36;
+        int[] filled = {0};
+        for (int hotbar = 0; hotbar < 2; hotbar++) {
+            sendPacket(serverbound, clickPacket(menu.id(), menu.stateId(), menu.items().size() - 9 + hotbar, 0, net.minecraft.world.inventory.ContainerInput.QUICK_MOVE));
+            pump(clientbound, serverbound, 1500, packet -> {
+                if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket slot && slot.getContainerId() == menu.id()
+                    && slot.getSlot() < machineSlots && !slot.getItem().isEmpty()) filled[0]++;
+                return false;
+            });
+        }
+        result.addProperty("machineFilledSlots", filled[0]);
+        closeMenu(clientbound, serverbound, menu);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+            net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, machine, net.minecraft.core.Direction.EAST, ++useSequence));
+        int[] drops = {0};
+        pump(clientbound, serverbound, 5000, packet -> {
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundAddEntityPacket add && BuiltInRegistries.ENTITY_TYPE.getKey(add.getType()).toString().equals("minecraft:item")) drops[0]++;
+            return false;
+        });
+        result.addProperty("machineDrops", drops[0]);
+        System.out.println("rejoin: " + result);
     }
 
     private void login() throws IOException {
@@ -345,6 +414,10 @@ public final class ClientProbe {
             sendPacket(serverbound, new ServerboundChunkBatchReceivedPacket(20.0F));
         } else if (packet instanceof ClientboundDisconnectPacket disconnect) {
             throw new IllegalStateException("Disconnected: " + disconnect.reason().getString());
+        } else if (packet instanceof ClientboundPlayerPositionPacket position) {
+            // The server ignores movement until a teleport is confirmed.
+            sendPacket(serverbound, new ServerboundAcceptTeleportationPacket(position.id()));
+            return false;
         } else {
             return false;
         }
@@ -645,6 +718,9 @@ public final class ClientProbe {
             }
             if (sent == keys.length && bulletRemoved && gunSound && gunComponent && gunData != null && !gunData.equals(initial) && report.has("zombieDamaged")) break;
         }
+        System.out.println("DUMP 0");
+        System.out.println("DUMP 1");
+        pump(clientbound, serverbound, 1500);
         report.addProperty("gunInitialData", String.valueOf(initial));
         report.addProperty("gunData", String.valueOf(gunData));
         report.addProperty("gunStateChanged", gunData != null && !gunData.equals(initial));
@@ -652,7 +728,429 @@ public final class ClientProbe {
         report.addProperty("gunStates", String.join(" | ", gunStates));
     }
 
-    private void play(String blockName, int x, int y, int z, String placeItem, String gunItem) throws Exception {
+
+    private void watchArmorStack(net.minecraft.world.item.ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return;
+        var energyType = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(Identifier.parse("draconicnext:portable_energy"));
+        var shieldType = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(Identifier.parse("draconicnext:armor_shield"));
+        report.addProperty("armorSeen", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        try {
+            var energy = energyType == null ? null : stack.get(energyType);
+            if (energy != null) report.addProperty("armorEnergy", (long) energy.getClass().getMethod("energy").invoke(energy));
+            var shield = shieldType == null ? null : stack.get(shieldType);
+            if (shield != null) {
+                float points = (float) shield.getClass().getMethod("points").invoke(shield);
+                if (points > (report.has("armorShieldMax") ? report.get("armorShieldMax").getAsFloat() : 0.0F)) report.addProperty("armorShieldMax", points);
+            }
+        } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+    }
+
+    /** Equips charged Draconic armor through the creative slot packet and checks the server keeps its charge and charges its shield. */
+    private void armorProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, String itemName) throws Exception {
+        var item = BuiltInRegistries.ITEM.getValue(Identifier.parse(itemName));
+        var energyType = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(Identifier.parse("draconicnext:portable_energy"));
+        var dataClass = Class.forName("net.solarspire.draconicnext.common.item.PortableEnergyData");
+        var charged = dataClass.getConstructor(long.class, int.class, int.class).newInstance(10_000_000L, 0, 0);
+        var stack = new net.minecraft.world.item.ItemStack(item);
+        stack.set((net.minecraft.core.component.DataComponentType) energyType, charged);
+        socket.setSoTimeout(500);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(6, stack));
+        long deadline = System.currentTimeMillis() + 8000;
+        while (System.currentTimeMillis() < deadline) {
+            Packet<?> packet;
+            try { packet = decode(clientbound, read()); } catch (java.net.SocketTimeoutException idle) { continue; }
+            if (packet == null) continue;
+            if (packet instanceof ClientboundKeepAlivePacket keepAlive) sendPacket(serverbound, new ServerboundKeepAlivePacket(keepAlive.getId()));
+            else if (packet instanceof ClientboundPingPacket ping) sendPacket(serverbound, new ServerboundPongPacket(ping.getId()));
+            else if (packet instanceof ClientboundChunkBatchFinishedPacket) sendPacket(serverbound, new ServerboundChunkBatchReceivedPacket(20.0F));
+            else if (packet instanceof ClientboundDisconnectPacket disconnect) throw new IllegalStateException("Disconnected during the armor probe: " + disconnect.reason().getString());
+            else if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket slot && slot.getContainerId() == 0 && slot.getSlot() == 6) watchArmorStack(slot.getItem());
+            else if (packet instanceof net.minecraft.network.protocol.game.ClientboundSetPlayerInventoryPacket slot && slot.slot() == 38) watchArmorStack(slot.contents());
+            else if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket content && content.containerId() == 0 && content.items().size() > 6) watchArmorStack(content.items().get(6));
+            else if (packet instanceof ClientboundCustomPayloadPacket custom && custom.payload().type().id().toString().equals("draconicnext:shield_state")) report.addProperty("armorShieldPayload", true);
+        }
+        // A hit while the shield is charged must be absorbed by it: health stays up and the shield reports the hit.
+        float[] health = {-1.0F};
+        command(serverbound, "gamemode survival NeoProbe");
+        pump(clientbound, serverbound, 500);
+        command(serverbound, "damage NeoProbe 4 minecraft:generic");
+        deadline = System.currentTimeMillis() + 4000;
+        while (System.currentTimeMillis() < deadline) {
+            Packet<?> packet;
+            try { packet = decode(clientbound, read()); } catch (java.net.SocketTimeoutException idle) { continue; }
+            if (packet == null) continue;
+            if (packet instanceof ClientboundKeepAlivePacket keepAlive) sendPacket(serverbound, new ServerboundKeepAlivePacket(keepAlive.getId()));
+            else if (packet instanceof ClientboundPingPacket ping) sendPacket(serverbound, new ServerboundPongPacket(ping.getId()));
+            else if (packet instanceof ClientboundChunkBatchFinishedPacket) sendPacket(serverbound, new ServerboundChunkBatchReceivedPacket(20.0F));
+            else if (packet instanceof net.minecraft.network.protocol.game.ClientboundSetHealthPacket set) health[0] = set.getHealth();
+            else if (packet instanceof ClientboundCustomPayloadPacket custom && custom.payload().type().id().toString().equals("draconicnext:shield_hit")) report.addProperty("armorShieldHit", true);
+        }
+        report.addProperty("armorHealthAfterHit", health[0]);
+        // The test script reads the server's copy of the stacks once it sees this marker.
+        System.out.println("DUMP 38");
+        pump(clientbound, serverbound, 4000);
+        report.addProperty("armorProbed", true);
+    }
+
+
+    /** Reads and answers keep-alives for the given time so the server keeps ticking the player. */
+    private void pump(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, long millis) throws IOException {
+        long end = System.currentTimeMillis() + millis;
+        socket.setSoTimeout(300);
+        while (System.currentTimeMillis() < end) {
+            Packet<?> packet;
+            try { packet = decode(clientbound, read()); } catch (java.net.SocketTimeoutException idle) { continue; }
+            if (packet instanceof ClientboundKeepAlivePacket keepAlive) sendPacket(serverbound, new ServerboundKeepAlivePacket(keepAlive.getId()));
+            else if (packet instanceof ClientboundPingPacket ping) sendPacket(serverbound, new ServerboundPongPacket(ping.getId()));
+            else if (packet instanceof ClientboundChunkBatchFinishedPacket) sendPacket(serverbound, new ServerboundChunkBatchReceivedPacket(20.0F));
+            else if (packet instanceof ClientboundDisconnectPacket disconnect) throw new IllegalStateException("Disconnected: " + disconnect.reason().getString());
+            else if (packet instanceof ClientboundPlayerPositionPacket position) sendPacket(serverbound, new ServerboundAcceptTeleportationPacket(position.id()));
+        }
+    }
+
+    /** A jab with a charged mod spear must lunge the player: the server pushes the player along their look direction. */
+    private void spearProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, String spearName) throws Exception {
+        var item = BuiltInRegistries.ITEM.getValue(Identifier.parse(spearName));
+        var energyType = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(Identifier.parse("draconicnext:portable_energy"));
+        var dataClass = Class.forName("net.solarspire.draconicnext.common.item.PortableEnergyData");
+        var stack = new net.minecraft.world.item.ItemStack(item);
+        stack.set((net.minecraft.core.component.DataComponentType) energyType, dataClass.getConstructor(long.class, int.class, int.class).newInstance(10_000_000L, 0, 0));
+        Class.forName("net.solarspire.draconicnext.common.tools.ConfigurableItem")
+            .getMethod("set", net.minecraft.world.item.ItemStack.class, String.class, double.class).invoke(null, stack, "lungeLevel", 3.0);
+        command(serverbound, "gamemode creative NeoProbe");
+        pump(clientbound, serverbound, 800);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(36, stack));
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(0));
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(0.0F, -30.0F, true, false));
+        pump(clientbound, serverbound, 1000);
+        command(serverbound, "gamemode survival NeoProbe");
+        pump(clientbound, serverbound, 1000);
+        double[] push = {0.0};
+        Seen watcher = packet -> {
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket motion) {
+                var delta = motion.movement();
+                push[0] = Math.max(push[0], Math.sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z));
+            }
+            return false;
+        };
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+            net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.STAB, net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN, ++useSequence));
+        pump(clientbound, serverbound, 3000, watcher);
+        report.addProperty("spearLunge", push[0]);
+    }
+
+    /** A mod recipe in the player's 2x2 grid: Rust's crafting falls back to Java's recipe manager for the result. */
+    private void craftProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound) throws Exception {
+        var input = BuiltInRegistries.ITEM.getValue(Identifier.parse("hbm:asphalt_light"));
+        var output = BuiltInRegistries.ITEM.getValue(Identifier.parse("hbm:asphalt"));
+        command(serverbound, "gamemode creative NeoProbe");
+        pump(clientbound, serverbound, 800);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(36, new net.minecraft.world.item.ItemStack(input, 4)));
+        pump(clientbound, serverbound, 500);
+        command(serverbound, "gamemode survival NeoProbe");
+        pump(clientbound, serverbound, 1000);
+        boolean[] crafted = {false};
+        Seen watcher = packet -> {
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket slot && slot.getContainerId() == 0
+                && slot.getSlot() == 0 && slot.getItem().is(output)) crafted[0] = true;
+            return crafted[0];
+        };
+        sendPacket(serverbound, clickPacket(0, 0, 36, 0, net.minecraft.world.inventory.ContainerInput.PICKUP));
+        pump(clientbound, serverbound, 500);
+        sendPacket(serverbound, clickPacket(0, 0, 1, 1, net.minecraft.world.inventory.ContainerInput.PICKUP));
+        pump(clientbound, serverbound, 3000, watcher);
+        report.addProperty("modCraft", crafted[0]);
+        // Everything goes back to the hotbar.
+        sendPacket(serverbound, clickPacket(0, 0, 1, 0, net.minecraft.world.inventory.ContainerInput.PICKUP));
+        sendPacket(serverbound, clickPacket(0, 0, 36, 0, net.minecraft.world.inventory.ContainerInput.PICKUP));
+        pump(clientbound, serverbound, 800);
+    }
+
+    /** A creative slot holding an enchanted stack (client enchantment IDs) must reach the server without a disconnect. */
+    private void enchantProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound) throws Exception {
+        command(serverbound, "gamemode creative NeoProbe");
+        pump(clientbound, serverbound, 800);
+        var stack = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.MACE);
+        stack.enchant(gameRegistries.lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.WIND_BURST), 3);
+        var book = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ENCHANTED_BOOK);
+        book.set(net.minecraft.core.component.DataComponents.STORED_ENCHANTMENTS, stack.getEnchantments());
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(38, stack));
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(39, book));
+        pump(clientbound, serverbound, 1500);
+        command(serverbound, "gamemode survival NeoProbe");
+        pump(clientbound, serverbound, 800);
+        report.addProperty("creativeEnchant", true);
+    }
+
+    /** Right-clicking a charged Draconic mace in the air must run its Java use: a meteor strike with a cooldown and motion. */
+    private void maceProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound) throws Exception {
+        var item = BuiltInRegistries.ITEM.getValue(Identifier.parse("draconicnext:draconic_mace"));
+        var energyType = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(Identifier.parse("draconicnext:portable_energy"));
+        var dataClass = Class.forName("net.solarspire.draconicnext.common.item.PortableEnergyData");
+        var stack = new net.minecraft.world.item.ItemStack(item);
+        stack.set((net.minecraft.core.component.DataComponentType) energyType, dataClass.getConstructor(long.class, int.class, int.class).newInstance(10_000_000L, 0, 0));
+        command(serverbound, "gamemode creative NeoProbe");
+        pump(clientbound, serverbound, 800);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(36, stack));
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(0));
+        command(serverbound, "gamemode survival NeoProbe");
+        command(serverbound, "tp NeoProbe 0.5 112 0.5");
+        pump(clientbound, serverbound, 1500);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(0.5, 112.0, 0.5, 0.0F, 60.0F, false, false));
+        pump(clientbound, serverbound, 500);
+        boolean[] seen = {false, false};
+        Seen watcher = packet -> {
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundCooldownPacket) seen[0] = true;
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundSoundPacket sound && sound.getSound().value().location().getPath().equals("item.firecharge.use")) seen[1] = true;
+            return seen[0] && seen[1];
+        };
+        // Falling: the meteor strike only starts in the air.
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(0.5, 111.5, 0.5, 0.0F, 60.0F, false, false));
+        pump(clientbound, serverbound, 300);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundUseItemPacket(net.minecraft.world.InteractionHand.MAIN_HAND, ++useSequence, 0.0F, 60.0F));
+        pump(clientbound, serverbound, 3000, watcher);
+        report.addProperty("maceCooldown", seen[0]);
+        report.addProperty("maceSound", seen[1]);
+        command(serverbound, "tp NeoProbe 0.5 101 0.5");
+        pump(clientbound, serverbound, 1500);
+    }
+
+    /** Mines a stone block in survival with a charged mod tool; area tools must clear their whole area and drop items. */
+    private void toolProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, String toolName) throws Exception {
+        var item = BuiltInRegistries.ITEM.getValue(Identifier.parse(toolName));
+        var energyType = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(Identifier.parse("draconicnext:portable_energy"));
+        var dataClass = Class.forName("net.solarspire.draconicnext.common.item.PortableEnergyData");
+        var stack = new net.minecraft.world.item.ItemStack(item);
+        stack.set((net.minecraft.core.component.DataComponentType) energyType, dataClass.getConstructor(long.class, int.class, int.class).newInstance(10_000_000L, 0, 0));
+        var configured = Class.forName("net.solarspire.draconicnext.common.tools.ConfigurableItem")
+            .getMethod("set", net.minecraft.world.item.ItemStack.class, String.class, double.class).invoke(null, stack, "digAOE", 1.0);
+        report.addProperty("toolConfigured", String.valueOf(configured));
+        command(serverbound, "gamemode creative NeoProbe");
+        command(serverbound, "fill 2 99 0 6 103 4 minecraft:stone");
+        pump(clientbound, serverbound, 1500);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(36, stack));
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(0));
+        pump(clientbound, serverbound, 800);
+        command(serverbound, "gamemode survival NeoProbe");
+        pump(clientbound, serverbound, 1500);
+        var target = new net.minecraft.core.BlockPos(2, 101, 2);
+        // The area tool works out its face from where the player looks.
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(-90.0F, 29.2F, true, false));
+        pump(clientbound, serverbound, 500);
+        var broken = new java.util.HashSet<net.minecraft.core.BlockPos>();
+        int[] drops = {0};
+        Seen watcher = packet -> {
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket update) {
+                if (update.getBlockState().isAir()) broken.add(update.getPos().immutable());
+            } else if (packet instanceof net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket section) {
+                section.runUpdates((pos, state) -> { if (state.isAir()) broken.add(pos.immutable()); });
+            } else if (packet instanceof net.minecraft.network.protocol.game.ClientboundAddEntityPacket add && add.getType() == BuiltInRegistries.ENTITY_TYPE.get(Identifier.parse("minecraft:item")).map(h -> h.value()).orElse(null)) {
+                drops[0]++;
+            }
+            return false;
+        };
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+            net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, target, net.minecraft.core.Direction.WEST, ++useSequence));
+        pump(clientbound, serverbound, 1500, watcher);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+            net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, target, net.minecraft.core.Direction.WEST, ++useSequence));
+        pump(clientbound, serverbound, 4000, watcher);
+        System.out.println("DUMP 0");
+        pump(clientbound, serverbound, 1500);
+        report.addProperty("toolTargetBroken", broken.contains(target));
+        report.addProperty("toolBlocksBroken", broken.size());
+        report.addProperty("toolItemDrops", drops[0]);
+    }
+
+    /** Hits a zombie next to the player with a fist and then a mod sword; the sword must hurt it more. */
+    private void meleeProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, String swordName) throws Exception {
+        var sword = BuiltInRegistries.ITEM.getValue(Identifier.parse(swordName));
+        for (int wait = 0; meleeZombieId < 0 && wait < 20; wait++) pump(clientbound, serverbound, 500);
+        report.addProperty("meleeZombieId", meleeZombieId);
+        if (meleeZombieId < 0) return;
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(8));
+        pump(clientbound, serverbound, 1500);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundAttackPacket(meleeZombieId));
+        pump(clientbound, serverbound, 1500);
+        float afterFist = meleeHealth;
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(36, new net.minecraft.world.item.ItemStack(sword)));
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(0));
+        pump(clientbound, serverbound, 1000);
+        System.out.println("DUMP 0");
+        pump(clientbound, serverbound, 1500);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundAttackPacket(meleeZombieId));
+        pump(clientbound, serverbound, 1500);
+        report.addProperty("meleeFistDamage", 20.0F - afterFist);
+        report.addProperty("meleeSwordDamage", afterFist - meleeHealth);
+    }
+
+    private record OpenMenu(int id, int stateId, List<net.minecraft.world.item.ItemStack> items) {}
+
+    /** Sends the trigger until the server opens a menu and syncs its content; id stays -1 when none opened. */
+    private OpenMenu openMenu(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, java.util.function.Supplier<Packet<?>> trigger) throws IOException {
+        int[] id = {-1};
+        int[] state = {0};
+        List<net.minecraft.world.item.ItemStack> items = new ArrayList<>();
+        for (int attempt = 0; attempt < 8 && id[0] <= 0; attempt++) {
+            sendPacket(serverbound, trigger.get());
+            pump(clientbound, serverbound, 2500, packet -> {
+                if (packet instanceof ClientboundCustomPayloadPacket custom && custom.payload() instanceof net.neoforged.neoforge.network.payload.AdvancedOpenScreenPayload open) {
+                    id[0] = open.windowId();
+                } else if (packet instanceof net.minecraft.network.protocol.game.ClientboundOpenScreenPacket open) {
+                    id[0] = open.getContainerId();
+                } else if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket set && id[0] > 0 && set.containerId() == id[0]) {
+                    items.addAll(set.items());
+                    state[0] = set.stateId();
+                    return true;
+                }
+                return false;
+            });
+        }
+        return new OpenMenu(id[0], state[0], items);
+    }
+
+    private static int countOf(List<net.minecraft.world.item.ItemStack> items, int from, int to, net.minecraft.world.item.Item item) {
+        int count = 0;
+        for (int i = from; i < to && i < items.size(); i++) if (items.get(i).is(item)) count += items.get(i).getCount();
+        return count;
+    }
+
+    private static boolean holdsStone(net.minecraft.world.item.ItemStack stack) {
+        var contents = stack.get(net.minecraft.core.component.DataComponents.CONTAINER);
+        return contents != null && contents.nonEmptyItemCopyStream().anyMatch(inner -> inner.is(net.minecraft.world.item.Items.COBBLESTONE));
+    }
+
+    private void command(ProtocolInfo<?> serverbound, String command) throws IOException {
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundChatCommandPacket(command));
+    }
+
+    private void giveHotbar(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, net.minecraft.world.item.ItemStack first, net.minecraft.world.item.ItemStack second) throws IOException {
+        for (int i = 0; i < 3; i++) {
+            sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(36, first));
+            sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket(37, second));
+            sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(0));
+            pump(clientbound, serverbound, 500, packet -> false);
+        }
+    }
+
+    /** Moves the cobblestone stack of the player's hotbar into the open crate and closes the menu; true when the crate showed it. */
+    private boolean fillCrateAndClose(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, OpenMenu menu) throws IOException {
+        int crateSlots = menu.items().size() - 36;
+        int source = -1;
+        for (int i = crateSlots; i < menu.items().size(); i++) if (menu.items().get(i).is(net.minecraft.world.item.Items.COBBLESTONE)) { source = i; break; }
+        if (source < 0) return false;
+        sendPacket(serverbound, clickPacket(menu.id(), menu.stateId(), source, 0, net.minecraft.world.inventory.ContainerInput.QUICK_MOVE));
+        boolean inserted = pump(clientbound, serverbound, 5000, packet ->
+            packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket slot && slot.getContainerId() == menu.id()
+                && slot.getSlot() < crateSlots && slot.getItem().is(net.minecraft.world.item.Items.COBBLESTONE));
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundContainerClosePacket(menu.id()));
+        pump(clientbound, serverbound, 1500, packet -> false);
+        return inserted;
+    }
+
+    private void closeMenu(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, OpenMenu menu) throws IOException {
+        if (menu.id() <= 0) return;
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundContainerClosePacket(menu.id()));
+        pump(clientbound, serverbound, 1000, packet -> false);
+    }
+
+    private int crateStone(OpenMenu menu) {
+        return menu.id() > 0 ? countOf(menu.items(), 0, menu.items().size() - 36, net.minecraft.world.item.Items.COBBLESTONE) : -1;
+    }
+
+    /**
+     * Crate acceptance: a held crate item opens and keeps what is put in across close and reopen; a placed crate block
+     * does the same and keeps its contents through being broken, picked up and placed again.
+     */
+    private void crateProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, String crateName) throws Exception {
+        var result = new JsonObject();
+        report.add("crate", result);
+        var crateItem = BuiltInRegistries.ITEM.getValue(Identifier.parse(crateName));
+        var stone = net.minecraft.world.item.Items.COBBLESTONE;
+        var crateBlock = new net.minecraft.core.BlockPos(3, 101, 3);
+        var hitSupport = new net.minecraft.world.phys.BlockHitResult(new net.minecraft.world.phys.Vec3(3.5, 101.0, 3.5), net.minecraft.core.Direction.UP, crateBlock.below(), false);
+        var hitCrate = new net.minecraft.world.phys.BlockHitResult(new net.minecraft.world.phys.Vec3(3.5, 102.0, 3.5), net.minecraft.core.Direction.UP, crateBlock, false);
+        java.util.function.Supplier<Packet<?>> useHeld = () -> new net.minecraft.network.protocol.game.ServerboundUseItemPacket(net.minecraft.world.InteractionHand.MAIN_HAND, ++useSequence, 0.0F, 0.0F);
+        java.util.function.Supplier<Packet<?>> useCrate = () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, hitCrate, ++useSequence);
+        socket.setSoTimeout(500);
+        // HBM opens a crate item on use only when the client reports that setting.
+        var openHeld = Class.forName("com.hbm.packet.toserver.CrateOpenHeldPayload").getDeclaredConstructor(boolean.class);
+        openHeld.setAccessible(true);
+        sendPacket(serverbound, new ServerboundCustomPayloadPacket((CustomPacketPayload) openHeld.newInstance(true)));
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerInputPacket(net.minecraft.world.entity.player.Input.EMPTY));
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(crateItem), new net.minecraft.world.item.ItemStack(stone, 32));
+
+        var held = openMenu(clientbound, serverbound, useHeld);
+        result.addProperty("heldOpened", held.id() > 0);
+        if (held.id() <= 0) return;
+        result.addProperty("heldInserted", fillCrateAndClose(clientbound, serverbound, held));
+        var heldAgain = openMenu(clientbound, serverbound, useHeld);
+        result.addProperty("heldReopenedStone", crateStone(heldAgain));
+        closeMenu(clientbound, serverbound, heldAgain);
+
+        // The placed crate was set from the console beside the player; right-click it with an empty hand.
+        giveHotbar(clientbound, serverbound, net.minecraft.world.item.ItemStack.EMPTY, new net.minecraft.world.item.ItemStack(stone, 32));
+        var block = openMenu(clientbound, serverbound, useCrate);
+        result.addProperty("blockOpened", block.id() > 0);
+        if (block.id() <= 0) return;
+        result.addProperty("blockInserted", fillCrateAndClose(clientbound, serverbound, block));
+        var blockAgain = openMenu(clientbound, serverbound, useCrate);
+        result.addProperty("blockReopenedStone", crateStone(blockAgain));
+        closeMenu(clientbound, serverbound, blockAgain);
+
+        // Break it as a fast survival player with a pickaxe, walk into the drop, then place the item again.
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_PICKAXE), net.minecraft.world.item.ItemStack.EMPTY);
+        command(serverbound, "gamemode survival");
+        command(serverbound, "effect give @s minecraft:haste 600 255 true");
+        pump(clientbound, serverbound, 1500, packet -> false);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+            net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, crateBlock, net.minecraft.core.Direction.UP, ++useSequence));
+        boolean broken = false;
+        for (int attempt = 0; attempt < 6 && !broken; attempt++) {
+            sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+                net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, crateBlock, net.minecraft.core.Direction.UP, ++useSequence));
+            broken = pump(clientbound, serverbound, 1000, packet ->
+                packet instanceof net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket update && update.getPos().equals(crateBlock) && update.getBlockState().isAir());
+        }
+        result.addProperty("blockBroken", broken);
+        if (!broken) return;
+        command(serverbound, "tp @s 3.5 101 3.5");
+        int[] pickedSlot = {-1};
+        pump(clientbound, serverbound, 6000, packet -> {
+            net.minecraft.world.item.ItemStack stack = null;
+            int slot = -1;
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundSetPlayerInventoryPacket inventory) { stack = inventory.contents(); slot = inventory.slot(); }
+            else if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket set && set.getContainerId() == 0) { stack = set.getItem(); slot = set.getSlot() >= 36 ? set.getSlot() - 36 : set.getSlot(); }
+            if (stack != null && stack.is(crateItem)) {
+                result.addProperty("droppedCrateHasStone", holdsStone(stack));
+                pickedSlot[0] = slot;
+                return true;
+            }
+            return false;
+        });
+        result.addProperty("droppedCratePickedUp", pickedSlot[0] >= 0);
+        if (pickedSlot[0] < 0) return;
+        // Stand clear of the block position before placing.
+        command(serverbound, "tp @s 0.5 101 2.5");
+        pump(clientbound, serverbound, 1000, packet -> false);
+        if (pickedSlot[0] <= 8) sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(pickedSlot[0]));
+        boolean placed = false;
+        for (int attempt = 0; attempt < 6 && !placed; attempt++) {
+            sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, hitSupport, ++useSequence));
+            placed = pump(clientbound, serverbound, 2000, packet ->
+                packet instanceof net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket update && update.getPos().equals(crateBlock) && !update.getBlockState().isAir());
+        }
+        result.addProperty("blockPlacedAgain", placed);
+        if (!placed) return;
+        pump(clientbound, serverbound, 1500, packet -> false);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(8));
+        var placedAgain = openMenu(clientbound, serverbound, useCrate);
+        result.addProperty("placedAgainStone", crateStone(placedAgain));
+        closeMenu(clientbound, serverbound, placedAgain);
+    }
+
+    private void play(String blockName, int x, int y, int z, String placeItem, String gunItem, String crateItem) throws Exception {
         RegistryAccess access = gameRegistries != null ? gameRegistries : RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
         ProtocolInfo<?> clientbound = GameProtocols.CLIENTBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(access, ConnectionType.NEOFORGE));
         ProtocolInfo<?> serverbound = GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(access, ConnectionType.NEOFORGE), () -> true);
@@ -700,10 +1198,36 @@ public final class ClientProbe {
                     menuProbe("block", clientbound, serverbound, new net.minecraft.core.BlockPos(x, y, z), true);
                     placeAgainst(clientbound, serverbound, placeItem, x, y, z);
                 }
+                if (gunItem != null && !gunItem.isEmpty()) meleeProbe(clientbound, serverbound, "draconicnext:draconic_sword");
                 if (gunItem != null && !gunItem.isEmpty()) gunProbe(clientbound, serverbound, gunItem);
+                if (gunItem != null && !gunItem.isEmpty()) armorProbe(clientbound, serverbound, "draconicnext:draconic_chest");
+                if (gunItem != null && !gunItem.isEmpty()) toolProbe(clientbound, serverbound, "draconicnext:draconic_staff_of_power");
+                if (gunItem != null && !gunItem.isEmpty()) spearProbe(clientbound, serverbound, "draconicnext:draconic_spear");
+                if (gunItem != null && !gunItem.isEmpty()) modMobProbe(clientbound, serverbound);
+                if (gunItem != null && !gunItem.isEmpty()) craftProbe(clientbound, serverbound);
+                if (gunItem != null && !gunItem.isEmpty()) enchantProbe(clientbound, serverbound);
+                if (gunItem != null && !gunItem.isEmpty()) maceProbe(clientbound, serverbound);
+                if (crateItem != null && !crateItem.isEmpty()) crateProbe(clientbound, serverbound, crateItem);
+                if (placeItem != null && !placeItem.isEmpty() && blockName.equals("hbm:machine_electric_furnace")) carryIntoDisconnect(clientbound, serverbound, new net.minecraft.core.BlockPos(x, y, z));
                 return;
             }
         }
+    }
+
+    /** Opens the machine menu and picks the hotbar stack up onto the cursor, so the disconnect happens with it carried. */
+    private void carryIntoDisconnect(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, net.minecraft.core.BlockPos machine) throws IOException {
+        command(serverbound, "gamemode creative @s");
+        pump(clientbound, serverbound, 1000, packet -> false);
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COBBLESTONE, 64), net.minecraft.world.item.ItemStack.EMPTY);
+        var hit = new net.minecraft.world.phys.BlockHitResult(
+            new net.minecraft.world.phys.Vec3(machine.getX() + 0.5, machine.getY() + 1.0, machine.getZ() + 0.5), net.minecraft.core.Direction.UP, machine, false);
+        var menu = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, hit, ++useSequence));
+        if (menu.id() <= 0) throw new IllegalStateException("The machine menu did not open for the carry probe");
+        int hotbar0 = menu.items().size() - 9;
+        sendPacket(serverbound, clickPacket(menu.id(), menu.stateId(), hotbar0, 0, net.minecraft.world.inventory.ContainerInput.PICKUP));
+        boolean carried = pump(clientbound, serverbound, 5000, packet -> packet instanceof net.minecraft.network.protocol.game.ClientboundSetCursorItemPacket cursor && cursor.contents().is(net.minecraft.world.item.Items.COBBLESTONE));
+        report.addProperty("carriedAtDisconnect", carried);
+        carrying = carried;
     }
 
     /** The test script says "probe-chat" on the server console once the client is in play. */
@@ -827,15 +1351,70 @@ public final class ClientProbe {
     }
 
     private int zombieId = -1;
+    private int meleeZombieId = -1;
+    private float meleeHealth = 20.0F;
 
     /** The summoned zombie's life as the client sees it: any hurt, damage or death signal for it counts as damaged. */
+    private int modMobId = -1;
+    private boolean modMobHurt;
+    private float modMobHealth = -1;
+
+    private void trackModMob(Packet<?> packet) {
+        if (packet instanceof net.minecraft.network.protocol.game.ClientboundAddEntityPacket add
+            && BuiltInRegistries.ENTITY_TYPE.getKey(add.getType()).toString().equals("hbm:entity_test_dummy")) {
+            modMobId = add.getId();
+            report.addProperty("modMobId", modMobId);
+        } else if (modMobId >= 0 && (packet instanceof net.minecraft.network.protocol.game.ClientboundDamageEventPacket damage && damage.entityId() == modMobId
+            || packet instanceof net.minecraft.network.protocol.game.ClientboundHurtAnimationPacket hurt && hurt.id() == modMobId)) {
+            modMobHurt = true;
+        } else if (modMobId >= 0 && packet instanceof net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket data && data.id() == modMobId) {
+            for (var value : data.packedItems()) {
+                if (value.value() instanceof Float health) {
+                    if (modMobHealth >= 0 && health < modMobHealth) modMobHurt = true;
+                    modMobHealth = health;
+                }
+            }
+        }
+    }
+
+    /** A punch on a Java-ticked mod mob must reach its Java hurtServer. */
+    private void modMobProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound) throws IOException {
+        command(serverbound, "gamemode survival NeoProbe");
+        command(serverbound, "tp NeoProbe -0.5 101 4.5");
+        command(serverbound, "setblock -1 100 6 minecraft:stone");
+        command(serverbound, "ferrum summon -1 101 6 hbm:entity_test_dummy");
+        for (int wait = 0; modMobId < 0 && wait < 10; wait++) pump(clientbound, serverbound, 500);
+        if (modMobId < 0) return;
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(8));
+        pump(clientbound, serverbound, 1500);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundAttackPacket(modMobId));
+        pump(clientbound, serverbound, 2000, packet -> modMobHurt);
+        report.addProperty("modMobHurt", modMobHurt);
+    }
+
     private void trackZombie(Packet<?> packet) {
+        trackModMob(packet);
         if (packet instanceof net.minecraft.network.protocol.game.ClientboundAddEntityPacket add) {
-            if (zombieId < 0 && BuiltInRegistries.ENTITY_TYPE.getKey(add.getType()).toString().equals("minecraft:zombie")) {
+            if (meleeZombieId < 0 && add.getZ() < 5.0 && BuiltInRegistries.ENTITY_TYPE.getKey(add.getType()).toString().equals("minecraft:husk")) {
+                meleeZombieId = add.getId();
+                return;
+            }
+            if (zombieId < 0 && BuiltInRegistries.ENTITY_TYPE.getKey(add.getType()).toString().equals("minecraft:husk")) {
                 zombieId = add.getId();
                 report.addProperty("zombieId", zombieId);
             }
             return;
+        }
+        if (meleeZombieId >= 0) {
+            if (packet instanceof net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket data && data.id() == meleeZombieId) {
+                for (var value : data.packedItems()) if (value.value() instanceof Float health) meleeHealth = Math.min(meleeHealth, health);
+            } else if (packet instanceof net.minecraft.network.protocol.game.ClientboundEntityEventPacket event) {
+                try {
+                    var field = net.minecraft.network.protocol.game.ClientboundEntityEventPacket.class.getDeclaredField("entityId");
+                    field.setAccessible(true);
+                    if (field.getInt(event) == meleeZombieId && event.getEventId() == 3) meleeHealth = 0.0F;
+                } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+            }
         }
         if (zombieId < 0 || report.has("zombieDamaged")) return;
         boolean hit = packet instanceof net.minecraft.network.protocol.game.ClientboundHurtAnimationPacket hurt && hurt.id() == zombieId

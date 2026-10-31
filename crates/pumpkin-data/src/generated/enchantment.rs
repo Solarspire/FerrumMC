@@ -113,7 +113,9 @@ pub enum EnchantmentEntityEffect {
         amount: LevelBasedValue,
     },
     PlaySound {
-        sound: &'static str,
+        sounds: &'static [&'static str],
+        volume: pumpkin_util::math::float_provider::FloatProvider,
+        pitch: pumpkin_util::math::float_provider::FloatProvider,
     },
     ReplaceBlock {
         offset_x: i32,
@@ -325,6 +327,7 @@ impl EnchantmentValueEffect {
 pub struct EnchantmentEffects {
     pub projectile_spawned: &'static [ConditionalEffect<EnchantmentEntityEffect>],
     pub post_attack: &'static [TargetedConditionalEffect<EnchantmentEntityEffect>],
+    pub post_piercing_attack: &'static [ConditionalEffect<EnchantmentEntityEffect>],
     pub projectile_count: &'static [ConditionalEffect<EnchantmentValueEffect>],
     pub projectile_spread: &'static [ConditionalEffect<EnchantmentValueEffect>],
     pub projectile_piercing: &'static [ConditionalEffect<EnchantmentValueEffect>],
@@ -486,6 +489,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -547,6 +551,7 @@ impl Enchantment {
                     max_amplifier: LevelBasedValue::Constant(3f32),
                 },
             }],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -600,6 +605,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -648,6 +654,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -701,6 +708,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -762,10 +770,13 @@ impl Enchantment {
                         join_team: false,
                     },
                     EnchantmentEntityEffect::PlaySound {
-                        sound: "minecraft:item.trident.thunder",
+                        sounds: &["minecraft:item.trident.thunder"],
+                        volume: pumpkin_util::math::float_provider::FloatProvider::Constant(5f32),
+                        pitch: pumpkin_util::math::float_provider::FloatProvider::Constant(1f32),
                     },
                 ]),
             }],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -781,7 +792,9 @@ impl Enchantment {
                         join_team: false,
                     },
                     EnchantmentEntityEffect::PlaySound {
-                        sound: "minecraft:item.trident.thunder",
+                        sounds: &["minecraft:item.trident.thunder"],
+                        volume: pumpkin_util::math::float_provider::FloatProvider::Constant(5f32),
+                        pitch: pumpkin_util::math::float_provider::FloatProvider::Constant(1f32),
                     },
                 ]),
             }],
@@ -824,6 +837,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -877,6 +891,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -925,6 +940,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -973,6 +989,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1035,6 +1052,7 @@ impl Enchantment {
                     },
                 },
             }],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1083,6 +1101,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1140,6 +1159,7 @@ impl Enchantment {
                 },
             }],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1188,6 +1208,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1236,6 +1257,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1316,6 +1338,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1369,6 +1392,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1419,6 +1443,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1472,6 +1497,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1527,6 +1553,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1580,6 +1607,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1633,6 +1661,38 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[ConditionalEffect {
+                effect: EnchantmentEntityEffect::AllOf(&[
+                    EnchantmentEntityEffect::ChangeItemDamage {
+                        amount: LevelBasedValue::Constant(1f32),
+                    },
+                    EnchantmentEntityEffect::ApplyExhaustion {
+                        amount: LevelBasedValue::Linear {
+                            base: 4f32,
+                            per_level_above_first: 4f32,
+                        },
+                    },
+                    EnchantmentEntityEffect::ApplyImpulse {
+                        direction: pumpkin_util::math::vector3::Vector3::new(0f64, 0f64, 1f64),
+                        coordinate_scale: pumpkin_util::math::vector3::Vector3::new(
+                            1f64, 0f64, 1f64,
+                        ),
+                        magnitude: LevelBasedValue::Linear {
+                            base: 0.458f32,
+                            per_level_above_first: 0.458f32,
+                        },
+                    },
+                    EnchantmentEntityEffect::PlaySound {
+                        sounds: &[
+                            "minecraft:item.spear.lunge_1",
+                            "minecraft:item.spear.lunge_2",
+                            "minecraft:item.spear.lunge_3",
+                        ],
+                        volume: pumpkin_util::math::float_provider::FloatProvider::Constant(1f32),
+                        pitch: pumpkin_util::math::float_provider::FloatProvider::Constant(1f32),
+                    },
+                ]),
+            }],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1681,6 +1741,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1734,6 +1795,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1784,6 +1846,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[ConditionalEffect {
                 effect: EnchantmentValueEffect::Add(LevelBasedValue::Linear {
                     base: 2f32,
@@ -1842,6 +1905,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[ConditionalEffect {
@@ -1895,6 +1959,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -1948,6 +2013,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2001,6 +2067,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2054,6 +2121,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2110,6 +2178,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2161,6 +2230,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2209,6 +2279,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2262,6 +2333,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2315,6 +2387,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2365,6 +2438,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2418,6 +2492,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2478,6 +2553,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2526,6 +2602,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2587,6 +2664,7 @@ impl Enchantment {
                     },
                 ]),
             }],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2635,6 +2713,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2708,6 +2787,7 @@ impl Enchantment {
         effects: EnchantmentEffects {
             projectile_spawned: &[],
             post_attack: &[],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],
@@ -2780,6 +2860,7 @@ impl Enchantment {
                     sound: Some(crate::sound::Sound::EntityWindChargeWindBurst),
                 },
             }],
+            post_piercing_attack: &[],
             projectile_count: &[],
             projectile_spread: &[],
             projectile_piercing: &[],

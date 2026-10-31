@@ -1,10 +1,17 @@
 use crate::enchantment::effects::EnchantmentEntityEffectExt;
 use crate::entity::Entity;
+use crate::entity::EntityBase;
+use crate::entity::player::Player;
 use crate::entity::projectile::arrow::ArrowEntity;
 use pumpkin_data::data_component_impl::EnchantmentsImpl;
 use pumpkin_data::enchantment::{Enchantment, EnchantmentEntityEffect, EnchantmentTarget};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
+
+/// `wind_burst.json`: `minecraft:movement.fall_distance.min`.
+const WIND_BURST_MIN_FALL_DISTANCE: f64 = 1.5;
+/// `lunge.json`: `type_specific/player.food.level.min`.
+const LUNGE_MIN_FOOD_LEVEL: u8 = 7;
 
 /// Data-driven helper for enchantment effects matching vanilla `EnchantmentHelper`.
 pub struct EnchantmentHelper;
@@ -113,6 +120,84 @@ impl EnchantmentHelper {
                     .apply(&world, level, None, Some(target), target.pos.load());
             }
         });
+    }
+
+    /// Vanilla `EnchantmentHelper.doPostAttackEffectsWithItemSource` for a player's melee hit,
+    /// for the effect types the engine runs (Fire Aspect's ignite, Wind Burst's explode).
+    pub fn do_post_attack_effects(player: &Player, victim: &Entity, weapon: &ItemStack) {
+        let world = player.world();
+        Self::run_iteration_on_item(weapon, |enchantment, level| {
+            for targeted_effect in enchantment.effects.post_attack {
+                if !Self::post_attack_requirements_met(enchantment, player) {
+                    continue;
+                }
+                let target = match targeted_effect.affected {
+                    Some(EnchantmentTarget::Attacker | EnchantmentTarget::DamagingEntity) => {
+                        player.get_entity()
+                    }
+                    Some(EnchantmentTarget::Victim) | None => victim,
+                };
+                match &targeted_effect.effect {
+                    EnchantmentEntityEffect::Ignite { .. }
+                    | EnchantmentEntityEffect::Explode { .. } => {
+                        targeted_effect.effect.apply(
+                            &world,
+                            level,
+                            None,
+                            Some(target),
+                            target.pos.load(),
+                        );
+                    }
+                    _ => {}
+                }
+            }
+        });
+    }
+
+    /// Vanilla `EnchantmentHelper.doPostPiercingAttackEffects` (Lunge): runs on the main hand
+    /// item after every attack and spear jab.
+    pub fn do_post_piercing_attack_effects(player: &Player) {
+        let weapon = player.inventory().held_item();
+        let world = player.world();
+        let entity = player.get_entity();
+        Self::run_iteration_on_item(&weapon, |enchantment, level| {
+            if enchantment.effects.post_piercing_attack.is_empty()
+                || !Self::post_piercing_requirements_met(enchantment, player)
+            {
+                return;
+            }
+            for effect in enchantment.effects.post_piercing_attack {
+                effect
+                    .effect
+                    .apply(&world, level, None, Some(entity), entity.pos.load());
+            }
+        });
+    }
+
+    /// The `requirements` of vanilla's `wind_burst.json`; the generated data doesn't carry
+    /// effect requirements yet.
+    fn post_attack_requirements_met(enchantment: &Enchantment, player: &Player) -> bool {
+        if *enchantment == Enchantment::WIND_BURST {
+            return !player.is_flying()
+                && f64::from(player.living_entity.fall_distance.load())
+                    >= WIND_BURST_MIN_FALL_DISTANCE;
+        }
+        true
+    }
+
+    /// The `requirements` of vanilla's `lunge.json`.
+    fn post_piercing_requirements_met(enchantment: &Enchantment, player: &Player) -> bool {
+        if *enchantment == Enchantment::LUNGE {
+            let entity = player.get_entity();
+            return entity.get_vehicle().is_none()
+                && !entity.is_fall_flying()
+                && !entity
+                    .touching_water
+                    .load(std::sync::atomic::Ordering::Relaxed)
+                && (player.is_creative()
+                    || player.hunger_manager.level.load() >= LUNGE_MIN_FOOD_LEVEL);
+        }
+        true
     }
 
     /// Computes projectile spread angle using data-driven projectile spread effects.

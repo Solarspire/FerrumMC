@@ -165,6 +165,22 @@ strip = false
 [profile.dev]
 debug = false
 
+# Chunk generation, lighting and chunk encoding are CPU-bound and take seconds per view ring at opt-level 0.
+[profile.dev.package.pumpkin-world]
+opt-level = 3
+
+[profile.dev.package.pumpkin-util]
+opt-level = 3
+
+[profile.dev.package.pumpkin-nbt]
+opt-level = 3
+
+[profile.dev.package.pumpkin-protocol]
+opt-level = 3
+
+[profile.dev.package.pumpkin-data]
+opt-level = 1
+
 [workspace.dependencies]
 tokio = { version = "1.54", default-features = false }
 syn = { version = "3.0", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "clone-impls", "derive"] }
