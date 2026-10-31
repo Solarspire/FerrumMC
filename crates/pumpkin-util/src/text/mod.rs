@@ -99,7 +99,7 @@ impl TextComponentBase {
     /// Converts this component to an NBT compound tag for the latest Minecraft version.
     #[must_use]
     pub fn to_nbt_compound(&self) -> pumpkin_nbt::NbtCompound {
-        self.to_nbt_compound_for_version(&JavaMinecraftVersion::V_26_3)
+        self.to_nbt_compound_for_version(&JavaMinecraftVersion::V_26_2)
     }
 
     /// Converts this component to an NBT compound tag for a specific Minecraft version.
@@ -1441,7 +1441,7 @@ impl TextComponent {
     /// A boxed byte slice containing the NBT-encoded component.
     #[must_use]
     pub fn encode(&self) -> Box<[u8]> {
-        self.encode_for_version(&JavaMinecraftVersion::V_26_3)
+        self.encode_for_version(&JavaMinecraftVersion::V_26_2)
     }
 
     /// Encodes this component into a byte array using NBT serialization for a specific Minecraft version.
@@ -2059,7 +2059,7 @@ mod custom_name_nbt_tests {
     fn plain_text_round_trips_as_string_tag() {
         let tag = TextComponent::text("Bob")
             .0
-            .to_nbt_tag_for_version(&crate::version::JavaMinecraftVersion::V_26_3);
+            .to_nbt_tag_for_version(&crate::version::JavaMinecraftVersion::V_26_2);
         assert!(matches!(tag, NbtTag::String(ref s) if &**s == "Bob"));
     }
 }

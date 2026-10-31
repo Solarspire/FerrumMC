@@ -1,22 +1,16 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::{LazyLock, Mutex},
-};
-
 use bytes::Bytes;
-use pumpkin_data::compatibility::{BLOCK_STATES_26_2, PACKETS_26_2, REGISTRIES_26_2};
 use pumpkin_data::data_component::DataComponent;
 use pumpkin_data::particle::Particle as P;
+use pumpkin_data::registry_ids::REGISTRY_ENTRIES;
 use pumpkin_nbt::{serializer::NbtWriteHelperJava, tag::NbtTag};
 use pumpkin_protocol::{
     ConnectionState, RawPacket, VarInt,
     ser::{NetworkReadExt, NetworkReadSliceExt, NetworkWriteExt},
 };
 use pumpkin_util::version::JavaMinecraftVersion;
-use tracing::{debug, warn};
-
+use std::{collections::HashMap, sync::LazyLock};
+use tracing::warn;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
-
 const fn phase(state: ConnectionState) -> Option<&'static str> {
     match state {
         ConnectionState::Config => Some("config"),
@@ -24,30 +18,11 @@ const fn phase(state: ConnectionState) -> Option<&'static str> {
         _ => None,
     }
 }
-
-/// ID lookups at the 26.2 wire boundary, built once: the bridge installs its registries before any client connects.
 struct Tables {
-    /// Per registry, the client's ID by engine ID, with runtime (modded) and synchronized entries folded in; -1 when
-    /// the client has no such entry.
     to_client: HashMap<&'static str, Vec<i32>>,
-    /// Per registry, the engine ID by the client's ID.
     to_engine: HashMap<&'static str, Vec<i32>>,
-    /// Target packet ID by source ID, indexed by `packet_table`; -1 when the other side has no such packet.
-    packets: [Vec<i32>; 4],
 }
-
 static TABLES: LazyLock<Tables> = LazyLock::new(Tables::build);
-
-const fn packet_table(direction: &str, phase: &str) -> Option<usize> {
-    match (direction.as_bytes(), phase.as_bytes()) {
-        (b"clientbound", b"config") => Some(0),
-        (b"clientbound", b"play") => Some(1),
-        (b"serverbound", b"config") => Some(2),
-        (b"serverbound", b"play") => Some(3),
-        _ => None,
-    }
-}
-
 fn set(table: &mut Vec<i32>, index: i32, value: i32) {
     let Ok(index) = usize::try_from(index) else {
         return;
@@ -57,39 +32,23 @@ fn set(table: &mut Vec<i32>, index: i32, value: i32) {
     }
     table[index] = value;
 }
-
 impl Tables {
     fn build() -> Self {
         let mut to_client = HashMap::new();
         let mut to_engine = HashMap::new();
-        for &(registry, ids) in REGISTRIES_26_2 {
-            let synced = pumpkin_data::registry::REGISTRY_V_26_2
+        for &(registry, names) in REGISTRY_ENTRIES {
+            let client = names
                 .iter()
-                .find(|reg| reg.registry_id == registry);
-            let mut client = Vec::with_capacity(ids.len());
-            let mut engine = Vec::new();
-            for &id in ids {
-                if id < 0 {
-                    client.push(-1);
-                    continue;
-                }
-                // A vanilla synchronized entry moves once mod datapack entries are sorted in.
-                let moved = synced
-                    .and_then(|reg| reg.entries.get(usize::try_from(id).ok()?))
-                    .and_then(|entry| {
-                        ferrum_neoforge::world::synced_registry_id(
-                            registry,
-                            &format!("minecraft:{}", entry.name),
-                        )
-                    });
-                client.push(moved.unwrap_or(id));
-            }
-            // The first engine entry for a client ID wins; synchronized entries reverse from where they moved.
-            for (engine_id, &id) in client.iter().enumerate().rev() {
-                set(&mut engine, id, i32::try_from(engine_id).unwrap_or(-1));
-            }
+                .enumerate()
+                .map(|(id, name)| {
+                    ferrum_neoforge::world::synced_registry_id(
+                        registry,
+                        &format!("minecraft:{name}"),
+                    )
+                    .unwrap_or(id as i32)
+                })
+                .collect::<Vec<_>>();
             to_client.insert(registry, client);
-            to_engine.insert(registry, engine);
         }
         for registry in ["item", "block", "block_entity_type", "entity_type"] {
             let client = to_client.entry(registry).or_default();
@@ -101,125 +60,18 @@ impl Tables {
                 );
             }
         }
-        let mut packets: [Vec<i32>; 4] = Default::default();
-        // The first mapping of a source ID wins.
-        for &(direction, phase, new, old) in PACKETS_26_2.iter().rev() {
-            let Some(table) = packet_table(direction, phase) else {
-                continue;
-            };
-            // Clientbound packets map engine IDs to the client's, serverbound ones the client's to the engine's.
-            let (source, target) = if direction == "serverbound" {
-                (old, new)
-            } else {
-                (new, old)
-            };
-            set(&mut packets[table], source, target);
+        for (&registry, client) in &to_client {
+            let mut engine = Vec::new();
+            for (id, &wire) in client.iter().enumerate().rev() {
+                set(&mut engine, wire, id as i32);
+            }
+            to_engine.insert(registry, engine);
         }
         Self {
             to_client,
             to_engine,
-            packets,
         }
     }
-}
-
-/// Entities a 26.2 client never saw spawn (26.3-only types), whose follow-up packets are dropped too.
-const MAX_HIDDEN_ENTITIES: usize = 4096;
-
-#[derive(Default)]
-pub(super) struct HiddenEntities(Mutex<HashSet<i32>>);
-
-impl HiddenEntities {
-    fn lock(&self) -> std::sync::MutexGuard<'_, HashSet<i32>> {
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-    }
-}
-
-/// The entity a play packet is about, for packets that lead with it.
-fn packet_entity(id: i32, mut input: &[u8]) -> Option<i32> {
-    use pumpkin_data::packet::clientbound::play as p;
-    let leads_with_var_int = [
-        p::SET_ENTITY_DATA,
-        p::MOVE_ENTITY_POS,
-        p::MOVE_ENTITY_POS_ROT,
-        p::MOVE_ENTITY_ROT,
-        p::TELEPORT_ENTITY,
-        p::ENTITY_POSITION_SYNC,
-        p::SET_EQUIPMENT,
-        p::SET_ENTITY_MOTION,
-        p::ROTATE_HEAD,
-        p::SET_PASSENGERS,
-        p::UPDATE_ATTRIBUTES,
-        p::ANIMATE,
-        p::SWING_ANIMATION,
-        p::HURT_ANIMATION,
-        p::DAMAGE_EVENT,
-        p::UPDATE_MOB_EFFECT,
-        p::REMOVE_MOB_EFFECT,
-        p::TAKE_ITEM_ENTITY,
-        p::PROJECTILE_POWER,
-    ];
-    if leads_with_var_int.iter().any(|packet| packet.0 == id) {
-        return input.get_var_int().ok().map(|entity| entity.0);
-    }
-    if id == p::ENTITY_EVENT.0 || id == p::SET_ENTITY_LINK.0 {
-        return input.get_i32_be().ok();
-    }
-    None
-}
-
-/// What happens to a packet that may concern hidden entities.
-enum HiddenPacket {
-    Keep,
-    Drop,
-    Replace(Bytes),
-}
-
-/// Drops what a 26.2 client cannot place: packets about hidden entities, and hidden ids from a removal list.
-fn hidden_entity_packet(hidden: &HiddenEntities, id: i32, input: &[u8]) -> Result<HiddenPacket> {
-    let mut hidden = hidden.lock();
-    if hidden.is_empty() {
-        return Ok(HiddenPacket::Keep);
-    }
-    if id == pumpkin_data::packet::clientbound::play::REMOVE_ENTITIES.0 {
-        let mut input = input;
-        let count = input.get_var_int()?.0;
-        if !(0..=65536).contains(&count) {
-            return Err("Too many removed entities".into());
-        }
-        let mut kept = Vec::new();
-        for _ in 0..count {
-            let entity = input.get_var_int()?.0;
-            if !hidden.remove(&entity) {
-                kept.push(entity);
-            }
-        }
-        if kept.len() == count as usize {
-            return Ok(HiddenPacket::Keep);
-        }
-        if kept.is_empty() {
-            return Ok(HiddenPacket::Drop);
-        }
-        let Some(target) = packet_id("clientbound", "play", id) else {
-            return Ok(HiddenPacket::Drop);
-        };
-        let mut output = Vec::new();
-        output.write_var_int(&VarInt(target))?;
-        output.write_var_int(&VarInt(i32::try_from(kept.len())?))?;
-        for entity in kept {
-            output.write_var_int(&VarInt(entity))?;
-        }
-        return Ok(HiddenPacket::Replace(output.into()));
-    }
-    Ok(
-        if packet_entity(id, input).is_some_and(|entity| hidden.contains(&entity)) {
-            HiddenPacket::Drop
-        } else {
-            HiddenPacket::Keep
-        },
-    )
 }
 
 fn lookup(table: &[i32], id: i32) -> Option<i32> {
@@ -227,10 +79,6 @@ fn lookup(table: &[i32], id: i32) -> Option<i32> {
         .get(usize::try_from(id).ok()?)
         .copied()
         .filter(|id| *id >= 0)
-}
-
-fn packet_id(direction: &str, phase: &str, id: i32) -> Option<i32> {
-    lookup(&TABLES.packets[packet_table(direction, phase)?], id)
 }
 
 fn mapped(registry: &str, id: i32) -> Option<i32> {
@@ -243,34 +91,14 @@ fn registry_id(registry: &str, id: i32) -> Result<i32> {
 }
 
 fn block_state(id: i32) -> Result<i32> {
-    if id >= i32::from(pumpkin_data::BlockStateId::COUNT)
-        && let Some(mapped) = ferrum_neoforge::world::java_state_raw(u16::try_from(id)?)
-    {
-        return Ok(mapped);
+    if id < 0 {
+        return Err("Invalid engine block state".into());
     }
-    let mapped = *BLOCK_STATES_26_2
-        .get(usize::try_from(id)?)
-        .ok_or("Invalid engine block state")?;
-    if mapped >= 0 {
-        return Ok(mapped);
+    if id < i32::from(pumpkin_data::BlockStateId::COUNT) {
+        return Ok(id);
     }
-    // Unsupported 26.3 content has a client-only placeholder; canonical Rust state is retained.
-    BLOCK_STATES_26_2
-        .get(usize::from(
-            pumpkin_data::Block::BARRIER.default_state.id.as_u16(),
-        ))
-        .copied()
-        .filter(|id| *id >= 0)
-        .ok_or_else(|| "Missing barrier state mapping".into())
-}
-
-/// The engine's ID for a play packet the client sent.
-pub(super) fn engine_play_id(version: JavaMinecraftVersion, id: i32) -> i32 {
-    if version == JavaMinecraftVersion::V_26_2 {
-        packet_id("serverbound", "play", id).unwrap_or(-1)
-    } else {
-        id
-    }
+    ferrum_neoforge::world::java_state_raw(u16::try_from(id)?)
+        .ok_or_else(|| "Unknown mod block state".into())
 }
 
 pub(super) fn incoming(
@@ -278,14 +106,7 @@ pub(super) fn incoming(
     state: ConnectionState,
     packet: &RawPacket,
 ) -> Result<RawPacket> {
-    let id = if version == JavaMinecraftVersion::V_26_2
-        && let Some(phase) = phase(state)
-    {
-        packet_id("serverbound", phase, packet.id)
-            .ok_or_else(|| format!("Unknown 26.2 {phase} packet {}", packet.id))?
-    } else {
-        packet.id
-    };
+    let id = packet.id;
     let mut payload = packet.payload.clone();
     if version == JavaMinecraftVersion::V_26_2 && state == ConnectionState::Play {
         use pumpkin_data::packet::serverbound::play as p;
@@ -327,7 +148,6 @@ pub(super) fn outgoing(
     version: JavaMinecraftVersion,
     state: ConnectionState,
     packet: Bytes,
-    hidden: &HiddenEntities,
 ) -> Result<Option<Bytes>> {
     if version != JavaMinecraftVersion::V_26_2 {
         return Ok(Some(packet));
@@ -337,30 +157,8 @@ pub(super) fn outgoing(
     };
     let mut input = &packet[..];
     let id = input.get_var_int()?.0;
-    if phase == "play" {
-        match hidden_entity_packet(hidden, id, input)? {
-            HiddenPacket::Keep => {}
-            HiddenPacket::Drop => return Ok(None),
-            HiddenPacket::Replace(packet) => return Ok(Some(packet)),
-        }
-    }
-    let swing = phase == "play" && id == pumpkin_data::packet::clientbound::play::SWING_ANIMATION.0;
-    let source_id = if swing {
-        pumpkin_data::packet::clientbound::play::ANIMATE.0
-    } else {
-        id
-    };
-    let Some(target) = packet_id("clientbound", phase, source_id) else {
-        return Ok(None);
-    };
     let mut output = Vec::with_capacity(packet.len());
-    output.write_var_int(&VarInt(target))?;
-    if swing {
-        output.write_var_int(&input.get_var_int()?)?;
-        let offhand = input.get_var_int()?.0 != 0;
-        output.write_u8(if offhand { 3 } else { 0 })?;
-        return Ok(Some(output.into()));
-    }
+    output.write_var_int(&VarInt(id))?;
     if phase == "config" {
         if id == pumpkin_data::packet::clientbound::config::UPDATE_TAGS.0 {
             tags(&mut input, &mut output)?;
@@ -376,23 +174,10 @@ pub(super) fn outgoing(
                 output.write_var_int(&VarInt(block_state(input.get_var_int()?.0)?))?;
             }
             id if id == p::ADD_ENTITY.0 => {
-                let entity = input.get_var_int()?;
-                output.write_var_int(&entity)?;
+                output.write_var_int(&input.get_var_int()?)?;
                 copy(&mut input, &mut output, 16)?;
-                let engine_type = input.get_var_int()?.0;
-                // 26.3-only entity types have no 26.2 client equivalent; skip the spawn and what follows it.
-                let Some(client_type) = mapped("entity_type", engine_type) else {
-                    debug!("Skipping spawn of entity type {engine_type} unknown to 26.2");
-                    let mut hidden = hidden.lock();
-                    // Removals normally clear the set; this only bounds what a missed one leaves behind.
-                    if hidden.len() >= MAX_HIDDEN_ENTITIES {
-                        hidden.clear();
-                    }
-                    hidden.insert(entity.0);
-                    return Ok(None);
-                };
-                hidden.lock().remove(&entity.0);
-                output.write_var_int(&VarInt(client_type))?;
+                output
+                    .write_var_int(&VarInt(registry_id("entity_type", input.get_var_int()?.0)?))?;
                 output.extend_from_slice(input);
             }
             id if id == p::UPDATE_ATTRIBUTES.0 => attributes(&mut input, &mut output)?,
@@ -400,18 +185,6 @@ pub(super) fn outgoing(
             id if id == p::RECIPE_BOOK_ADD.0 => recipes(&mut input, &mut output)?,
             id if id == p::LOGIN.0 => login(&mut input, &mut output)?,
             id if id == p::RESPAWN.0 => spawn_data(&mut input, &mut output)?,
-            id if id == p::MOVE_ENTITY_POS.0
-                || id == p::MOVE_ENTITY_POS_ROT.0
-                || id == p::MOVE_ENTITY_ROT.0 =>
-            {
-                output.write_var_int(&input.get_var_int()?)?;
-                let flags = input.get_var_int()?.0;
-                if flags > 1 {
-                    return Err("Unsupported entity delta path".into());
-                }
-                output.extend_from_slice(input);
-                output.write_bool(flags != 0)?;
-            }
             id if id == p::CONTAINER_SET_CONTENT.0 => {
                 output.write_var_int(&input.get_var_int()?)?;
                 output.write_var_int(&input.get_var_int()?)?;
@@ -443,24 +216,9 @@ pub(super) fn outgoing(
                 item(&mut input, &mut output, false)?;
             }
             id if id == p::SET_CURSOR_ITEM.0 => item(&mut input, &mut output, false)?,
-            id if id == p::ANIMATE.0 => {
-                output.write_var_int(&input.get_var_int()?)?;
-                let animation = input.get_u8()?;
-                output.write_u8(match animation {
-                    0 => 2,
-                    1 => 4,
-                    2 => 5,
-                    _ => return Err("Invalid entity animation".into()),
-                })?;
-            }
             id if id == p::SOUND.0 || id == p::SOUND_ENTITY.0 => {
                 sound(&mut input, &mut output)?;
                 output.extend_from_slice(input);
-            }
-            id if id == p::LIGHT_UPDATE.0 => {
-                output.write_var_int(&input.get_var_int()?)?;
-                output.write_var_int(&input.get_var_int()?)?;
-                light(&mut input, &mut output)?;
             }
             id if id == p::SECTION_BLOCKS_UPDATE.0 => {
                 copy(&mut input, &mut output, 8)?;
@@ -526,9 +284,7 @@ pub(super) fn outgoing(
                 let chat_type = input.get_var_int()?.0;
                 if is_raw_chat_type(chat_type) {
                     // The client has no raw chat type, so show the text as a system message.
-                    let Some(target) = packet_id("clientbound", "play", p::SYSTEM_CHAT.0) else {
-                        return Ok(None);
-                    };
+                    let target = p::SYSTEM_CHAT.0;
                     output.clear();
                     output.write_var_int(&VarInt(target))?;
                     nbt(&mut message, &mut output)?;
@@ -555,16 +311,6 @@ pub(super) fn outgoing(
                 particle_data(input.get_var_int()?.0, &mut input, &mut output)?;
                 sound(&mut input, &mut output)?;
                 output.write_var_int(&input.get_var_int()?)?;
-                input.get_bool()?;
-            }
-            id if id == p::ENTITY_POSITION_SYNC.0 => {
-                output.write_var_int(&input.get_var_int()?)?;
-                if input.get_var_int()?.0 != 0 {
-                    return Err("Unsupported entity movement path".into());
-                }
-                copy(&mut input, &mut output, 24)?;
-                output.extend_from_slice(&[0; 24]);
-                output.extend_from_slice(input);
             }
             _ => output.extend_from_slice(input),
         }
@@ -622,7 +368,7 @@ fn creative_item(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
         match reverse_id("data_component_type", client_id) {
             Ok(id) if id == custom_data => {
                 let mut value = value;
-                custom = value.get_compound_nbt_borrowed(&JavaMinecraftVersion::V_26_3)?;
+                custom = value.get_compound_nbt_borrowed(&JavaMinecraftVersion::V_26_2)?;
             }
             Ok(id) => match engine_component(id, value) {
                 Ok(Some(value)) => components.push((id, value)),
@@ -690,12 +436,6 @@ fn engine_component(id: i32, mut value: &[u8]) -> Result<Option<Vec<u8>>> {
                 output.write_var_int(&VarInt(enchantment))?;
                 output.write_var_int(&level)?;
             }
-        }
-        C::DamageResistant => {
-            if value.get_var_int()?.0 != 0 {
-                return Ok(None);
-            }
-            output.write_string(&format!("#{}", value.get_str()?))?;
         }
         C::PotionContents => {
             let potion = value.get_bool()?;
@@ -783,7 +523,7 @@ fn tags(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
                 tag_data.write_var_int(&VarInt(id))?;
             }
         }
-        if REGISTRIES_26_2.iter().any(|(key, _)| *key == registry) {
+        if REGISTRY_ENTRIES.iter().any(|(key, _)| *key == registry) {
             registries.write_string(&name)?;
             registries.write_var_int(&VarInt(count))?;
             registries.extend_from_slice(&tag_data);
@@ -911,23 +651,13 @@ fn chunk(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
     }
     output.write_var_int(&VarInt(retained))?;
     output.extend_from_slice(&entities);
-    light(input, output)?;
-    Ok(())
-}
-
-fn light(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
-    use pumpkin_protocol::codec::bit_set::BitSet;
-    for _ in 0..4 {
-        BitSet::decode_with_version(input, &JavaMinecraftVersion::V_26_3)?
-            .encode_with_version(output, &JavaMinecraftVersion::V_26_2)?;
-    }
     output.extend_from_slice(input);
     Ok(())
 }
 
 fn nbt(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
     let before = *input;
-    input.get_nbt(&JavaMinecraftVersion::V_26_3)?;
+    input.get_nbt(&JavaMinecraftVersion::V_26_2)?;
     output.extend_from_slice(&before[..before.len() - input.len()]);
     Ok(())
 }
@@ -949,9 +679,7 @@ fn item(input: &mut &[u8], output: &mut Vec<u8>, template: bool) -> Result<()> {
         .ok()
         .and_then(pumpkin_data::runtime::item)
         .is_some();
-    let id = mapped("item", id.0)
-        .or_else(|| mapped("item", i32::from(pumpkin_data::item::Item::BARRIER.id)))
-        .ok_or("Missing barrier item mapping")?;
+    let id = mapped("item", id.0).ok_or("Missing barrier item mapping")?;
     if template {
         output.write_var_int(&VarInt(id))?;
         output.write_var_int(&count)?;
@@ -978,7 +706,7 @@ fn item(input: &mut &[u8], output: &mut Vec<u8>, template: bool) -> Result<()> {
         }
         input.get_var_int()?;
         let mut data = input
-            .get_compound_nbt_borrowed(&JavaMinecraftVersion::V_26_3)?
+            .get_compound_nbt_borrowed(&JavaMinecraftVersion::V_26_2)?
             .unwrap_or_default();
         // Mod components wait in custom data for the client's real typed components.
         if let Some(NbtTag::Compound(components)) = data
@@ -1060,11 +788,6 @@ fn component(input: &mut &[u8], output: &mut Vec<u8>) -> Result<bool> {
             }
         }
         // 26.2 holds a damage type holder set: a leading 0 names a tag, without the `#`.
-        C::DamageResistant => {
-            let tag = value.get_str()?;
-            output.write_var_int(&VarInt(0))?;
-            output.write_string(tag.strip_prefix('#').unwrap_or(&tag))?;
-        }
         C::PotionContents => {
             let potion = value.get_bool()?;
             output.write_bool(potion)?;
@@ -1116,17 +839,11 @@ fn merchant_offers(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
 
 /// Engine-only `raw` chat type, which no 26.2 client registry contains.
 fn is_raw_chat_type(id: i32) -> bool {
-    let vanilla = REGISTRIES_26_2
-        .iter()
-        .find(|(name, _)| *name == "chat_type")
-        .and_then(|(_, ids)| ids.get(usize::try_from(id).ok()?))
-        .copied()
-        .and_then(|id| usize::try_from(id).ok());
-    let Some(vanilla) = vanilla else { return true };
     pumpkin_data::registry::REGISTRY_V_26_2
         .iter()
         .find(|reg| reg.registry_id == "chat_type")
-        .is_none_or(|reg| reg.entries.get(vanilla).is_none())
+        .and_then(|reg| reg.entries.get(usize::try_from(id).ok()?))
+        .is_some_and(|entry| entry.name == "raw")
 }
 
 fn chat_type_id(id: i32) -> Result<i32> {
@@ -1181,41 +898,50 @@ fn player_chat(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
 
 /// Serializer IDs of 26.2's `EntityDataSerializers`, in registration order.
 mod data_type {
-    pub const BYTE: i32 = 0;
-    pub const INT: i32 = 1;
-    pub const LONG: i32 = 2;
-    pub const FLOAT: i32 = 3;
-    pub const STRING: i32 = 4;
-    pub const COMPONENT: i32 = 5;
-    pub const OPTIONAL_COMPONENT: i32 = 6;
-    pub const ITEM_STACK: i32 = 7;
-    pub const BOOLEAN: i32 = 8;
-    pub const ROTATIONS: i32 = 9;
-    pub const BLOCK_POS: i32 = 10;
-    pub const OPTIONAL_BLOCK_POS: i32 = 11;
-    pub const DIRECTION: i32 = 12;
-    pub const OPTIONAL_LIVING_ENTITY_REFERENCE: i32 = 13;
-    pub const BLOCK_STATE: i32 = 14;
-    pub const OPTIONAL_BLOCK_STATE: i32 = 15;
-    pub const PARTICLE: i32 = 16;
-    pub const PARTICLES: i32 = 17;
-    pub const VILLAGER_DATA: i32 = 18;
-    pub const OPTIONAL_UNSIGNED_INT: i32 = 19;
-    pub const POSE: i32 = 20;
-    pub const CAT_VARIANT: i32 = 21;
-    pub const ZOMBIE_NAUTILUS_VARIANT: i32 = 32;
-    pub const OPTIONAL_GLOBAL_POS: i32 = 33;
-    pub const PAINTING_VARIANT: i32 = 34;
-    pub const SNIFFER_STATE: i32 = 35;
-    pub const ARMADILLO_STATE: i32 = 36;
-    pub const COPPER_GOLEM_STATE: i32 = 37;
-    pub const WEATHERING_COPPER_STATE: i32 = 38;
-    pub const VECTOR3: i32 = 39;
-    pub const QUATERNION: i32 = 40;
-    pub const RESOLVABLE_PROFILE: i32 = 41;
-    pub const HUMANOID_ARM: i32 = 42;
-    /// Newer than 26.2, which would disconnect on it.
-    pub const DYE_COLOR: i32 = 43;
+    pub const BYTE: i32 = pumpkin_data::meta_data_type::MetaDataType::BYTE.id;
+    pub const INT: i32 = pumpkin_data::meta_data_type::MetaDataType::INT.id;
+    pub const LONG: i32 = pumpkin_data::meta_data_type::MetaDataType::LONG.id;
+    pub const FLOAT: i32 = pumpkin_data::meta_data_type::MetaDataType::FLOAT.id;
+    pub const STRING: i32 = pumpkin_data::meta_data_type::MetaDataType::STRING.id;
+    pub const COMPONENT: i32 = pumpkin_data::meta_data_type::MetaDataType::COMPONENT.id;
+    pub const OPTIONAL_COMPONENT: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::OPTIONAL_COMPONENT.id;
+    pub const ITEM_STACK: i32 = pumpkin_data::meta_data_type::MetaDataType::ITEM_STACK.id;
+    pub const BOOLEAN: i32 = pumpkin_data::meta_data_type::MetaDataType::BOOLEAN.id;
+    pub const ROTATIONS: i32 = pumpkin_data::meta_data_type::MetaDataType::ROTATIONS.id;
+    pub const BLOCK_POS: i32 = pumpkin_data::meta_data_type::MetaDataType::BLOCK_POS.id;
+    pub const OPTIONAL_BLOCK_POS: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::OPTIONAL_BLOCK_POS.id;
+    pub const DIRECTION: i32 = pumpkin_data::meta_data_type::MetaDataType::DIRECTION.id;
+    pub const OPTIONAL_LIVING_ENTITY_REFERENCE: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::OPTIONAL_LIVING_ENTITY_REFERENCE.id;
+    pub const BLOCK_STATE: i32 = pumpkin_data::meta_data_type::MetaDataType::BLOCK_STATE.id;
+    pub const OPTIONAL_BLOCK_STATE: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::OPTIONAL_BLOCK_STATE.id;
+    pub const PARTICLE: i32 = pumpkin_data::meta_data_type::MetaDataType::PARTICLE.id;
+    pub const PARTICLES: i32 = pumpkin_data::meta_data_type::MetaDataType::PARTICLES.id;
+    pub const VILLAGER_DATA: i32 = pumpkin_data::meta_data_type::MetaDataType::VILLAGER_DATA.id;
+    pub const OPTIONAL_UNSIGNED_INT: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::OPTIONAL_UNSIGNED_INT.id;
+    pub const POSE: i32 = pumpkin_data::meta_data_type::MetaDataType::POSE.id;
+    pub const CAT_VARIANT: i32 = pumpkin_data::meta_data_type::MetaDataType::CAT_VARIANT.id;
+    pub const ZOMBIE_NAUTILUS_VARIANT: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::ZOMBIE_NAUTILUS_VARIANT.id;
+    pub const OPTIONAL_GLOBAL_POS: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::OPTIONAL_GLOBAL_POS.id;
+    pub const PAINTING_VARIANT: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::PAINTING_VARIANT.id;
+    pub const SNIFFER_STATE: i32 = pumpkin_data::meta_data_type::MetaDataType::SNIFFER_STATE.id;
+    pub const ARMADILLO_STATE: i32 = pumpkin_data::meta_data_type::MetaDataType::ARMADILLO_STATE.id;
+    pub const COPPER_GOLEM_STATE: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::COPPER_GOLEM_STATE.id;
+    pub const WEATHERING_COPPER_STATE: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::WEATHERING_COPPER_STATE.id;
+    pub const VECTOR3: i32 = pumpkin_data::meta_data_type::MetaDataType::VECTOR3.id;
+    pub const QUATERNION: i32 = pumpkin_data::meta_data_type::MetaDataType::QUATERNION.id;
+    pub const RESOLVABLE_PROFILE: i32 =
+        pumpkin_data::meta_data_type::MetaDataType::RESOLVABLE_PROFILE.id;
+    pub const HUMANOID_ARM: i32 = pumpkin_data::meta_data_type::MetaDataType::HUMANOID_ARM.id;
     /// Registries of `CAT_VARIANT..=ZOMBIE_NAUTILUS_VARIANT`.
     pub const VARIANT_REGISTRIES: [&str; 12] = [
         "cat_variant",
@@ -1340,10 +1066,6 @@ fn entity_data_value(kind: i32, input: &mut &[u8], output: &mut Vec<u8>) -> Resu
             }
             output.write_var_int(&VarInt(registry_id("painting_variant", holder - 1)? + 1))?;
         }
-        t::DYE_COLOR => {
-            input.get_var_int()?;
-            return Ok(false);
-        }
         t::RESOLVABLE_PROFILE => return Err("Unsupported resolvable profile entity data".into()),
         _ => return Err(format!("Unknown entity data serializer {kind}").into()),
     }
@@ -1373,6 +1095,7 @@ fn advancements(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
             if flags & 1 != 0 {
                 output.write_string(&input.get_str()?)?;
             }
+            copy(input, output, 8)?;
         }
         let start = *input;
         let requirements = input.get_var_int()?.0;
@@ -1384,10 +1107,6 @@ fn advancements(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
         }
         input.get_bool()?;
         let requirements = &start[..start.len() - input.len()];
-        let coordinates = input.read_slice_borrowed(8)?;
-        if display {
-            output.extend_from_slice(coordinates);
-        }
         output.extend_from_slice(requirements);
     }
     output.extend_from_slice(input);
@@ -1400,9 +1119,7 @@ fn slot(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
     match kind.0 {
         0 | 1 => (),
         4 => output.write_var_int(&VarInt(
-            mapped("item", input.get_var_int()?.0)
-                .or_else(|| mapped("item", i32::from(pumpkin_data::item::Item::BARRIER.id)))
-                .ok_or("Missing item mapping")?,
+            mapped("item", input.get_var_int()?.0).ok_or("Missing item mapping")?,
         ))?,
         5 => item(input, output, true)?,
         6 => output.write_string(&input.get_str()?)?,
@@ -1531,26 +1248,14 @@ fn spawn_data(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
     )?))?;
     output.write_string(&input.get_str()?)?;
     copy(input, output, 8)?;
-    output.write_u8(u8::try_from(input.get_var_int()?.0)?)?;
-    output.write_i8(i8::try_from(input.get_var_int()?.0 - 1)?)?;
+    copy(input, output, 2)?;
     output.extend_from_slice(input);
     Ok(())
 }
 
 fn particles(input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
-    let id = input.get_var_int()?.0;
-    let mut particle = Vec::new();
-    particle_data(id, input, &mut particle)?;
-    copy(input, output, 38)?;
-    copy(input, output, 4)?;
-    copy(input, &mut Vec::new(), 8)?;
-    let count = input.get_var_int()?.0;
-    if input.get_var_int()?.0 != 0 {
-        return Err("Unsupported particle randomization".into());
-    }
-    output.write_i32_be(count)?;
-    output.extend_from_slice(&particle);
-    Ok(())
+    copy(input, output, 46)?;
+    particle_data(input.get_var_int()?.0, input, output)
 }
 
 fn particle_data(id: i32, input: &mut &[u8], output: &mut Vec<u8>) -> Result<()> {
@@ -1560,6 +1265,8 @@ fn particle_data(id: i32, input: &mut &[u8], output: &mut Vec<u8>) -> Result<()>
     match particle {
         P::Block | P::BlockMarker | P::FallingDust | P::DustPillar | P::BlockCrumble => {
             output.write_var_int(&VarInt(block_state(input.get_var_int()?.0)?))?;
+            // NeoForge's `BlockParticleOption` appends an optional `BlockPos` (absent here).
+            output.write_bool(false)?;
         }
         P::Dust => copy(input, output, 8)?,
         P::DustColorTransition => copy(input, output, 12)?,
@@ -1593,20 +1300,59 @@ fn particle_data(id: i32, input: &mut &[u8], output: &mut Vec<u8>) -> Result<()>
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pumpkin_protocol::java::client::play::CUpdateEntityRot;
+    use pumpkin_protocol::java::server::play::SSetCreativeSlot;
+    use pumpkin_protocol::{ClientPacket, ServerPacket};
 
     #[test]
-    fn creative_item_uses_engine_identity_and_rejects_truncated_components() -> Result<()> {
-        // Vanilla 26.2 acacia_boat is 899; the pinned engine's item ID is 983.
+    fn native_movement_keeps_packet_id_and_layout() -> Result<()> {
+        let mut packet = Vec::new();
+        packet.write_var_int(&VarInt(
+            pumpkin_data::packet::clientbound::play::MOVE_ENTITY_ROT.0,
+        ))?;
+        CUpdateEntityRot::new(VarInt(17), 90, 45, true)
+            .write_packet_data(&mut packet, &JavaMinecraftVersion::V_26_2)?;
+        let original = Bytes::from(packet);
+        assert_eq!(
+            outgoing(
+                JavaMinecraftVersion::V_26_2,
+                ConnectionState::Play,
+                original.clone()
+            )?,
+            Some(original)
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn creative_stack_keeps_native_item_and_components_and_rejects_truncation() -> Result<()> {
+        let mut payload = Vec::new();
+        payload.write_i16_be(36)?;
+        payload.write_var_int(&VarInt(1))?;
+        payload.write_var_int(&VarInt(i32::from(pumpkin_data::item::Item::ACACIA_BOAT.id)))?;
+        payload.write_var_int(&VarInt(1))?;
+        payload.write_var_int(&VarInt(0))?;
+        payload.write_var_int(&VarInt(i32::from(DataComponent::Damage.to_id())))?;
+        payload.extend_from_slice(&[1, 5]);
         let packet = RawPacket {
-            id: 56,
-            payload: Bytes::from_static(&[0, 36, 1, 0x83, 7, 0, 0]),
+            id: pumpkin_data::packet::serverbound::play::SET_CREATIVE_MODE_SLOT.0,
+            payload: payload.clone().into(),
         };
-        let translated = incoming(JavaMinecraftVersion::V_26_2, ConnectionState::Play, &packet)?;
-        assert_eq!(translated.id, 57);
-        assert_eq!(&translated.payload[..], &[0, 36, 1, 0xd7, 7, 0, 0]);
+        let mapped = incoming(JavaMinecraftVersion::V_26_2, ConnectionState::Play, &packet)?;
+        assert_eq!(mapped.id, packet.id);
+        assert_eq!(mapped.payload, packet.payload);
+        let mut data = &mapped.payload[..];
+        let stack = SSetCreativeSlot::read(&mut data, &JavaMinecraftVersion::V_26_2)?;
+        assert_eq!(
+            stack.clicked_item.0.item.id,
+            pumpkin_data::item::Item::ACACIA_BOAT.id
+        );
+        assert_eq!(stack.clicked_item.0.get_damage(), 5);
+        assert!(data.is_empty());
+        payload.pop();
         let truncated = RawPacket {
-            id: 56,
-            payload: Bytes::from_static(&[0, 36, 1, 0x83, 7, 1, 0, 0, 4]),
+            id: packet.id,
+            payload: payload.into(),
         };
         assert!(
             incoming(
@@ -1616,85 +1362,6 @@ mod tests {
             )
             .is_err()
         );
-        Ok(())
-    }
-
-    #[test]
-    fn entity_data_item_stack_uses_client_item_id() -> Result<()> {
-        // Vanilla 26.2 acacia_boat is 899; the pinned engine's item ID is 983.
-        let mut packet = Vec::new();
-        packet.write_var_int(&VarInt(
-            pumpkin_data::packet::clientbound::play::SET_ENTITY_DATA.0,
-        ))?;
-        packet.extend_from_slice(&[9, 8, 7, 1, 0xd7, 7, 0, 0, 10, 1, 5, 0xff]);
-        let translated = outgoing(
-            JavaMinecraftVersion::V_26_2,
-            ConnectionState::Play,
-            packet.into(),
-            &HiddenEntities::default(),
-        )?
-        .ok_or("Missing packet")?;
-        let mut input = &translated[..];
-        input.get_var_int()?;
-        assert_eq!(input, &[9, 8, 7, 1, 0x83, 7, 0, 0, 10, 1, 5, 0xff]);
-        Ok(())
-    }
-
-    #[test]
-    fn relative_movement_moves_ground_flag_after_delta() -> Result<()> {
-        let mut packet = Vec::new();
-        packet.write_var_int(&VarInt(
-            pumpkin_data::packet::clientbound::play::MOVE_ENTITY_POS.0,
-        ))?;
-        packet.extend_from_slice(&[7, 1, 1, 2, 3, 4, 5, 6]);
-        let translated = outgoing(
-            JavaMinecraftVersion::V_26_2,
-            ConnectionState::Play,
-            packet.into(),
-            &HiddenEntities::default(),
-        )?
-        .ok_or("Missing packet")?;
-        let mut input = &translated[..];
-        input.get_var_int()?;
-        assert_eq!(input, &[7, 1, 2, 3, 4, 5, 6, 1]);
-        Ok(())
-    }
-
-    #[test]
-    fn packets_about_entities_hidden_from_the_client_are_dropped() -> Result<()> {
-        use pumpkin_data::packet::clientbound::play as p;
-        let hidden = HiddenEntities::default();
-        let send = |packet: Vec<u8>| {
-            outgoing(
-                JavaMinecraftVersion::V_26_2,
-                ConnectionState::Play,
-                packet.into(),
-                &hidden,
-            )
-        };
-        let unknown_type = REGISTRIES_26_2
-            .iter()
-            .find(|(name, _)| *name == "entity_type")
-            .and_then(|(_, ids)| ids.iter().position(|id| *id < 0))
-            .ok_or("every entity type exists in 26.2")?;
-        let mut spawn = Vec::new();
-        spawn.write_var_int(&VarInt(p::ADD_ENTITY.0))?;
-        spawn.write_var_int(&VarInt(5))?;
-        spawn.extend_from_slice(&[0; 16]);
-        spawn.write_var_int(&VarInt(i32::try_from(unknown_type)?))?;
-        assert!(send(spawn)?.is_none());
-        let mut data = Vec::new();
-        data.write_var_int(&VarInt(p::SET_ENTITY_DATA.0))?;
-        data.extend_from_slice(&[5, 0xff]);
-        assert!(send(data)?.is_none());
-        let mut remove = Vec::new();
-        remove.write_var_int(&VarInt(p::REMOVE_ENTITIES.0))?;
-        remove.extend_from_slice(&[2, 5, 6]);
-        let removed = send(remove)?.ok_or("removal of a visible entity dropped")?;
-        let mut input = &removed[..];
-        input.get_var_int()?;
-        assert_eq!(input, &[1, 6]);
-        assert!(hidden.lock().is_empty());
         Ok(())
     }
 }

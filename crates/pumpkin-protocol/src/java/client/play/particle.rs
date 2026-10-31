@@ -175,10 +175,6 @@ impl ClientPacket for CParticle<'_> {
             } else {
                 write.write_i32_be(self.particle_id.0)?;
             }
-        } else if *version >= JavaMinecraftVersion::V_26_3 {
-            // The particle moved back to the front of the packet in 26.3
-            write.write_var_int(&self.particle_id)?;
-            write.write_slice(self.data)?;
         }
 
         if *version >= JavaMinecraftVersion::V_1_8 {
@@ -203,15 +199,7 @@ impl ClientPacket for CParticle<'_> {
         write.write_f32_be(self.offset.z)?;
 
         write.write_f32_be(self.max_speed)?;
-        if *version >= JavaMinecraftVersion::V_26_3 {
-            // Since 26.3 the speed is set per axis and the count is a var int, followed by the
-            // randomization type, 0 being the default one.
-            write.write_f32_be(self.max_speed)?;
-            write.write_f32_be(self.max_speed)?;
-            write.write_var_int(&VarInt(self.particle_count))?;
-            write.write_var_int(&VarInt(0))?;
-            return Ok(());
-        }
+
         write.write_i32_be(self.particle_count)?;
 
         if *version >= JavaMinecraftVersion::V_1_20_5 {

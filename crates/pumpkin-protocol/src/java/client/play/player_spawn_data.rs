@@ -8,45 +8,23 @@ use crate::{
     ser::{NetworkReadExt, NetworkWriteExt, ReadingError, WritingError},
 };
 
-/// Writes the current and previous game mode. Since 26.3 both are var ints and the previous game
-/// mode is optional, where 0 means none and any other value is the game mode id plus one.
+/// Writes the current and previous game modes as bytes.
 pub(super) fn write_game_modes(
     mut write: impl std::io::Write,
     game_mode: u8,
     previous_gamemode: i8,
-    version: JavaMinecraftVersion,
+    _version: JavaMinecraftVersion,
 ) -> Result<(), WritingError> {
-    if version >= JavaMinecraftVersion::V_26_3 {
-        write.write_var_int(&VarInt(i32::from(game_mode)))?;
-        let previous = if previous_gamemode < 0 {
-            0
-        } else {
-            i32::from(previous_gamemode) + 1
-        };
-        write.write_var_int(&VarInt(previous))
-    } else {
-        write.write_u8(game_mode)?;
-        write.write_i8(previous_gamemode)
-    }
+    write.write_u8(game_mode)?;
+    write.write_i8(previous_gamemode)
 }
 
 /// Reads the current and previous game mode written by [`write_game_modes`].
 pub(super) fn read_game_modes(
     read: &mut &[u8],
-    version: JavaMinecraftVersion,
+    _version: JavaMinecraftVersion,
 ) -> Result<(u8, i8), ReadingError> {
-    if version >= JavaMinecraftVersion::V_26_3 {
-        let game_mode = read.get_var_int()?.0 as u8;
-        let previous = read.get_var_int()?.0;
-        let previous_gamemode = if previous <= 0 {
-            -1
-        } else {
-            (previous - 1) as i8
-        };
-        Ok((game_mode, previous_gamemode))
-    } else {
-        Ok((read.get_u8()?, read.get_i8()?))
-    }
+    Ok((read.get_u8()?, read.get_i8()?))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -135,12 +113,11 @@ impl PlayerSpawnData {
     pub fn read(read: &mut &[u8], version: &JavaMinecraftVersion) -> Result<Self, ReadingError> {
         let dimension = if version >= &JavaMinecraftVersion::V_1_20_5 {
             let id = read.get_var_int()?.0 as u8;
-            match id {
-                1 => Dimension::OVERWORLD_CAVES,
-                2 => Dimension::THE_END,
-                3 => Dimension::THE_NETHER,
-                _ => Dimension::OVERWORLD,
-            }
+            Dimension::ALL
+                .iter()
+                .find(|dimension| dimension.id == id)
+                .cloned()
+                .unwrap_or(Dimension::OVERWORLD)
         } else if version >= &JavaMinecraftVersion::V_1_16 {
             let dim_name = read.get_str()?;
             Dimension::from_name(&dim_name)

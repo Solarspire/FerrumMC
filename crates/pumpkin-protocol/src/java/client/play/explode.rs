@@ -92,11 +92,6 @@ impl ClientPacket for CExplosion {
             if *version >= JavaMinecraftVersion::V_1_21_9 {
                 write.write_var_int(&self.block_particles_pool_size)?;
             }
-
-            // Whether the explosion sound is played, added in 26.3
-            if *version >= JavaMinecraftVersion::V_26_3 {
-                write.write_bool(true)?;
-            }
         } else {
             write.write_f32_be(self.radius)?;
 
@@ -183,9 +178,9 @@ mod tests {
     }
 
     #[test]
-    fn explosion_particle_id_stays_latest_for_26_3() {
+    fn explosion_particle_id_stays_latest_for_26_2() {
         assert_eq!(
-            encoded_particle_id(JavaMinecraftVersion::V_26_3),
+            encoded_particle_id(JavaMinecraftVersion::V_26_2),
             VarInt(29)
         );
     }

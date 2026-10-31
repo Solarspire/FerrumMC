@@ -53,9 +53,9 @@ mod tests {
 
     #[test]
     fn spectator_click_without_target() -> Result<(), ReadingError> {
-        // 26.3 sends OPTIONAL_VAR_INT(0) when a spectator clicks without an entity target.
+        // Vanilla sends OPTIONAL_VAR_INT(0) when a spectator clicks without an entity target.
         let mut payload = [0x00].as_slice();
-        let packet = SSpectateEntity::read(&mut payload, &JavaMinecraftVersion::V_26_3)?;
+        let packet = SSpectateEntity::read(&mut payload, &JavaMinecraftVersion::V_26_2)?;
         assert_eq!(packet.target_entity_id(), None);
         assert!(payload.is_empty());
         Ok(())
@@ -75,12 +75,12 @@ mod tests {
 
         for &(bytes, target) in fixtures {
             let mut payload = bytes;
-            let packet = SSpectateEntity::read(&mut payload, &JavaMinecraftVersion::V_26_3)?;
+            let packet = SSpectateEntity::read(&mut payload, &JavaMinecraftVersion::V_26_2)?;
             assert_eq!(packet.target_entity_id(), target);
             assert!(payload.is_empty());
 
             let mut encoded = Vec::new();
-            packet.write_packet_data(&mut encoded, &JavaMinecraftVersion::V_26_3)?;
+            packet.write_packet_data(&mut encoded, &JavaMinecraftVersion::V_26_2)?;
             assert_eq!(encoded, bytes);
         }
         Ok(())
@@ -90,7 +90,7 @@ mod tests {
     fn spectator_action_rejects_malformed_var_int() {
         for bytes in [&[][..], &[0x80], &[0x80, 0x80, 0x80, 0x80, 0x80, 0x00]] {
             let mut payload = bytes;
-            assert!(SSpectateEntity::read(&mut payload, &JavaMinecraftVersion::V_26_3).is_err());
+            assert!(SSpectateEntity::read(&mut payload, &JavaMinecraftVersion::V_26_2).is_err());
         }
     }
 
@@ -98,15 +98,15 @@ mod tests {
     async fn consecutive_spectator_actions_preserve_packet_boundaries()
     -> Result<(), Box<dyn std::error::Error>> {
         // Complete uncompressed frames: click air, entity 42, then entity 127.
-        let frames = [0x02, 0x3f, 0x00, 0x02, 0x3f, 0x2b, 0x03, 0x3f, 0x80, 0x01];
+        let frames = [0x02, 0x3e, 0x00, 0x02, 0x3e, 0x2b, 0x03, 0x3e, 0x80, 0x01];
         let mut decoder = TCPNetworkDecoder::new(frames.as_slice());
-        assert_eq!(SSpectateEntity::to_id(JavaMinecraftVersion::V_26_3), 0x3f);
+        assert_eq!(SSpectateEntity::to_id(JavaMinecraftVersion::V_26_2), 0x3e);
 
         for target in [None, Some(42), Some(127)] {
             let raw = decoder.get_raw_packet().await?;
-            assert_eq!(raw.id, 0x3f);
+            assert_eq!(raw.id, 0x3e);
             let mut payload = raw.payload.as_ref();
-            let packet = SSpectateEntity::read(&mut payload, &JavaMinecraftVersion::V_26_3)?;
+            let packet = SSpectateEntity::read(&mut payload, &JavaMinecraftVersion::V_26_2)?;
             assert_eq!(packet.target_entity_id(), target);
             assert!(payload.is_empty());
         }

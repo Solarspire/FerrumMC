@@ -1,8 +1,7 @@
 param([string]$CaptureDirectory = "$PSScriptRoot/../run/smoke")
 . "$PSScriptRoot/env.ps1"
 $releases = @(
-    @{ Version = '26.2'; Protocol = 776; Sha1 = '823e2250d24b3ddac457a60c92a6a941943fcd6a' },
-    @{ Version = '26.3'; Protocol = 777; Sha1 = '33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c' }
+    @{ Version = '26.2'; Protocol = 776; Sha1 = '823e2250d24b3ddac457a60c92a6a941943fcd6a' }
 )
 foreach ($release in $releases) {
     $version = $release.Version
