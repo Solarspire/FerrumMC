@@ -102,15 +102,7 @@ pub trait BlockEntity: Any + Send + Sync {
         self.write_nbt(nbt);
     }
     fn get_id(&self) -> u32 {
-        let name = self
-            .resource_location()
-            .split(':')
-            .next_back()
-            .unwrap_or("");
-        pumpkin_data::block_properties::BLOCK_ENTITY_TYPES
-            .iter()
-            .position(|block_entity_name| *block_entity_name == name)
-            .unwrap_or(0) as u32
+        block_entity_type_id(self.resource_location())
     }
 
     /// Obtain NBT data for sending to the client in `ChunkData`
@@ -173,6 +165,19 @@ pub fn block_entity_from_generic<T: BlockEntity>(nbt: &NbtCompound) -> T {
 
 #[must_use]
 #[allow(clippy::too_many_lines)]
+/// Engine ID of a block entity type by resource location; modded types live after the vanilla ones.
+#[must_use]
+pub fn block_entity_type_id(resource_location: &str) -> u32 {
+    if let Some(id) = pumpkin_data::runtime::block_entity_type_id(resource_location) {
+        return u32::from(id);
+    }
+    let name = resource_location.split(':').next_back().unwrap_or("");
+    BLOCK_ENTITY_TYPES
+        .iter()
+        .position(|n| *n == name)
+        .unwrap_or(0) as u32
+}
+
 pub fn block_entity_from_nbt(nbt: &NbtCompound) -> Option<Arc<dyn BlockEntity>> {
     let id = nbt.get_string("id")?;
     let x = nbt.get_int("x")?;
