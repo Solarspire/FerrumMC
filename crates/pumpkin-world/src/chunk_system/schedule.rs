@@ -23,12 +23,14 @@ use std::thread;
 use std::time::Duration;
 use tracing::{debug, error, info, trace, warn};
 
+/// Field order is the heap order: nearest ticket level first, so the chunks around players finish
+/// before work for farther ones.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct TaskPriority {
+    eff_level: i8,
     stage: u8,
     x: i32,
     z: i32,
-    eff_level: i8,
 }
 
 pub(crate) struct TaskHeapNode(TaskPriority, NodeKey);
@@ -1820,5 +1822,30 @@ impl GenerationSchedule {
             }
         }
         true
+    }
+}
+
+#[cfg(test)]
+mod priority_tests {
+    use super::{BinaryHeap, NodeKey, TaskHeapNode, TaskPriority};
+
+    #[test]
+    fn nearer_ticket_level_runs_before_earlier_stage_or_lower_x() {
+        let near = TaskPriority {
+            eff_level: 30,
+            stage: 8,
+            x: 100,
+            z: 0,
+        };
+        let far = TaskPriority {
+            eff_level: 40,
+            stage: 2,
+            x: -100,
+            z: 0,
+        };
+        let mut queue = BinaryHeap::new();
+        queue.push(TaskHeapNode(far, NodeKey::default()));
+        queue.push(TaskHeapNode(near, NodeKey::default()));
+        assert_eq!(queue.pop().map(|node| node.0), Some(near));
     }
 }
