@@ -7,7 +7,7 @@ use std::fs;
 use crate::version::JavaMinecraftVersion;
 
 /// The newest protocol version whose registry data is used as the fallback for unknown versions.
-const LATEST_VERSION: JavaMinecraftVersion = JavaMinecraftVersion::V_26_3;
+const LATEST_VERSION: JavaMinecraftVersion = JavaMinecraftVersion::V_26_2;
 
 /// Generates the `TokenStream` for the `Registry` and `StaticRegistry` structs, version-keyed
 /// static registry data, and the `Registry::get_synced` method.
@@ -41,13 +41,10 @@ pub(crate) const SYNCED_REGISTRIES: &[&str] = &[
     "test_environment",
     "test_instance",
     "sulfur_cube_archetype",
-    "decorated_pot_pattern",
-    "block_transformer",
-    "worldgen/block_state_provider",
 ];
 
 pub(crate) fn build() -> TokenStream {
-    let versions = [("26_2", "V_26_2"), ("26_3", "V_26_3")];
+    let versions = [("26_2", "V_26_2")];
 
     let process_version = |ver_folder: &str| -> TokenStream {
         let base_path = std::path::Path::new(if ver_folder == "26_2" {
@@ -212,8 +209,8 @@ pub(crate) fn build() -> TokenStream {
 
         impl Registry {
             #[must_use]
-            pub fn get_synced(version: JavaMinecraftVersion) -> Vec<Self> {
-                let static_regs = if version == JavaMinecraftVersion::V_26_2 { REGISTRY_V_26_2 } else { REGISTRY_V_26_3 };
+            pub fn get_synced(_version: JavaMinecraftVersion) -> Vec<Self> {
+                let static_regs = REGISTRY_V_26_2;
 
                 static_regs.iter().map(|static_reg| {
                     let registry_id = if static_reg.registry_id.contains(':') {

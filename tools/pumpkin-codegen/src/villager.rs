@@ -48,7 +48,7 @@ struct TradeJson {
     #[serde(alias = "price_multiplier")]
     reputation_discount: Option<f32>,
     #[serde(
-        rename = "given_item_modifier",
+        rename = "given_item_modifiers",
         default,
         deserialize_with = "crate::loot_table::one_or_many"
     )]
@@ -231,7 +231,7 @@ pub fn build() -> TokenStream {
             .given_item_modifiers
             .iter()
             .find_map(|modifier| {
-                let function = modifier.get("type")?.as_str()?;
+                let function = modifier.get("function")?.as_str()?;
                 Some(match function {
                     "minecraft:enchant_randomly" => quote! { VillagerTradeModifier::EnchantRandomly },
                     "minecraft:enchant_with_levels" => {

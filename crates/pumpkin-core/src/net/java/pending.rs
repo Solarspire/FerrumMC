@@ -206,7 +206,7 @@ impl PendingConnection {
         }
     }
 
-    /// Server for the connection packet events, only for clients below 26.3 after handshake.
+    /// Server for the connection packet events, only for clients below 26.2 after handshake.
     fn translating_server(&self) -> Option<Arc<Server>> {
         if self.version.load() == CURRENT_MC_VERSION
             || self.connection_state.load() == ConnectionState::HandShake
@@ -216,7 +216,7 @@ impl PendingConnection {
         self.server.upgrade()
     }
 
-    /// Encoded as 26.3. `ConnectionPacketSentEvent` can rewrite it.
+    /// Encoded as native 26.2. `ConnectionPacketSentEvent` can rewrite it.
     pub async fn send_packet_now<P: ClientPacket>(&mut self, packet: &P) {
         let mut packet_buf = Vec::new();
         if let Err(err) =
@@ -233,16 +233,15 @@ impl PendingConnection {
         let payload = if translated_by_plugin {
             payload
         } else {
-            match super::compatibility::outgoing(
+            match super::registry_remap::outgoing(
                 self.version.load(),
                 self.connection_state.load(),
                 payload,
-                &super::compatibility::HiddenEntities::default(),
             ) {
                 Ok(Some(payload)) => payload,
                 Ok(None) => return,
                 Err(error) => {
-                    warn!("26.2 configuration translation failed: {error}");
+                    warn!("NeoForge configuration remap failed: {error}");
                     self.close();
                     return;
                 }
@@ -254,7 +253,7 @@ impl PendingConnection {
         let _ = self.network_writer.flush().await;
     }
 
-    /// `ConnectionPacketSentEvent` with the 26.3 packet. `None` when cancelled.
+    /// `ConnectionPacketSentEvent` with the native 26.2 packet. `None` when cancelled.
     async fn translate_outgoing(&self, packet_data: Bytes) -> Option<(Bytes, bool)> {
         let Some(server) = self.translating_server() else {
             return Some((packet_data, false));
@@ -289,7 +288,7 @@ impl PendingConnection {
         Some((framed.into(), true))
     }
 
-    /// `ConnectionPacketReceivedEvent` with the client's packet; handlers rewrite it to 26.3.
+    /// `ConnectionPacketReceivedEvent` with the client's packet; handlers rewrite it to native 26.2.
     /// `None` when cancelled.
     async fn translate_incoming(&self, packet: &RawPacket) -> Option<RawPacket> {
         let unchanged = || RawPacket {
@@ -394,7 +393,7 @@ impl PendingConnection {
             self.translate_incoming(packet).await
         } else {
             Some(
-                super::compatibility::incoming(
+                super::registry_remap::incoming(
                     self.version.load(),
                     self.connection_state.load(),
                     packet,

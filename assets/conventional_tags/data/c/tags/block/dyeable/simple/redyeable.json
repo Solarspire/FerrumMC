@@ -12,14 +12,6 @@
       "id": "#minecraft:wool_carpets",
       "required": false
     },
-    {
-      "id": "#minecraft:wool_slabs",
-      "required": false
-    },
-    {
-      "id": "#minecraft:wool_stairs",
-      "required": false
-    },
     "minecraft:white_shulker_box",
     "minecraft:orange_shulker_box",
     "minecraft:magenta_shulker_box",

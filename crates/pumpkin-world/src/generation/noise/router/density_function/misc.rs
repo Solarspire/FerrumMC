@@ -36,14 +36,18 @@ impl EndIsland {
         let k = x % 2;
         let l = z % 2;
 
-        let mut f = -100.0f32;
+        // DensityFunctions.EndIslandDensityFunction includes the central island.
+        let distance_squared = x.wrapping_mul(x).wrapping_add(z.wrapping_mul(z));
+        let mut f = (100.0 - (distance_squared as f32).sqrt() * 8.0).clamp(-100.0, 80.0);
 
         for m in -12..=12 {
             for n in -12..=12 {
                 let o = (i + m) as i64;
                 let p = (j + n) as i64;
 
-                if (o * o + p * p) > 4096 && (sampler.sample_2d(o as f64, p as f64) as f32) < -0.9 {
+                if (o * o + p * p) > 4096
+                    && sampler.sample_2d(o as f64, p as f64) < f64::from(-0.9f32)
+                {
                     let island_size =
                         ((o as f32).abs() * 3439.0 + (p as f32).abs() * 147.0) % 13.0 + 9.0;
                     let xd = (k - m * 2) as f32;

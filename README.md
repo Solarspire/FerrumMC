@@ -2,7 +2,7 @@
 
 FerrumMC is a Rust-native hybrid Minecraft server: Pumpkin owns simulation and storage, while embedded PatchBukkit supplies a JVM for Bukkit/Paper plugins. It is a prototype, not a claim of complete Bukkit or mod compatibility.
 
-The client target is **Java 26.2 / protocol 776**. The authoritative engine stays on pinned latest Pumpkin HEAD, internally **26.3 / protocol 777**. Phase 1 tests status and login admission for both; full configuration/play and cross-version registry translation remain separate gates. A bridge for allowlisted real NeoForge 26.2 mods is planned. Java must never independently simulate or save another world.
+FerrumMC runs a **native Java 26.2 engine / protocol 776** and accepts NeoForge 26.2 clients with the server's mods. Engine data, registries, packets and codecs use native identities. The embedded JVM runs real mod jars through Rust-owned world views; Java never independently simulates or saves another world. Existing worlds require reset after the native-ID migration.
 
 ## Build and run (Windows)
 

@@ -759,8 +759,7 @@ struct RawRule {
     block_entity_modifier: Option<RawBlockEntityModifier>,
 }
 
-/// 26.3 renamed the block state keys from Name and Properties to id and properties, and writes a
-/// state without properties as just its name.
+/// Accepts full block states and bare names in processor inputs.
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
 enum RawOutputStateRepr {

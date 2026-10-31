@@ -4150,8 +4150,7 @@ impl LivingEntity {
     /// Mirrors vanilla `LivingEntity.getVisibilityPercent`.
     #[must_use]
     pub fn visibility_percent(&self, targeting_entity_type: Option<&'static EntityType>) -> f64 {
-        use pumpkin_data::data_component_impl::{EquippableImpl, IDSet, MobVisibilityImpl};
-
+        use pumpkin_data::item::Item;
         let mut percent = 1.0;
         if self.entity.is_sneaking() {
             percent *= 0.8;
@@ -4178,29 +4177,12 @@ impl LivingEntity {
             percent *= 0.7 * cover;
         }
         if let Some(target_type) = targeting_entity_type {
-            for slot in [
-                EquipmentSlot::MAIN_HAND,
-                EquipmentSlot::OFF_HAND,
-                EquipmentSlot::FEET,
-                EquipmentSlot::LEGS,
-                EquipmentSlot::CHEST,
-                EquipmentSlot::HEAD,
-                EquipmentSlot::BODY,
-                EquipmentSlot::SADDLE,
-            ] {
-                let stack = equipment.get(&slot);
-                if let Some(mob_visibility) = stack.get_data_component::<MobVisibilityImpl>()
-                    && let Some(equippable) = stack.get_data_component::<EquippableImpl>()
-                    && *equippable.slot == slot
-                {
-                    let matches_target = match &mob_visibility.targeting_entity_types {
-                        IDSet::Tag(tag) => target_type.is_tagged_with(tag).unwrap_or(false),
-                        IDSet::IDs(ids) => ids.iter().any(|id| id.id == target_type.id),
-                    };
-                    if matches_target {
-                        percent *= f64::from(mob_visibility.visibility);
-                    }
-                }
+            let head = equipment.get(&EquipmentSlot::HEAD).item;
+            if (target_type == &EntityType::SKELETON && head == &Item::SKELETON_SKULL)
+                || (target_type == &EntityType::ZOMBIE && head == &Item::ZOMBIE_HEAD)
+                || (target_type == &EntityType::CREEPER && head == &Item::CREEPER_HEAD)
+            {
+                percent *= 0.5;
             }
         }
         percent.clamp(0.0, 10.0)
@@ -4473,7 +4455,7 @@ mod tests {
         metadata
             .write(
                 &mut bytes,
-                &pumpkin_util::version::JavaMinecraftVersion::V_26_3,
+                &pumpkin_util::version::JavaMinecraftVersion::V_26_2,
             )
             .unwrap();
 

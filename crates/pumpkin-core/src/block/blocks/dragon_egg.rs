@@ -5,7 +5,6 @@ use crate::block::{
     PathComputationType, PlacedArgs,
 };
 use crate::world::World;
-use pumpkin_data::world::WorldEvent;
 use pumpkin_data::{BlockState, BlockStateId};
 use pumpkin_macros::pumpkin_block;
 use pumpkin_util::math::position::BlockPos;
@@ -35,13 +34,6 @@ impl DragonEggBlock {
             let state = world.get_block_state(&test_pos);
 
             if state.is_air() && world.is_in_build_limit(test_pos) {
-                let packed_diff = pos.pack_difference_in_position(
-                    &test_pos,
-                    Self::TELEPORT_RADIUS_XZ,
-                    Self::TELEPORT_RADIUS_Y,
-                    Self::TELEPORT_RADIUS_XZ,
-                );
-                world.sync_world_event(WorldEvent::ParticlesDragonEggTeleport, *pos, packed_diff);
                 let current_state = world.get_block_state(pos);
                 world.set_block_state(
                     &test_pos,

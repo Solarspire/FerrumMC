@@ -5,7 +5,7 @@ use crate::server::Server;
 use pumpkin_data::block_properties::{
     ChestLikeProperties, ChestType, DoubleBlockHalf, OakDoorLikeProperties,
 };
-use pumpkin_data::data_component_impl::BlockTransformerImpl;
+use pumpkin_data::block_transformer::AXE;
 use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::SoundCategory;
@@ -35,12 +35,7 @@ impl ItemBehaviour for AxeItem {
         block: &Block,
         _server: &Server,
     ) -> BlockActionResult {
-        let Some(transformer) = item
-            .get_data_component::<BlockTransformerImpl>()
-            .and_then(BlockTransformerImpl::get_transformer)
-        else {
-            return BlockActionResult::Pass;
-        };
+        let transformer = &AXE;
 
         let world = player.world();
         let get_block = |dx: i8, dy: i8, dz: i8| {

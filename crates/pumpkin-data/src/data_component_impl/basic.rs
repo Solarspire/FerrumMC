@@ -523,53 +523,6 @@ impl DataComponentImpl for ProvidesBannerPatternsImpl {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct ProvidesPotteryPatternImpl {
-    pub pattern: Cow<'static, str>,
-}
-impl ProvidesPotteryPatternImpl {
-    pub fn read_data(data: &NbtTag) -> Option<Self> {
-        data.extract_string().map(|pattern| Self {
-            pattern: Cow::Owned(pattern.to_string()),
-        })
-    }
-}
-impl DataComponentImpl for ProvidesPotteryPatternImpl {
-    fn write_data(&self) -> NbtTag {
-        NbtTag::String(self.pattern.to_string().into())
-    }
-    fn get_hash(&self) -> i32 {
-        get_str_hash(&self.pattern) as i32
-    }
-    default_impl!(ProvidesPotteryPattern);
-}
-
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct CushionColorImpl {
-    pub color: crate::dye_color::DyeColor,
-}
-impl CushionColorImpl {
-    pub fn read_data(data: &NbtTag) -> Option<Self> {
-        let color = if let Some(s) = data.extract_string() {
-            crate::dye_color::DyeColor::by_name(s)?
-        } else if let Some(id) = data.extract_int() {
-            crate::dye_color::DyeColor::by_id(id as u8)?
-        } else {
-            return None;
-        };
-        Some(Self { color })
-    }
-}
-impl DataComponentImpl for CushionColorImpl {
-    fn write_data(&self) -> NbtTag {
-        NbtTag::String(self.color.name().into())
-    }
-    fn get_hash(&self) -> i32 {
-        get_str_hash(self.color.name()) as i32
-    }
-    default_impl!(CushionColor);
-}
-
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct BannerPatternLayer {
     pub pattern: String,
     pub color: crate::dye_color::DyeColor,

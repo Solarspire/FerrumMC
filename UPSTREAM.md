@@ -1,5 +1,19 @@
 # Upstream provenance and FerrumMC patches
 
+
+## Current native engine
+
+FerrumMC now uses Minecraft 26.2 / protocol 776 and world data version 4903, workspace version `0.2.1+26.2`, on checkpoint `041f2b6`. Historical sections below describe earlier integration stages and are retained as provenance.
+
+- Retained Extractor 26.2 inputs replace engine assets; official reports independently verify all 1,196 blocks / 32,366 states, all packet IDs, and ten built-in registries (including 1,537 items and 158 entity types).
+- `pumpkin-codegen` regenerates native data, SDK constants, both WIT versions and host packet mappings. Native carver settings, surface rules and density interpolation read 26.2 datapack definitions. Fuel, compost, brewing, pottery and tool transforms use native tables extracted by `tools/vanilla-26.2/Extract.java`.
+- The old version translator and generated version mappings are deleted. `net/java/registry_remap.rs` keeps dense NeoForge registry remaps, synchronized registry movement, item components and chunk palette widening; packet IDs and layouts remain native.
+- Cushions, poplar, straw beds, shelf mushrooms, red shrubs, wool/concrete stairs and slabs, abandoned camps, post effects and the compute command are removed. Packet/component codecs, chunk statuses, world/player versions and structure palette writes use native 26.2 layouts.
+- Public plugin data enums lose unsupported entries and gain native `map-color` / `swing-animation`. This changes generated plugin ABI shapes; rebuild plugins for this engine. The v0.1 host retains synchronous WIT calls.
+- Existing owner worlds are untouched and require reset. The vendored PatchBukkit Paper 26.3 build pin is historical integration debt; plugins remain disabled alongside the NeoForge JVM until the shared-JVM work is completed. This migration does not claim PatchBukkit runtime compatibility.
+
+Verification details for this migration are recorded with the worktree handoff. No owner server was started, stopped or modified.
+
 Snapshot: 2026-10-29. This directory is a source copy, not a Git checkout. No `git init`, commits, remote writes or pull requests were performed. Reference repositories were read only. Generated build/runtime downloads live in ignored workspace caches and scratch directories.
 
 ## Compatibility tuple
@@ -31,7 +45,7 @@ Compared with the supplied Pumpkin snapshot, excluding line-ending differences:
 - `crates/pumpkin-config/src/networking/java.rs`: default FerrumMC MOTD.
 - `crates/pumpkin-core/src/net/java/mod.rs`: isolated FerrumMC minimum admission version 26.2; updated compatibility comment.
 - `crates/pumpkin-core/src/net/java/handshake.rs`: admission uses that policy, retaining current-version upper bound and transfer behavior.
-- `crates/pumpkin-core/src/server/connection_cache.rs`: FerrumMC wire brand/default MOTD and status admission range 26.2–26.3.
+- `crates/pumpkin-core/src/server/connection_cache.rs`: FerrumMC wire brand/default MOTD and status admission range 26.2â€“26.3.
 - `rust-toolchain.toml`: stable selection plus exact-version check documentation.
 - `.gitignore`: local caches, scratch runtime and sample plugin sources/artifacts.
 - `README.md`: FerrumMC scope, commands, credits and license links.
@@ -788,3 +802,234 @@ Touched upstream files: `crates/pumpkin-world/src/generation/{mod.rs,proto_chunk
 ## Vanilla 26.2 combat: mace, wind charge, Wind Burst, spear lunge (2026-10-31)
 
 Ported from the decompiled 26.2 server jar (`MaceItem`, `Player.attack`/`itemAttackInteraction`, `ServerExplosion`, `ServerLevel.explode`, `SimpleExplosionDamageCalculator`, `ExplodeEffect`, `AbstractWindCharge`/`WindCharge`/`BreezeWindCharge`, `WindChargedMobEffect`, the `onExplosionHit` overrides of buttons/levers/bells/doors/trapdoors/fence gates/candles, `ApplyEntityImpulse`, `PlaySoundEffect`, `KineticWeapon`/`PiercingWeapon`, `EnchantmentHelper.doPostPiercingAttackEffects`). Horizon was read as a cross-check only; no code copied. Touched: `pumpkin-core` `world/explosion.rs`, `entity/{player,living,combat}.rs`, `entity/projectile/{mod,wind_charge}.rs`, `entity/effect/wind_charged.rs`, `item/{registry,items/{mace,spear,wind_charge}}.rs`, `enchantment/{helper,effects/{explode,entity_effect,apply_entity_impulse,play_sound}}.rs`, `block/blocks/{mod,wind_trigger,trapdoor,fence_gates,redstone/bell}.rs`; codegen `enchantments.rs` (`post_piercing_attack`, `play_sound` sound lists) and regenerated `pumpkin-data/src/generated/enchantment.rs`.
+
+## Native 26.2 touched upstream paths
+
+- `crates/pumpkin-core/src/block/blocks/composter.rs`
+- `crates/pumpkin-core/src/block/blocks/dragon_egg.rs`
+- `crates/pumpkin-core/src/block/blocks/mod.rs`
+- `crates/pumpkin-core/src/block/blocks/plant/bush.rs`
+- `crates/pumpkin-core/src/block/blocks/plant/mod.rs`
+- `crates/pumpkin-core/src/block/blocks/plant/sapling.rs`
+- `crates/pumpkin-core/src/block/blocks/plant/shelf_mushroom.rs`
+- `crates/pumpkin-core/src/block/blocks/plant/tree_grower.rs`
+- `crates/pumpkin-core/src/block/blocks/redstone/dispenser.rs`
+- `crates/pumpkin-core/src/block/blocks/slabs.rs`
+- `crates/pumpkin-core/src/block/blocks/stairs.rs`
+- `crates/pumpkin-core/src/block/blocks/straw_bed.rs`
+- `crates/pumpkin-core/src/block/blocks/weathering_copper.rs`
+- `crates/pumpkin-core/src/block/entities/brewing_stand.rs`
+- `crates/pumpkin-core/src/block/entities/conduit.rs`
+- `crates/pumpkin-core/src/block/entities/furnace_like_block_entity.rs`
+- `crates/pumpkin-core/src/block/entities/sign.rs`
+- `crates/pumpkin-core/src/block/registry.rs`
+- `crates/pumpkin-core/src/command/commands/compute.rs`
+- `crates/pumpkin-core/src/command/commands/mod.rs`
+- `crates/pumpkin-core/src/command/commands/posteffect.rs`
+- `crates/pumpkin-core/src/entity/decoration/cushion.rs`
+- `crates/pumpkin-core/src/entity/decoration/mod.rs`
+- `crates/pumpkin-core/src/entity/living.rs`
+- `crates/pumpkin-core/src/entity/mod.rs`
+- `crates/pumpkin-core/src/entity/passive/villager/data.rs`
+- `crates/pumpkin-core/src/entity/passive/villager/mod.rs`
+- `crates/pumpkin-core/src/entity/player.rs`
+- `crates/pumpkin-core/src/entity/projectile/experience_bottle.rs`
+- `crates/pumpkin-core/src/entity/synched_entity_data.rs`
+- `crates/pumpkin-core/src/entity/type.rs`
+- `crates/pumpkin-core/src/item/items/axe.rs`
+- `crates/pumpkin-core/src/item/items/boat.rs`
+- `crates/pumpkin-core/src/item/items/cushion.rs`
+- `crates/pumpkin-core/src/item/items/hoe.rs`
+- `crates/pumpkin-core/src/item/items/honeycomb.rs`
+- `crates/pumpkin-core/src/item/items/mod.rs`
+- `crates/pumpkin-core/src/item/items/potions.rs`
+- `crates/pumpkin-core/src/item/items/shovel.rs`
+- `crates/pumpkin-core/src/neoforge.rs`
+- `crates/pumpkin-core/src/net/java/chunk_data/mod.rs`
+- `crates/pumpkin-core/src/net/java/compatibility.rs`
+- `crates/pumpkin-core/src/net/java/login/known_packs.rs`
+- `crates/pumpkin-core/src/net/java/mod.rs`
+- `crates/pumpkin-core/src/net/java/pending.rs`
+- `crates/pumpkin-core/src/net/java/play/player_action.rs`
+- `crates/pumpkin-core/src/net/java/registry_remap.rs`
+- `crates/pumpkin-core/src/plugin/api/events/server/packet.rs`
+- `crates/pumpkin-core/src/plugin/api/events/world/structure_grow.rs`
+- `crates/pumpkin-core/src/server/builtin_game_tests/walls_stairs_and_shapes.rs`
+- `crates/pumpkin-data/build.rs`
+- `crates/pumpkin-data/src/block_state.rs`
+- `crates/pumpkin-data/src/data_component_impl/basic.rs`
+- `crates/pumpkin-data/src/data_component_impl/block_entity.rs`
+- `crates/pumpkin-data/src/data_component_impl/combat.rs`
+- `crates/pumpkin-data/src/data_component_impl/food.rs`
+- `crates/pumpkin-data/src/data_component_impl/mod.rs`
+- `crates/pumpkin-data/src/data_component_impl/utility.rs`
+- `crates/pumpkin-data/src/generated/advancement.rs`
+- `crates/pumpkin-data/src/generated/biome.rs`
+- `crates/pumpkin-data/src/generated/block.rs`
+- `crates/pumpkin-data/src/generated/block_transformer.rs`
+- `crates/pumpkin-data/src/generated/carver.rs`
+- `crates/pumpkin-data/src/generated/chunk_status.rs`
+- `crates/pumpkin-data/src/generated/compatibility.rs`
+- `crates/pumpkin-data/src/generated/composter_increase_chance.rs`
+- `crates/pumpkin-data/src/generated/configured_feature.rs`
+- `crates/pumpkin-data/src/generated/configured_features_generated.rs`
+- `crates/pumpkin-data/src/generated/context_provider.rs`
+- `crates/pumpkin-data/src/generated/data_component.rs`
+- `crates/pumpkin-data/src/generated/decorated_pot_pattern.rs`
+- `crates/pumpkin-data/src/generated/dimension.rs`
+- `crates/pumpkin-data/src/generated/enchantment.rs`
+- `crates/pumpkin-data/src/generated/entity_status.rs`
+- `crates/pumpkin-data/src/generated/entity_type.rs`
+- `crates/pumpkin-data/src/generated/flower_pot_transformations.rs`
+- `crates/pumpkin-data/src/generated/fluid.rs`
+- `crates/pumpkin-data/src/generated/fuels.rs`
+- `crates/pumpkin-data/src/generated/item.rs`
+- `crates/pumpkin-data/src/generated/loot_table.rs`
+- `crates/pumpkin-data/src/generated/map_decoration.rs`
+- `crates/pumpkin-data/src/generated/material_rule.rs`
+- `crates/pumpkin-data/src/generated/meta_data_type.rs`
+- `crates/pumpkin-data/src/generated/noise_parameter.rs`
+- `crates/pumpkin-data/src/generated/noise_router.rs`
+- `crates/pumpkin-data/src/generated/packet.rs`
+- `crates/pumpkin-data/src/generated/particle.rs`
+- `crates/pumpkin-data/src/generated/placed_feature.rs`
+- `crates/pumpkin-data/src/generated/placed_features_generated.rs`
+- `crates/pumpkin-data/src/generated/potion_brewing.rs`
+- `crates/pumpkin-data/src/generated/processor_list.rs`
+- `crates/pumpkin-data/src/generated/recipes.rs`
+- `crates/pumpkin-data/src/generated/registry.rs`
+- `crates/pumpkin-data/src/generated/registry_ids.rs`
+- `crates/pumpkin-data/src/generated/sound.rs`
+- `crates/pumpkin-data/src/generated/spawn_egg.rs`
+- `crates/pumpkin-data/src/generated/statistic.rs`
+- `crates/pumpkin-data/src/generated/structure_metadata.rs`
+- `crates/pumpkin-data/src/generated/structure_template.rs`
+- `crates/pumpkin-data/src/generated/structures.rs`
+- `crates/pumpkin-data/src/generated/tag.rs`
+- `crates/pumpkin-data/src/generated/template_pool.rs`
+- `crates/pumpkin-data/src/generated/tracked_data.rs`
+- `crates/pumpkin-data/src/generated/translation.rs`
+- `crates/pumpkin-data/src/generated/trim_material.rs`
+- `crates/pumpkin-data/src/generated/villager.rs`
+- `crates/pumpkin-data/src/generated/world_event.rs`
+- `crates/pumpkin-data/src/item_stack/mod.rs`
+- `crates/pumpkin-data/src/lib.rs`
+- `crates/pumpkin-gametest/src/lib.rs`
+- `crates/pumpkin-gametest/src/structure/template.rs`
+- `crates/pumpkin-inventory/src/brewing/brewing_screen_handler.rs`
+- `crates/pumpkin-inventory/src/crafting/crafting_screen_handler.rs`
+- `crates/pumpkin-inventory/src/furnace_like/furnace_like_screen_handler.rs`
+- `crates/pumpkin-inventory/src/furnace_like/furnace_like_slot.rs`
+- `crates/pumpkin-plugin-api/src/generated/block.rs`
+- `crates/pumpkin-plugin-api/src/generated/item.rs`
+- `crates/pumpkin-plugin-wit/v0.1/biomes.wit`
+- `crates/pumpkin-plugin-wit/v0.1/common.wit`
+- `crates/pumpkin-plugin-wit/v0.1/data-components.wit`
+- `crates/pumpkin-plugin-wit/v0.1/entity-statuses.wit`
+- `crates/pumpkin-plugin-wit/v0.1/entity-types.wit`
+- `crates/pumpkin-plugin-wit/v0.1/java-packets.wit`
+- `crates/pumpkin-plugin-wit/v0.1/particles.wit`
+- `crates/pumpkin-plugin-wit/v0.1/player.wit`
+- `crates/pumpkin-plugin-wit/v0.1/sounds.wit`
+- `crates/pumpkin-plugin-wit/v0.1/statistics.wit`
+- `crates/pumpkin-plugin-wit/v0.2/biomes.wit`
+- `crates/pumpkin-plugin-wit/v0.2/data-components.wit`
+- `crates/pumpkin-plugin-wit/v0.2/entity-statuses.wit`
+- `crates/pumpkin-plugin-wit/v0.2/entity-types.wit`
+- `crates/pumpkin-plugin-wit/v0.2/java-packets.wit`
+- `crates/pumpkin-plugin-wit/v0.2/particles.wit`
+- `crates/pumpkin-plugin-wit/v0.2/player.wit`
+- `crates/pumpkin-plugin-wit/v0.2/sounds.wit`
+- `crates/pumpkin-plugin-wit/v0.2/statistics.wit`
+- `crates/pumpkin-protocol/src/codec/bit_set.rs`
+- `crates/pumpkin-protocol/src/codec/data_component.rs`
+- `crates/pumpkin-protocol/src/codec/item_stack_seralizer.rs`
+- `crates/pumpkin-protocol/src/java/client/config/mod.rs`
+- `crates/pumpkin-protocol/src/java/client/config/post_effects.rs`
+- `crates/pumpkin-protocol/src/java/client/play/award_stats.rs`
+- `crates/pumpkin-protocol/src/java/client/play/entity_animation.rs`
+- `crates/pumpkin-protocol/src/java/client/play/entity_metadata.rs`
+- `crates/pumpkin-protocol/src/java/client/play/entity_position_sync.rs`
+- `crates/pumpkin-protocol/src/java/client/play/explode.rs`
+- `crates/pumpkin-protocol/src/java/client/play/login.rs`
+- `crates/pumpkin-protocol/src/java/client/play/mod.rs`
+- `crates/pumpkin-protocol/src/java/client/play/particle.rs`
+- `crates/pumpkin-protocol/src/java/client/play/player_spawn_data.rs`
+- `crates/pumpkin-protocol/src/java/client/play/post_effects.rs`
+- `crates/pumpkin-protocol/src/java/client/play/recipe_book_add.rs`
+- `crates/pumpkin-protocol/src/java/client/play/set_equipment.rs`
+- `crates/pumpkin-protocol/src/java/client/play/update_advancement.rs`
+- `crates/pumpkin-protocol/src/java/client/play/update_attributes.rs`
+- `crates/pumpkin-protocol/src/java/client/play/update_entity_pos.rs`
+- `crates/pumpkin-protocol/src/java/client/play/update_entity_pos_rot.rs`
+- `crates/pumpkin-protocol/src/java/client/play/update_entity_rot.rs`
+- `crates/pumpkin-protocol/src/java/server/play/confirm_teleport.rs`
+- `crates/pumpkin-protocol/src/java/server/play/player_action.rs`
+- `crates/pumpkin-protocol/src/java/server/play/spectate_entity.rs`
+- `crates/pumpkin-protocol/src/java/server/play/swing_arm.rs`
+- `crates/pumpkin-protocol/src/java/server/play/update_sign.rs`
+- `crates/pumpkin-protocol/src/ser/mod.rs`
+- `crates/pumpkin-protocol/tests/native_26_2.rs`
+- `crates/pumpkin-util/src/text/legacy.rs`
+- `crates/pumpkin-util/src/text/mod.rs`
+- `crates/pumpkin-util/src/version.rs`
+- `crates/pumpkin-wasm-host-v0_1/src/events/world.rs`
+- `crates/pumpkin-wasm-host-v0_1/src/generated_packets.rs`
+- `crates/pumpkin-wasm-host-v0_1/src/player.rs`
+- `crates/pumpkin-wasm-host-v0_2/src/events/world.rs`
+- `crates/pumpkin-wasm-host-v0_2/src/generated_packets.rs`
+- `crates/pumpkin-wasm-host-v0_2/src/player.rs`
+- `crates/pumpkin-world/src/chunk/format/anvil.rs`
+- `crates/pumpkin-world/src/chunk/format/mod.rs`
+- `crates/pumpkin-world/src/chunk_system/chunk_state.rs`
+- `crates/pumpkin-world/src/generation/carver/cave.rs`
+- `crates/pumpkin-world/src/generation/feature/features/tree/foliage/mod.rs`
+- `crates/pumpkin-world/src/generation/feature/features/tree/foliage/poplar.rs`
+- `crates/pumpkin-world/src/generation/feature/features/tree/trunk/mod.rs`
+- `crates/pumpkin-world/src/generation/feature/features/tree/trunk/poplar.rs`
+- `crates/pumpkin-world/src/generation/feature_order.rs`
+- `crates/pumpkin-world/src/generation/proto_chunk_test/resume.rs`
+- `crates/pumpkin-world/src/generation/proto_chunk_test/stage_parity.rs`
+- `crates/pumpkin-world/src/generation/rule/mod.rs`
+- `crates/pumpkin-world/src/generation/structure/mod.rs`
+- `crates/pumpkin-world/src/generation/structure/structures/desert_pyramid.rs`
+- `crates/pumpkin-world/src/generation/structure/structures/jungle_temple.rs`
+- `crates/pumpkin-world/src/generation/structure/structures/nether_fortress/corridor_nether_warts_room.rs`
+- `crates/pumpkin-world/src/generation/structure/structures/nether_fortress/corridor_stairs.rs`
+- `crates/pumpkin-world/src/generation/structure/structures/stronghold/five_way_crossing.rs`
+- `crates/pumpkin-world/src/generation/structure/structures/stronghold/portal_room.rs`
+- `crates/pumpkin-world/src/generation/structure/structures/stronghold/stairs.rs`
+- `crates/pumpkin-world/src/generation/structure/structures/swamp_hut.rs`
+- `crates/pumpkin-world/src/generation/structure/template/processor.rs`
+- `crates/pumpkin-world/src/generation/structure/template/structure_template.rs`
+- `crates/pumpkin-world/src/lib.rs`
+- `crates/pumpkin-world/src/world_info/anvil.rs`
+- `crates/pumpkin-world/src/world_info/mod.rs`
+- `tools/pumpkin-codegen/src/biome.rs`
+- `tools/pumpkin-codegen/src/block_transformer.rs`
+- `tools/pumpkin-codegen/src/carver.rs`
+- `tools/pumpkin-codegen/src/compatibility.rs`
+- `tools/pumpkin-codegen/src/composter_increase_chance.rs`
+- `tools/pumpkin-codegen/src/configured_feature.rs`
+- `tools/pumpkin-codegen/src/decorated_pot_pattern.rs`
+- `tools/pumpkin-codegen/src/dimension.rs`
+- `tools/pumpkin-codegen/src/fuels.rs`
+- `tools/pumpkin-codegen/src/item.rs`
+- `tools/pumpkin-codegen/src/loot_table.rs`
+- `tools/pumpkin-codegen/src/main.rs`
+- `tools/pumpkin-codegen/src/material_rule.rs`
+- `tools/pumpkin-codegen/src/message_type.rs`
+- `tools/pumpkin-codegen/src/meta_data_type.rs`
+- `tools/pumpkin-codegen/src/noise_router.rs`
+- `tools/pumpkin-codegen/src/packet.rs`
+- `tools/pumpkin-codegen/src/placed_feature.rs`
+- `tools/pumpkin-codegen/src/potion_brewing.rs`
+- `tools/pumpkin-codegen/src/registry.rs`
+- `tools/pumpkin-codegen/src/registry_ids.rs`
+- `tools/pumpkin-codegen/src/sdk/mod.rs`
+- `tools/pumpkin-codegen/src/structures.rs`
+- `tools/pumpkin-codegen/src/tag.rs`
+- `tools/pumpkin-codegen/src/tracked_data.rs`
+- `tools/pumpkin-codegen/src/trim_material.rs`
+- `tools/pumpkin-codegen/src/version.rs`
+- `tools/pumpkin-codegen/src/wit/v0_2/mod.rs`

@@ -11,7 +11,6 @@ use crate::{
 use pumpkin_data::{
     Block, BlockState, BlockStateId,
     block_properties::ComposterLikeProperties,
-    data_component_impl::CompostableImpl,
     entity::EntityType,
     game_event::GameEvent,
     item::Item,
@@ -53,11 +52,13 @@ impl BlockBehaviour for ComposterBlock {
         let level = props.level;
 
         let item_stack = &mut *args.item_stack;
-        if let Some(compostable) = item_stack.get_data_component::<CompostableImpl>()
+        if let Some(chance) =
+            pumpkin_data::composter_increase_chance::get_composter_increase_chance_from_item_id(
+                item_stack.item.id,
+            )
             && level < 8
         {
             if level < 7 {
-                let chance = compostable.chance;
                 if !args.player.has_infinite_materials() {
                     item_stack.decrement(1);
                 }

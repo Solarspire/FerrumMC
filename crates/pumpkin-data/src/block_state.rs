@@ -180,10 +180,7 @@ impl BlockState {
     pub fn is_suffocating(&self) -> bool {
         let block = self.id.to_block();
         match block.suffocation_predicate() {
-            // Flag first: the tag check scans about 1000 IDs.
-            SuffocationPredicate::Default => {
-                self.is_full_cube() && block.has_tag(&tag::Block::MINECRAFT_CAUSES_SUFFOCATION)
-            }
+            SuffocationPredicate::Default => self.is_solid() && self.is_full_cube(),
             SuffocationPredicate::Never => false,
             SuffocationPredicate::Always => true,
         }

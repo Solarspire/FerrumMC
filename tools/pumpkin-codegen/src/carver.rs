@@ -5,10 +5,11 @@ use std::collections::BTreeMap;
 use std::fs;
 
 pub fn build() -> TokenStream {
-    let dir = std::path::Path::new("../../assets/datapack/data/minecraft/worldgen/carver");
+    let dir =
+        std::path::Path::new("../../assets/datapack/data/minecraft/worldgen/configured_carver");
     let mut carvers: BTreeMap<String, Value> = BTreeMap::new();
     let mut entries: Vec<_> = fs::read_dir(dir)
-        .expect("Missing worldgen/carver directory")
+        .expect("Missing worldgen/configured_carver directory")
         .flatten()
         .filter(|e| e.path().extension().is_some_and(|ext| ext == "json"))
         .collect();
@@ -28,38 +29,27 @@ pub fn build() -> TokenStream {
         let variant_name = format_ident!("{}", name.to_uppercase());
         let carver_type = data["type"].as_str().unwrap_or("");
 
+        let data = &data["config"];
         let prob = data["probability"].as_f64().unwrap_or(0.0) as f32;
         let y = value_to_height_provider(&data["y"]);
 
         let additional = match carver_type {
-            "minecraft:cave" => {
-                let count = value_to_int_provider(&data["count"]);
+            "minecraft:cave" | "minecraft:nether_cave" => {
+                let is_nether = carver_type == "minecraft:nether_cave";
                 let horizontal_radius_multiplier =
                     value_to_float_provider(&data["horizontal_radius_multiplier"]);
                 let vertical_radius_multiplier =
                     value_to_float_provider(&data["vertical_radius_multiplier"]);
                 let floor_level = value_to_float_provider(&data["floor_level"]);
-                let room_vertical_radius_multiplier =
-                    value_to_float_provider(&data["room_vertical_radius_multiplier"]);
-                let start_vertical_radius_multiplier =
-                    if data.get("start_vertical_radius_multiplier").is_some() {
-                        value_to_float_provider(&data["start_vertical_radius_multiplier"])
-                    } else {
-                        quote! { FloatProvider::Constant(1.0) }
-                    };
-                let thickness = value_to_float_provider(&data["thickness"]);
-                let weird_thickness_bias = data["weird_thickness_bias"].as_bool().unwrap_or(false);
+                let room_vertical_radius_multiplier = value_to_float_provider(&data["yScale"]);
 
                 quote! {
                     CarverAdditionalConfig::Cave(CaveCarverConfig {
-                        count: #count,
+                        is_nether: #is_nether,
                         horizontal_radius_multiplier: #horizontal_radius_multiplier,
                         vertical_radius_multiplier: #vertical_radius_multiplier,
                         floor_level: #floor_level,
                         room_vertical_radius_multiplier: #room_vertical_radius_multiplier,
-                        start_vertical_radius_multiplier: #start_vertical_radius_multiplier,
-                        thickness: #thickness,
-                        weird_thickness_bias: #weird_thickness_bias,
                     })
                 }
             }
@@ -77,7 +67,7 @@ pub fn build() -> TokenStream {
                 let vertical_radius_center_factor = shape["vertical_radius_center_factor"]
                     .as_f64()
                     .unwrap_or(0.0) as f32;
-                let y_scale = value_to_float_provider(&shape["y_scale"]);
+                let y_scale = value_to_float_provider(&data["yScale"]);
 
                 quote! {
                     CarverAdditionalConfig::Canyon(CanyonCarverConfig {
@@ -94,7 +84,7 @@ pub fn build() -> TokenStream {
                     })
                 }
             }
-            _ => quote! { CarverAdditionalConfig::Cave(CaveCarverConfig::default()) },
+            _ => panic!("Unsupported native carver type: {carver_type}"),
         };
 
         carver_instances.push(quote! {
@@ -146,30 +136,11 @@ pub fn build() -> TokenStream {
 
         #[derive(Clone, Debug)]
         pub struct CaveCarverConfig {
-            pub count: IntProvider,
+            pub is_nether: bool,
             pub horizontal_radius_multiplier: FloatProvider,
             pub vertical_radius_multiplier: FloatProvider,
             pub floor_level: FloatProvider,
             pub room_vertical_radius_multiplier: FloatProvider,
-            pub start_vertical_radius_multiplier: FloatProvider,
-            pub thickness: FloatProvider,
-            pub weird_thickness_bias: bool,
-        }
-
-        impl CaveCarverConfig {
-            #[must_use]
-            pub const fn default() -> Self {
-                Self {
-                    count: IntProvider::Constant(1),
-                    horizontal_radius_multiplier: FloatProvider::Constant(1.0),
-                    vertical_radius_multiplier: FloatProvider::Constant(1.0),
-                    floor_level: FloatProvider::Constant(-0.7),
-                    room_vertical_radius_multiplier: FloatProvider::Constant(0.5),
-                    start_vertical_radius_multiplier: FloatProvider::Constant(1.0),
-                    thickness: FloatProvider::Constant(1.0),
-                    weird_thickness_bias: false,
-                }
-            }
         }
 
         #[derive(Clone, Debug)]

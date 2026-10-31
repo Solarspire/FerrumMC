@@ -6,7 +6,6 @@ use std::sync::{
 };
 
 use crate::block::entities::PropertyDelegate;
-use pumpkin_data::data_component_impl::BrewingFuelImpl;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::potion::Potion;
@@ -304,7 +303,7 @@ impl BrewingStandBlockEntity {
         let expected_fuel = if self.fuel.load(Ordering::Relaxed) <= 0
             && let Ok(items) = self.items.try_read()
             && !items[4].is_empty()
-            && items[4].get_data_component::<BrewingFuelImpl>().is_some()
+            && items[4].item == &Item::BLAZE_POWDER
         {
             items[4].clone()
         } else {
@@ -433,14 +432,14 @@ impl pumpkin_inventory::Inventory for BrewingStandBlockEntity {
             // Slot 3 - ingredient (must be tagged as brewable)
             3 => {
                 // Fuel items belong in slot 4, not the ingredient slot.
-                if stack.get_data_component::<BrewingFuelImpl>().is_some() {
+                if stack.item == &Item::BLAZE_POWDER {
                     return false;
                 }
                 // Allow any item that's not fuel (ingredient validation happens during brewing)
                 true
             }
-            // Slot 4 - fuel (`minecraft:brewing_fuel` data component, 26.3+)
-            4 => stack.get_data_component::<BrewingFuelImpl>().is_some(),
+            // Slot 4 - blaze powder fuel
+            4 => stack.item == &Item::BLAZE_POWDER,
             _ => false,
         }
     }

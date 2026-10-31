@@ -611,7 +611,6 @@ impl ToFromWasmEvent
                         pumpkin_core::plugin::api::events::world::structure_grow::TreeType::Mangrove
                     }
                     "Cherry" => pumpkin_core::plugin::api::events::world::structure_grow::TreeType::Cherry,
-                    "Poplar" => pumpkin_core::plugin::api::events::world::structure_grow::TreeType::Poplar,
                     "Azalea" => pumpkin_core::plugin::api::events::world::structure_grow::TreeType::Azalea,
                     "BrownMushroom" => {
                         pumpkin_core::plugin::api::events::world::structure_grow::TreeType::BrownMushroom

@@ -215,7 +215,6 @@ fn resolve_palette(structure: &NbtCompound) -> GameTestResult<Vec<PaletteEntry>>
         let entry = entry
             .extract_compound()
             .ok_or_else(|| invalid_structure(format!("Palette entry {index} is not a compound")))?;
-        // 26.3 renamed palette keys from "Name"/"Properties" to "id"/"properties".
         let name = entry
             .get_string("id")
             .or_else(|| entry.get_string("Name"))

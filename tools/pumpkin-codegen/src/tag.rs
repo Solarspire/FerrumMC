@@ -290,9 +290,9 @@ fn load_datapack_tags(
 /// Generates the `TokenStream` for the `Tag` type, `RegistryKey` enum, tag
 /// modules, and the `Taggable` trait with its lookup helpers.
 pub(crate) fn build() -> TokenStream {
-    let versions = [("26_3", "V_26_3")];
+    let versions = [("26_2", "V_26_2")];
 
-    let version_mapping = [("V_26_3", "V_26_3")];
+    let version_mapping = [("V_26_2", "V_26_2")];
 
     // --- Load Global Assets ---
     let blocks_assets: BlockAssets =
@@ -397,7 +397,7 @@ pub(crate) fn build() -> TokenStream {
         let datapack_base = datapack_data_dir.join("minecraft");
 
         let tags = load_datapack_tags(&datapack_data_dir);
-        let is_latest = ver_folder == "26_3";
+        let is_latest = ver_folder == "26_2";
 
         let mut ver_cat_match_arms = Vec::new();
         let fn_name = format_ident!("get_tags_{}", ver_ident_str);
@@ -492,7 +492,7 @@ pub(crate) fn build() -> TokenStream {
 
     for (ver_variant, ver_ident_str) in version_mapping {
         let ver_ident = format_ident!("{ver_variant}");
-        if ver_ident_str == "V_26_3" {
+        if ver_ident_str == "V_26_2" {
             version_fn_match_arms.push(quote! {
                 JavaMinecraftVersion::#ver_ident => get_latest_map(tag_category)
             });

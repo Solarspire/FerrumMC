@@ -2,7 +2,7 @@ use std::fs::{self, File};
 use std::io::{self, Cursor, Read};
 use std::path::{Path, PathBuf};
 
-const MC_VERSION: &str = "26.3";
+const MC_VERSION: &str = "26.2";
 const MANIFEST_URL: &str = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

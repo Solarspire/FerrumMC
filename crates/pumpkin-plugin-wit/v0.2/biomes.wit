@@ -10,7 +10,6 @@ interface biomes {
     cherry-grove,
     cold-ocean,
     crimson-forest,
-    dappled-forest,
     dark-forest,
     deep-cold-ocean,
     deep-dark,

@@ -23,7 +23,7 @@ interface java-packets {
     server-listing: bool,
   }
   /// Response to a `CCookieRequest` from the server during the configuration phase
-  /// 
+  ///
   /// Cookies allow servers to store small amounts of data on the client side,
   /// which can be retrieved later (e.g., for session tracking or preferences)
   record config-s-config-cookie-response {
@@ -46,7 +46,7 @@ interface java-packets {
     known-packs: list<inexpressible-host-type>,
   }
   /// A packet used for custom communication between the client and server.
-  /// 
+  ///
   /// This allows mods, plugins, or proxy
   /// software to send proprietary data over the standard Minecraft protocol.
   record config-s-plugin-message {
@@ -71,7 +71,7 @@ interface java-packets {
     unknown(s32),
   }
   /// Sent by the client to inform the server of the status of a requested resource pack.
-  /// 
+  ///
   /// This allows the server to know if the player is using the required textures
   /// or if the download failed.
   record config-s-config-resource-pack {
@@ -201,9 +201,6 @@ interface java-packets {
   }
   record s-confirm-teleport {
     teleport-id: s32,
-    position: tuple<f64, f64, f64>,
-    yaw: f32,
-    pitch: f32,
   }
   record s-container-button-click {
     window-id: s32,
@@ -225,7 +222,7 @@ interface java-packets {
     payload: option<list<u8>>,
   }
   /// A packet used for custom communication between the client and server.
-  /// 
+  ///
   /// This allows mods, plugins, or proxy software to send proprietary data over the standard
   /// Minecraft protocol.
   record s-custom-payload {
@@ -330,8 +327,6 @@ interface java-packets {
     swap-item,
     /// Sent when a player is holding a spear and performs a jab attack.
     spear-jab,
-    /// Sent since 26.3 when the player keeps mining but looks at another face of the block.
-    change-destroy-direction,
   }
   record s-player-command {
     entity-id: s32,
@@ -561,7 +556,7 @@ interface java-packets {
     sequence: s32,
   }
   /// Sent by the client to measure the round-trip time (latency) to the server.
-  /// 
+  ///
   /// This is the second part of the Server List Ping (SLP) process
   /// The server should respond with `CPingResponse`.
   record status-s-status-ping-request {
@@ -601,9 +596,6 @@ interface java-packets {
     channel: string,
     data: list<u8>,
   }
-  record config-c-config-post-effects {
-    effects: list<string>,
-  }
   /// Added in 1.20.2
   record config-c-registry-data {
     registry-id: string,
@@ -636,7 +628,7 @@ interface java-packets {
     tags: list<inexpressible-host-type>,
   }
   /// Sent by the server to retrieve a previously stored cookie from the client.
-  /// 
+  ///
   /// This occurs during the login phase, allowing the server to identify
   /// returning players or retrieve session data stored during a previous visit.
   record login-c-login-cookie-request {
@@ -644,7 +636,7 @@ interface java-packets {
     key: string,
   }
   /// Sent by the server to initiate the encryption handshake.
-  /// 
+  ///
   /// This packet provides the client with the server's public key and a
   /// verification token, allowing the client to generate a shared secret
   /// for secure communication.
@@ -662,7 +654,7 @@ interface java-packets {
     should-authenticate: bool,
   }
   /// Sent by the server to reject a login attempt or kick a player during the login phase
-  /// 
+  ///
   /// This is used for reasons such as the server being full, the player being banned,
   /// or version mismatches. After this packet is sent, the connection is closed.
   record login-c-login-disconnect {
@@ -670,7 +662,7 @@ interface java-packets {
     json-reason: string,
   }
   /// Sent by the server to signal a successful login and transition to the configuration phase
-  /// 
+  ///
   /// This packet provides the client with its official UUID and username as
   /// recognized by the server, along with any associated skin or cape properties.
   record c-login-success {
@@ -687,7 +679,7 @@ interface java-packets {
     session-id: uuid,
   }
   /// Sent by the server to initiate a custom plugin messaging exchange during login.
-  /// 
+  ///
   /// This is used by server software (like proxies or anti-cheats) to request
   /// information from a client-side mod before the player officially joins.
   record login-c-login-plugin-request {
@@ -701,30 +693,30 @@ interface java-packets {
     data: list<u8>,
   }
   /// Sent by the server to enable network compression for all subsequent packets.
-  /// 
+  ///
   /// Once this packet is sent, both the server and the client must compress any
   /// packet with a size equal to or greater than the specified threshold.
   record login-c-set-compression {
     /// The packet size threshold (in bytes) at which compression is applied.
-    /// 
+    ///
     /// Packets smaller than this are sent uncompressed. A negative threshold
     /// typically disables compression.
     threshold: s32,
   }
   /// Sent by the server to acknowledge a sequence of block changes initiated by the client.
-  /// 
+  ///
   /// This packet is critical for preventing "ghost blocks" and synchronization issues.
   /// It tells the client that the server has processed all actions up to a specific point.
   record c-acknowledge-block-change {
     /// The ID of the last sequence processed by the server.
-    /// 
+    ///
     /// The client increments this ID every time it starts a sequence of actions
     /// (like breaking or placing a block), and the server must mirror it back
     /// to confirm processing is complete.
     sequence-id: s32,
   }
   /// Updates the text displayed above the player's hotbar (the Action Bar).
-  /// 
+  ///
   /// Unlike chat messages, Action Bar text is transient and generally used for
   /// non-critical status information like "Now entering: Wilderness" or
   /// mana/stamina counters.
@@ -748,7 +740,7 @@ interface java-packets {
     value: s32,
   }
   /// Updates the visual "breaking" progress of a block for all clients.
-  /// 
+  ///
   /// This packet controls the overlay of cracks that appear on a block when
   /// it is being mined. It is often used to show other players' mining progress.
   record c-set-block-destroy-stage {
@@ -762,7 +754,7 @@ interface java-packets {
     destroy-stage: u8,
   }
   /// Updates the NBT data of a block entity (e.g., signs, chests, or banners).
-  /// 
+  ///
   /// This packet is sent by the server when a block entity's state changes
   /// (like text on a sign) or when the block entity is loaded into the client's view.
   record c-block-entity-data {
@@ -774,7 +766,7 @@ interface java-packets {
     nbt-data: list<u8>,
   }
   /// Triggers a physical block animation or sound effect.
-  /// 
+  ///
   /// This is used for simple block interactions that don't necessarily change
   /// NBT data, such as chests opening/closing, pistons extending, or note blocks playing.
   record c-block-event {
@@ -789,7 +781,7 @@ interface java-packets {
     block-type: s32,
   }
   /// Updates a single block state at a specific location in the world.
-  /// 
+  ///
   /// This is the most common way to sync world changes to the client, such as
   /// when a player places a block, a fluid flows, or a redstone component toggles.
   record c-block-update {
@@ -799,7 +791,7 @@ interface java-packets {
     state-id: s32,
   }
   /// Updates the "Boss Bar" displayed at the top of the player's screen.
-  /// 
+  ///
   /// This packet is used to manage health bars for entities like the Ender Dragon
   /// or Wither, as well as custom progress bars for server events or raids.
   record c-boss-event {
@@ -830,7 +822,7 @@ interface java-packets {
     update-flags(u8),
   }
   /// Updates the center of the player's loaded chunk radius (the "view center").
-  /// 
+  ///
   /// This packet tells the client which chunk coordinate it should use as the
   /// focal point for loading and unloading chunks. It is typically sent when
   /// a player moves across a chunk boundary.
@@ -841,13 +833,13 @@ interface java-packets {
     chunk-z: s32,
   }
   /// Notifies the client of a change in the world's difficulty level or lock status.
-  /// 
+  ///
   /// This updates the client's internal state, which affects certain UI elements
   /// and client-side behavior (though actual game logic like mob damage is
   /// primarily handled by the server).
   record c-change-difficulty {
     /// The current difficulty level of the world.
-    /// 
+    ///
     /// * **0**: Peaceful
     /// * **1**: Easy
     /// * **2**: Normal
@@ -858,7 +850,7 @@ interface java-packets {
     locked: bool,
   }
   /// Notifies the client that the server has finished sending a batch of chunks.
-  /// 
+  ///
   /// Introduced in modern protocol versions to optimize world loading, this packet
   /// allows the client to acknowledge the receipt of a group of chunks, helping
   /// the server regulate the flow of data and prevent network congestion.
@@ -880,7 +872,7 @@ interface java-packets {
     data: nbt-tree,
   }
   /// The chunk data and light packet sent to clients (`LEVEL_CHUNK_WITH_LIGHT`).
-  /// 
+  ///
   /// Contains chunk position, heightmaps, pre-encoded section and biome payload,
   /// block entities, and lighting data.
   record c-chunk-data {
@@ -900,31 +892,31 @@ interface java-packets {
     chunks: list<chunk-biome-entry>,
   }
   /// Removes any currently displayed Title or Subtitle from the player's screen.
-  /// 
+  ///
   /// This packet is used to immediately hide titles that are currently in their
   /// "stay" or "fade-out" phases.
   record c-clear-title {
     /// If true, the client also resets the title timings (fade-in, stay, fade-out)
     /// to their default values (10, 70, 20 ticks).
-    /// 
+    ///
     /// Set this to false if you want to clear the text but keep custom timings
     /// for the next title you send.
     reset: bool,
   }
   /// Notifies the client that a container (inventory, chest, etc.) has been closed.
-  /// 
+  ///
   /// This is used by the server to force the player's UI to shut, for example,
   /// if the player moves too far away from a chest or if an NPC's trade window
   /// is invalidated.
   record c-close-container {
     /// The ID of the container window to close.
-    /// 
+    ///
     /// A value of 0 usually refers to the player's own inventory, while higher
     /// values refer to active windows opened via previous packets.
     sync-id: s32,
   }
   /// Notifies the client that a player has died.
-  /// 
+  ///
   /// This packet is responsible for triggering the death screen on the client
   /// and displaying the death message in the chat for the deceased player.
   record c-combat-death {
@@ -937,7 +929,7 @@ interface java-packets {
     duration-ticks: s32,
   }
   /// Sent by the server to provide a list of "tab-completion" suggestions.
-  /// 
+  ///
   /// This packet responds to a client's request for help with commands,
   /// appearing as a scrollable list of options while the player is typing
   /// in the chat bar.
@@ -960,7 +952,7 @@ interface java-packets {
     tooltip: option<string>,
   }
   /// Sends the entire command tree to the client for client-side parsing and tab-completion.
-  /// 
+  ///
   /// Minecraft uses the "Brigadier" command system. This packet informs the client
   /// which commands exist, their arguments, and how they branch, allowing the
   /// client to highlight syntax errors in red before the command is even sent.
@@ -1119,7 +1111,7 @@ interface java-packets {
     summonable-entities,
   }
   /// Sent by the server to request a "cookie" (stored data) from the client.
-  /// 
+  ///
   /// Introduced in modern Minecraft versions, cookies allow servers to store
   /// small amounts of persistent data on the client side that can be retrieved
   /// even across different server instances or sub-servers in a network.
@@ -1140,7 +1132,7 @@ interface java-packets {
     details: list<tuple<string, string>>,
   }
   /// Notifies the client that an entity has taken damage.
-  /// 
+  ///
   /// This packet is used to trigger damage animations (like the red tint on mobs),
   /// directional knockback visuals, and sound effects. It provides the client
   /// with specific details about the damage source to ensure the visual feedback
@@ -1189,7 +1181,7 @@ interface java-packets {
     signature: option<list<u8>>,
   }
   /// Forces the client to disconnect from the server while in the "Play" state.
-  /// 
+  ///
   /// This packet displays the provided reason to the player on a dedicated
   /// disconnection screen. It is used for kicks, server shutdowns, or when
   /// a player is banned.
@@ -1199,7 +1191,7 @@ interface java-packets {
     reason: string,
   }
   /// Sends a chat message that is not cryptographically signed by a player.
-  /// 
+  ///
   /// Introduced to support server-side "disguised" identities (like /say or NPC chat),
   /// this packet bypasses the player-to-player chat signing requirements while
   /// still allowing the client to format the message using the standard chat registry.
@@ -1215,7 +1207,7 @@ interface java-packets {
     target-name: option<string>,
   }
   /// Instructs the client to display a specific scoreboard objective in a given slot.
-  /// 
+  ///
   /// This packet is the final step in showing a scoreboard to a player. After
   /// an objective is created and populated with scores, this packet "maps"
   /// that objective to a visual location like the sidebar or the player list.
@@ -1227,7 +1219,7 @@ interface java-packets {
     score-name: string,
   }
   /// Triggers a specific animation for an entity that is visible to the client.
-  /// 
+  ///
   /// This is primarily used for player-driven animations like swinging an arm
   /// or showing damage, but it can apply to other entities as well.
   record c-entity-animation {
@@ -1238,9 +1230,8 @@ interface java-packets {
     animation: u8,
   }
   /// Plays the swing animation of an entity's hand.
-  /// 
-  /// Up to 26.2 this was an animation of [`CEntityAnimation`], since 26.3 it is its own packet that
-  /// also carries the swing animation of the held item.
+  ///
+  /// Uses the same packet as [`CEntityAnimation`].
   record c-swing-arm {
     entity-id: s32,
     off-hand: bool,
@@ -1253,7 +1244,7 @@ interface java-packets {
     magic-criticaleffect,
   }
   /// Updates the "Data Tracker" values for an entity.
-  /// 
+  ///
   /// Entity Metadata (or `DataWatchers`) controls persistent visual states that
   /// don't require a full packet to update, such as whether an entity is on fire,
   /// crouching, glowing, or the custom name displayed above its head.
@@ -1265,11 +1256,11 @@ interface java-packets {
     metadata: list<u8>,
   }
   /// Updates the exact position, rotation, and velocity of an entity.
-  /// 
+  ///
   /// This packet is used for server-side authority over entity movement.
   /// In the latest protocol versions, this replaces several older "Relative Move"
   /// packets to provide more precise synchronization and reduce "rubber-banding."
-  /// 
+  ///
   /// Note: This packet must NOT be used for the player receiving the packet or
   /// any entity the player is currently riding.
   record c-entity-position-sync {
@@ -1288,14 +1279,14 @@ interface java-packets {
     on-ground: bool,
   }
   /// Plays a sound effect that originates from a specific entity.
-  /// 
+  ///
   /// Unlike global sounds, this sound will follow the entity as it moves
   /// through the world. The client handles the panning and attenuation
   /// (volume drop-off) based on the distance between the player and the entity.
   record c-entity-sound-effect {
     /// The sound to play. Can be a hardcoded ID or a custom `SoundEvent`
     /// (Resource Location).
-    /// 
+    ///
     /// WARNING: Could not fully translate type `IdOr < SoundEvent >` to WIT
     sound-event: inexpressible-host-type,
     /// The category of the sound (e.g., Master, Music, Weather, Players).
@@ -1312,7 +1303,7 @@ interface java-packets {
     seed: s64,
   }
   /// Sends a status update for a specific entity.
-  /// 
+  ///
   /// This packet is a "catch-all" for various entity triggers that don't
   /// warrant a complex packet of their own. It primarily handles visual
   /// and logical state triggers, such as tool breaking, totem usage,
@@ -1325,7 +1316,7 @@ interface java-packets {
     entity-status: u8,
   }
   /// Updates the velocity of an entity.
-  /// 
+  ///
   /// This packet informs the client of a sudden change in an entity's movement,
   /// such as knockback from an attack, explosions, or being launched by a piston.
   record c-entity-velocity {
@@ -1335,7 +1326,7 @@ interface java-packets {
     velocity: string,
   }
   /// Notifies the client that an explosion has occurred.
-  /// 
+  ///
   /// This is a high-level packet that handles the visual, auditory, and physical
   /// effects of an explosion in a single call. It triggers the explosion particles,
   /// plays the sound at the source, and applies knockback to the player.
@@ -1353,14 +1344,14 @@ interface java-packets {
     /// The ID of the particle to use for the explosion (e.g., `minecraft:explosion_emitter`).
     particle: s32,
     /// The sound to play (e.g., `minecraft:entity.generic.explode`).
-    /// 
+    ///
     /// WARNING: Could not fully translate type `IdOr < SoundEvent >` to WIT
     sound: inexpressible-host-type,
     /// The size of the block particles pool, used for debris visuals in 1.21.9+.
     block-particles-pool-size: s32,
   }
   /// Updates the game state or triggers specific environmental changes.
-  /// 
+  ///
   /// This packet is the primary way the server communicates global or
   /// context-specific transitions, such as changing the weather,
   /// altering the player's gamemode, or displaying the credits.
@@ -1396,7 +1387,7 @@ interface java-packets {
     duration-ms: s32,
   }
   /// Rotates an entity's head to a specific yaw.
-  /// 
+  ///
   /// In Minecraft, an entity's "body yaw" and "head yaw" are separate.
   /// While standard movement packets update the body, this packet is
   /// required to make an entity (like a player or a mob) look in a
@@ -1408,7 +1399,7 @@ interface java-packets {
     head-yaw: u8,
   }
   /// Triggers the "hurt" visual effect on an entity.
-  /// 
+  ///
   /// This packet causes the entity to turn red and perform a directional
   /// camera shake or model tilt. It is typically sent immediately after
   /// an entity's health is reduced.
@@ -1420,7 +1411,7 @@ interface java-packets {
     yaw: f32,
   }
   /// Fully initializes the world border for the client.
-  /// 
+  ///
   /// This packet is sent when a player joins the world or changes dimensions.
   /// It synchronizes the current position, size, and all warning parameters
   /// to ensure the client-side visual barrier matches the server's authority.
@@ -1449,7 +1440,7 @@ interface java-packets {
     cooldown: s32,
   }
   /// Maintains the connection and measures latency (ping) between client and server.
-  /// 
+  ///
   /// The server sends this packet at regular intervals (typically every 15–20 seconds).
   /// The client must respond with the exact same ID. If the server does not receive
   /// a response within a timeout period (usually 30 seconds), it will disconnect
@@ -1460,7 +1451,7 @@ interface java-packets {
     keep-alive-id: s64,
   }
   /// Triggers a specific sound or particle effect at a world location.
-  /// 
+  ///
   /// This packet handles a wide variety of "world-level" events, such as
   /// block breaking particles, firework explosions, or ambient sounds
   /// like doors opening and portals humming.
@@ -1479,7 +1470,7 @@ interface java-packets {
     disable-relative-volume: bool,
   }
   /// Sent by the server to update light levels (block light and sky light) for a chunk.
-  /// 
+  ///
   /// This packet updates lighting data for a specific chunk without sending the full chunk data.
   /// It was introduced in Minecraft 1.14 (protocol version 477).
   record c-light-update {
@@ -1498,7 +1489,7 @@ interface java-packets {
   }
   /// The "Join Game" packet that transitions the client from the Configuration state
   /// to the Play state.
-  /// 
+  ///
   /// This is one of the largest and most important packets in the protocol. It
   /// initializes the player's world view, dimension settings, and local game
   /// rules. Once received, the client begins rendering the world.
@@ -1589,7 +1580,7 @@ interface java-packets {
     pitch: f32,
   }
   /// Updates multiple blocks within a single chunk section (or chunk in older versions).
-  /// 
+  ///
   /// This packet is much more efficient than sending multiple individual
   /// `CBlockUpdate` packets when many changes occur in the same area
   /// (e.g., explosions, structure generation, or large-scale terraforming).
@@ -1599,7 +1590,7 @@ interface java-packets {
     /// Suppress light updates (used in 1.16..=1.19.4)
     suppress-light-updates: bool,
     /// Array of block updates: (`BlockPos`, `BlockStateId`)
-    /// 
+    ///
     /// WARNING: Could not fully translate type `Vec < (BlockPos , BlockStateId) >` to WIT
     updates: list<tuple<tuple<s32, s32, s32>, inexpressible-host-type>>,
   }
@@ -1612,7 +1603,7 @@ interface java-packets {
     entity-id: s32,
   }
   /// Instructs the client to open a specific type of GUI (inventory, chest, etc.).
-  /// 
+  ///
   /// This packet is sent when a player interacts with a block (like a chest)
   /// or when a command/plugin forces an interface to open. It establishes a
   /// `sync_id` which must be used in all subsequent "Set Slot" or "Click Slot"
@@ -1629,7 +1620,7 @@ interface java-packets {
     window-title: string,
   }
   /// Opens the sign text input screen for the client.
-  /// 
+  ///
   /// This packet is sent by the server to force the client to show the
   /// sign editing interface. This usually happens immediately after a
   /// player places a sign or interacts with an existing one (if allowed).
@@ -1641,7 +1632,7 @@ interface java-packets {
     is-front-text: bool,
   }
   /// Spawns a cluster of particles at a specific location.
-  /// 
+  ///
   /// This is the most versatile visual packet in the protocol. It allows for
   /// precise control over particle density, spread, and speed. It can also
   /// carry extra data for complex particles like redstone dust (color) or
@@ -1681,7 +1672,7 @@ interface java-packets {
     recipe-id: string,
   }
   /// Updates the player's movement and interaction abilities.
-  /// 
+  ///
   /// This packet informs the client about the player's state (flying, invulnerable)
   /// and sets the movement speeds. While the client applies these visuals,
   /// the server must still validate these states to prevent cheating.
@@ -1724,7 +1715,7 @@ interface java-packets {
     signature: list<u8>,
   }
   /// Sends a cryptographically signed player chat message to the client.
-  /// 
+  ///
   /// This packet is the backbone of the modern secure chat system. It includes
   /// tracking indices, digital signatures, and context for reporting.
   record c-player-chat-message {
@@ -1774,7 +1765,7 @@ interface java-packets {
     partially-filtered(list<s64>),
   }
   /// Updates one or more players' information on the client.
-  /// 
+  ///
   /// This packet replaces the legacy "Player Info" packet with a more efficient
   /// bitmask-driven approach. Instead of sending full data every time, the
   /// server only sends the fields specified in the `actions` bitmask.
@@ -1797,7 +1788,7 @@ interface java-packets {
     entity: option<tuple<s32, s32>>,
   }
   /// Updates the player's position and rotation on the client.
-  /// 
+  ///
   /// Commonly known as the "Teleport Packet," this is sent by the server to
   /// force a change in the player's location. The client must respond with a
   /// `Teleport Confirm` packet matching the `teleport_id`.
@@ -1814,12 +1805,12 @@ interface java-packets {
     /// The vertical rotation (-90 to 90 degrees).
     pitch: f32,
     /// A set of flags determining which of the above fields are relative (~).
-    /// 
+    ///
     /// WARNING: Could not fully translate type `Vec < PositionFlag >` to WIT
     relatives: list<inexpressible-host-type>,
   }
   /// Sent by the server to remove one or more players from the client's player list (tab list).
-  /// 
+  ///
   /// This packet is typically used when a player leaves the server or becomes invisible
   /// to the recipient (e.g., moving out of tracking range).
   record c-remove-player-info {
@@ -1832,7 +1823,7 @@ interface java-packets {
   }
   record player-spawn-data {
     /// The Dimension for the current dimension's properties (lighting, sky color).
-    /// 
+    ///
     /// WARNING: Could not fully translate type `Dimension` to WIT
     dimension: inexpressible-host-type,
     /// Used by the client to seed local biome noise and decoration algorithms.
@@ -1852,7 +1843,7 @@ interface java-packets {
     sealevel: s32,
   }
   /// Sent by the server to set the client's default spawn point and compass target.
-  /// 
+  ///
   /// This packet updates where the player will respawn upon death (if no bed or anchor is set)
   /// and dictates the coordinates that a compass will point toward.
   record c-player-spawn-position {
@@ -1868,9 +1859,6 @@ interface java-packets {
     /// The vertical rotation (-90 to 90 degrees) the player's camera should face upon respawning.
     /// (1.21.9+)
     pitch: f32,
-  }
-  record c-post-effects {
-    effects: list<string>,
   }
   record c-projectile-power {
     entity-id: s32,
@@ -1889,7 +1877,7 @@ interface java-packets {
     recipes: list<s32>,
   }
   /// Sent by the server to update the player's recipe book open/filter state.
-  /// 
+  ///
   /// Wire format: 4 `TypeSettings` pairs (crafting, furnace, `blast_furnace`, smoker),
   /// each pair is (`is_open`: bool, `is_filtering`: bool).
   record c-recipe-book-settings {
@@ -1903,7 +1891,7 @@ interface java-packets {
     smoker-filtering: bool,
   }
   /// Sent by the server to instruct the client to remove (despawn) one or more entities.
-  /// 
+  ///
   /// This is typically sent when an entity leaves the player's tracking range,
   /// is killed, or is otherwise removed from the world.
   record c-remove-entities {
@@ -2094,7 +2082,7 @@ interface java-packets {
     subtitle: string,
   }
   /// Sends a system chat message to the client.
-  /// 
+  ///
   /// System messages are messages sent by the server itself (such as join/quit notices,
   /// command feedback, server announcements, or actionbar overlay messages).
   record c-system-chat-message {
@@ -2222,7 +2210,7 @@ interface java-packets {
     raw-data: list<u8>,
   }
   /// Sent by the server to create or update a score for an entity on a specific objective.
-  /// 
+  ///
   /// This packet is the primary way to manage scoreboard data. In the latest protocol,
   /// it also supports optional custom formatting for how the numeric score is displayed.
   record c-update-score {
@@ -2238,7 +2226,7 @@ interface java-packets {
     display-name: option<string>,
     /// Optional formatting for the number (e.g., blank, fixed text, or styled).
     /// This allows for scores to appear as something other than raw numbers.
-    /// 
+    ///
     /// WARNING: Could not fully translate type `Option < NumberFormat >` to WIT
     number-format: option<inexpressible-host-type>,
   }
@@ -2277,7 +2265,7 @@ interface java-packets {
     waypoint: tracked-waypoint,
   }
   /// Sent by the server to trigger a specific sound or particle effect at a world location.
-  /// 
+  ///
   /// This is used for a wide variety of effects, from breaking blocks and firework
   /// explosions to splashing water or record playing.
   record c-world-event {
@@ -2287,7 +2275,7 @@ interface java-packets {
     /// The world coordinates where the effect should originate.
     location: tuple<s32, s32, s32>,
     /// Additional metadata associated with the event.
-    /// 
+    ///
     /// For example, if breaking a block, this contains the block ID.
     /// For firework particles, it may contain the color or type.
     data: s32,
@@ -2296,23 +2284,23 @@ interface java-packets {
     disable-relative-volume: bool,
   }
   /// Sent by the server to complete a latency check initiated by a `SStatusPingRequest`.
-  /// 
+  ///
   /// This is the final packet in the Server List Ping (SLP) sequence. It allows the
   /// client to calculate the round-trip time (ping) to the server.
   record status-c-ping-response {
     /// The exact 64-bit integer received from the client's ping request.
-    /// 
+    ///
     /// The client uses this value to ensure the response matches the specific
     /// request it sent and to measure elapsed time.
     payload: s64,
   }
   /// Sent by the server in response to a `SStatusRequest`.
-  /// 
+  ///
   /// This packet provides the client with the information required to display the
   /// server in the multiplayer menu, including the MOTD, player count, and icon
   record status-c-status-response {
     /// A JSON-encoded string containing the server's status data.
-    /// 
+    ///
     /// The maximum length of this string is 32,767 characters. It typically
     /// includes fields for `version`, `players`, `description` (MOTD), and `favicon`
     json-response: string,
@@ -2325,7 +2313,7 @@ interface java-packets {
     /// Sent by the client to inform the server about its local settings
     config-s-client-information-config(config-s-client-information-config),
     /// Response to a `CCookieRequest` from the server during the configuration phase
-    /// 
+    ///
     /// Cookies allow servers to store small amounts of data on the client side,
     /// which can be retrieved later (e.g., for session tracking or preferences)
     config-s-config-cookie-response(config-s-config-cookie-response),
@@ -2333,13 +2321,13 @@ interface java-packets {
     config-s-keep-alive(config-s-keep-alive),
     config-s-known-packs(config-s-known-packs),
     /// A packet used for custom communication between the client and server.
-    /// 
+    ///
     /// This allows mods, plugins, or proxy
     /// software to send proprietary data over the standard Minecraft protocol.
     config-s-plugin-message(config-s-plugin-message),
     config-s-config-pong(config-s-config-pong),
     /// Sent by the client to inform the server of the status of a requested resource pack.
-    /// 
+    ///
     /// This allows the server to know if the player is using the required textures
     /// or if the download failed.
     config-s-config-resource-pack(config-s-config-resource-pack),
@@ -2374,7 +2362,7 @@ interface java-packets {
     s-cookie-response(s-cookie-response),
     s-custom-click-action(s-custom-click-action),
     /// A packet used for custom communication between the client and server.
-    /// 
+    ///
     /// This allows mods, plugins, or proxy software to send proprietary data over the standard
     /// Minecraft protocol.
     s-custom-payload(s-custom-payload),
@@ -2426,12 +2414,12 @@ interface java-packets {
     s-use-item(s-use-item),
     s-use-item-on(s-use-item-on),
     /// Sent by the client to measure the round-trip time (latency) to the server.
-    /// 
+    ///
     /// This is the second part of the Server List Ping (SLP) process
     /// The server should respond with `CPingResponse`.
     status-s-status-ping-request(status-s-status-ping-request),
     /// Sent by the client to request the server's current status information.
-    /// 
+    ///
     /// This is the first packet sent during the "Status" state.
     /// The server should respond with `CStatusResponse`.
     status-s-status-request,
@@ -2450,7 +2438,6 @@ interface java-packets {
     config-c-known-packs(config-c-known-packs),
     config-c-config-ping(config-c-config-ping),
     config-c-plugin-message(config-c-plugin-message),
-    config-c-config-post-effects(config-c-config-post-effects),
     /// Added in 1.20.2
     config-c-registry-data(config-c-registry-data),
     config-c-config-remove-resource-pack(config-c-config-remove-resource-pack),
@@ -2463,32 +2450,32 @@ interface java-packets {
     config-c-transfer(config-c-transfer),
     config-c-update-tags(config-c-update-tags),
     /// Sent by the server to retrieve a previously stored cookie from the client.
-    /// 
+    ///
     /// This occurs during the login phase, allowing the server to identify
     /// returning players or retrieve session data stored during a previous visit.
     login-c-login-cookie-request(login-c-login-cookie-request),
     /// Sent by the server to reject a login attempt or kick a player during the login phase
-    /// 
+    ///
     /// This is used for reasons such as the server being full, the player being banned,
     /// or version mismatches. After this packet is sent, the connection is closed.
     login-c-login-disconnect(login-c-login-disconnect),
     /// Sent by the server to initiate a custom plugin messaging exchange during login.
-    /// 
+    ///
     /// This is used by server software (like proxies or anti-cheats) to request
     /// information from a client-side mod before the player officially joins.
     login-c-login-plugin-request(login-c-login-plugin-request),
     /// Sent by the server to enable network compression for all subsequent packets.
-    /// 
+    ///
     /// Once this packet is sent, both the server and the client must compress any
     /// packet with a size equal to or greater than the specified threshold.
     login-c-set-compression(login-c-set-compression),
     /// Sent by the server to acknowledge a sequence of block changes initiated by the client.
-    /// 
+    ///
     /// This packet is critical for preventing "ghost blocks" and synchronization issues.
     /// It tells the client that the server has processed all actions up to a specific point.
     c-acknowledge-block-change(c-acknowledge-block-change),
     /// Updates the text displayed above the player's hotbar (the Action Bar).
-    /// 
+    ///
     /// Unlike chat messages, Action Bar text is transient and generally used for
     /// non-critical status information like "Now entering: Wilderness" or
     /// mana/stamina counters.
@@ -2496,51 +2483,51 @@ interface java-packets {
     c-add-resource-pack(c-add-resource-pack),
     c-award-stats(c-award-stats),
     /// Updates the visual "breaking" progress of a block for all clients.
-    /// 
+    ///
     /// This packet controls the overlay of cracks that appear on a block when
     /// it is being mined. It is often used to show other players' mining progress.
     c-set-block-destroy-stage(c-set-block-destroy-stage),
     /// Updates the NBT data of a block entity (e.g., signs, chests, or banners).
-    /// 
+    ///
     /// This packet is sent by the server when a block entity's state changes
     /// (like text on a sign) or when the block entity is loaded into the client's view.
     c-block-entity-data(c-block-entity-data),
     /// Triggers a physical block animation or sound effect.
-    /// 
+    ///
     /// This is used for simple block interactions that don't necessarily change
     /// NBT data, such as chests opening/closing, pistons extending, or note blocks playing.
     c-block-event(c-block-event),
     /// Updates a single block state at a specific location in the world.
-    /// 
+    ///
     /// This is the most common way to sync world changes to the client, such as
     /// when a player places a block, a fluid flows, or a redstone component toggles.
     c-block-update(c-block-update),
     /// Updates the "Boss Bar" displayed at the top of the player's screen.
-    /// 
+    ///
     /// This packet is used to manage health bars for entities like the Ender Dragon
     /// or Wither, as well as custom progress bars for server events or raids.
     c-boss-event(c-boss-event),
     c-bundle-delimiter,
     /// Updates the center of the player's loaded chunk radius (the "view center").
-    /// 
+    ///
     /// This packet tells the client which chunk coordinate it should use as the
     /// focal point for loading and unloading chunks. It is typically sent when
     /// a player moves across a chunk boundary.
     c-center-chunk(c-center-chunk),
     /// Notifies the client of a change in the world's difficulty level or lock status.
-    /// 
+    ///
     /// This updates the client's internal state, which affects certain UI elements
     /// and client-side behavior (though actual game logic like mob damage is
     /// primarily handled by the server).
     c-change-difficulty(c-change-difficulty),
     /// Notifies the client that the server has finished sending a batch of chunks.
-    /// 
+    ///
     /// Introduced in modern protocol versions to optimize world loading, this packet
     /// allows the client to acknowledge the receipt of a group of chunks, helping
     /// the server regulate the flow of data and prevent network congestion.
     c-chunk-batch-end(c-chunk-batch-end),
     /// Signals the beginning of a new batch of chunk data packets.
-    /// 
+    ///
     /// This packet initiates a synchronized chunk loading sequence. In modern
     /// protocol versions, the server must wrap chunk data transmissions between
     /// a `Start` and `End` packet to manage client-side backpressure and
@@ -2549,37 +2536,37 @@ interface java-packets {
     c-chunks-biomes(c-chunks-biomes),
     c-play-clear-dialog,
     /// Removes any currently displayed Title or Subtitle from the player's screen.
-    /// 
+    ///
     /// This packet is used to immediately hide titles that are currently in their
     /// "stay" or "fade-out" phases.
     c-clear-title(c-clear-title),
     /// Notifies the client that a container (inventory, chest, etc.) has been closed.
-    /// 
+    ///
     /// This is used by the server to force the player's UI to shut, for example,
     /// if the player moves too far away from a chest or if an NPC's trade window
     /// is invalidated.
     c-close-container(c-close-container),
     /// Notifies the client that a player has died.
-    /// 
+    ///
     /// This packet is responsible for triggering the death screen on the client
     /// and displaying the death message in the chat for the deceased player.
     c-combat-death(c-combat-death),
     c-combat-enter,
     c-combat-end(c-combat-end),
     /// Sent by the server to provide a list of "tab-completion" suggestions.
-    /// 
+    ///
     /// This packet responds to a client's request for help with commands,
     /// appearing as a scrollable list of options while the player is typing
     /// in the chat bar.
     c-command-suggestions(c-command-suggestions),
     /// Sends the entire command tree to the client for client-side parsing and tab-completion.
-    /// 
+    ///
     /// Minecraft uses the "Brigadier" command system. This packet informs the client
     /// which commands exist, their arguments, and how they branch, allowing the
     /// client to highlight syntax errors in red before the command is even sent.
     c-commands(c-commands),
     /// Sent by the server to request a "cookie" (stored data) from the client.
-    /// 
+    ///
     /// Introduced in modern Minecraft versions, cookies allow servers to store
     /// small amounts of persistent data on the client side that can be retrieved
     /// even across different server instances or sub-servers in a network.
@@ -2589,7 +2576,7 @@ interface java-packets {
     c-custom-payload(c-custom-payload),
     c-play-custom-report-details(c-play-custom-report-details),
     /// Notifies the client that an entity has taken damage.
-    /// 
+    ///
     /// This packet is used to trigger damage animations (like the red tint on mobs),
     /// directional knockback visuals, and sound effects. It provides the client
     /// with specific details about the damage source to ensure the visual feedback
@@ -2602,60 +2589,60 @@ interface java-packets {
     c-debug-sample(c-debug-sample),
     c-delete-chat(c-delete-chat),
     /// Forces the client to disconnect from the server while in the "Play" state.
-    /// 
+    ///
     /// This packet displays the provided reason to the player on a dedicated
     /// disconnection screen. It is used for kicks, server shutdowns, or when
     /// a player is banned.
     c-play-disconnect(c-play-disconnect),
     /// Sends a chat message that is not cryptographically signed by a player.
-    /// 
+    ///
     /// Introduced to support server-side "disguised" identities (like /say or NPC chat),
     /// this packet bypasses the player-to-player chat signing requirements while
     /// still allowing the client to format the message using the standard chat registry.
     c-disguised-chat-message(c-disguised-chat-message),
     /// Instructs the client to display a specific scoreboard objective in a given slot.
-    /// 
+    ///
     /// This packet is the final step in showing a scoreboard to a player. After
     /// an objective is created and populated with scores, this packet "maps"
     /// that objective to a visual location like the sidebar or the player list.
     c-display-objective(c-display-objective),
     /// Triggers a specific animation for an entity that is visible to the client.
-    /// 
+    ///
     /// This is primarily used for player-driven animations like swinging an arm
     /// or showing damage, but it can apply to other entities as well.
     c-entity-animation(c-entity-animation),
     /// Updates the "Data Tracker" values for an entity.
-    /// 
+    ///
     /// Entity Metadata (or `DataWatchers`) controls persistent visual states that
     /// don't require a full packet to update, such as whether an entity is on fire,
     /// crouching, glowing, or the custom name displayed above its head.
     c-set-entity-metadata(c-set-entity-metadata),
     /// Plays a sound effect that originates from a specific entity.
-    /// 
+    ///
     /// Unlike global sounds, this sound will follow the entity as it moves
     /// through the world. The client handles the panning and attenuation
     /// (volume drop-off) based on the distance between the player and the entity.
     c-entity-sound-effect(c-entity-sound-effect),
     /// Sends a status update for a specific entity.
-    /// 
+    ///
     /// This packet is a "catch-all" for various entity triggers that don't
     /// warrant a complex packet of their own. It primarily handles visual
     /// and logical state triggers, such as tool breaking, totem usage,
     /// or sheep shearing.
     c-entity-status(c-entity-status),
     /// Updates the velocity of an entity.
-    /// 
+    ///
     /// This packet informs the client of a sudden change in an entity's movement,
     /// such as knockback from an attack, explosions, or being launched by a piston.
     c-entity-velocity(c-entity-velocity),
     /// Notifies the client that an explosion has occurred.
-    /// 
+    ///
     /// This is a high-level packet that handles the visual, auditory, and physical
     /// effects of an explosion in a single call. It triggers the explosion particles,
     /// plays the sound at the source, and applies knockback to the player.
     c-explosion(c-explosion),
     /// Updates the game state or triggers specific environmental changes.
-    /// 
+    ///
     /// This packet is the primary way the server communicates global or
     /// context-specific transitions, such as changing the weather,
     /// altering the player's gamemode, or displaying the credits.
@@ -2663,52 +2650,52 @@ interface java-packets {
     c-game-rule-values(c-game-rule-values),
     c-game-test-highlight-pos(c-game-test-highlight-pos),
     /// Rotates an entity's head to a specific yaw.
-    /// 
+    ///
     /// In Minecraft, an entity's "body yaw" and "head yaw" are separate.
     /// While standard movement packets update the body, this packet is
     /// required to make an entity (like a player or a mob) look in a
     /// specific direction without necessarily turning its entire body.
     c-head-rot(c-head-rot),
     /// Triggers the "hurt" visual effect on an entity.
-    /// 
+    ///
     /// This packet causes the entity to turn red and perform a directional
     /// camera shake or model tilt. It is typically sent immediately after
     /// an entity's health is reduced.
     c-hurt-animation(c-hurt-animation),
     /// Fully initializes the world border for the client.
-    /// 
+    ///
     /// This packet is sent when a player joins the world or changes dimensions.
     /// It synchronizes the current position, size, and all warning parameters
     /// to ensure the client-side visual barrier matches the server's authority.
     c-initialize-world-border(c-initialize-world-border),
     c-item-cooldown(c-item-cooldown),
     /// Maintains the connection and measures latency (ping) between client and server.
-    /// 
+    ///
     /// The server sends this packet at regular intervals (typically every 15–20 seconds).
     /// The client must respond with the exact same ID. If the server does not receive
     /// a response within a timeout period (usually 30 seconds), it will disconnect
     /// the player with a "Timed Out" message.
     c-keep-alive(c-keep-alive),
     /// Triggers a specific sound or particle effect at a world location.
-    /// 
+    ///
     /// This packet handles a wide variety of "world-level" events, such as
     /// block breaking particles, firework explosions, or ambient sounds
     /// like doors opening and portals humming.
     c-level-event(c-level-event),
     /// Sent by the server to update light levels (block light and sky light) for a chunk.
-    /// 
+    ///
     /// This packet updates lighting data for a specific chunk without sending the full chunk data.
     /// It was introduced in Minecraft 1.14 (protocol version 477).
     c-light-update(c-light-update),
     /// The "Join Game" packet that transitions the client from the Configuration state
     /// to the Play state.
-    /// 
+    ///
     /// This is one of the largest and most important packets in the protocol. It
     /// initializes the player's world view, dimension settings, and local game
     /// rules. Once received, the client begins rendering the world.
     c-login(c-login),
     /// Warns the client that the server is running low on disk space.
-    /// 
+    ///
     /// Added in 26.1. This packet informs the client to display a warning
     /// overlay/notification about low storage.
     c-low-disk-space-warning,
@@ -2717,7 +2704,7 @@ interface java-packets {
     c-move-minecart-along-track(c-move-minecart-along-track),
     c-move-vehicle(c-move-vehicle),
     /// Updates multiple blocks within a single chunk section (or chunk in older versions).
-    /// 
+    ///
     /// This packet is much more efficient than sending multiple individual
     /// `CBlockUpdate` packets when many changes occur in the same area
     /// (e.g., explosions, structure generation, or large-scale terraforming).
@@ -2725,20 +2712,20 @@ interface java-packets {
     c-open-book(c-open-book),
     c-open-mount-screen(c-open-mount-screen),
     /// Instructs the client to open a specific type of GUI (inventory, chest, etc.).
-    /// 
+    ///
     /// This packet is sent when a player interacts with a block (like a chest)
     /// or when a command/plugin forces an interface to open. It establishes a
     /// `sync_id` which must be used in all subsequent "Set Slot" or "Click Slot"
     /// packets to ensure the server and client are talking about the same window.
     c-open-screen(c-open-screen),
     /// Opens the sign text input screen for the client.
-    /// 
+    ///
     /// This packet is sent by the server to force the client to show the
     /// sign editing interface. This usually happens immediately after a
     /// player places a sign or interacts with an existing one (if allowed).
     c-open-sign-editor(c-open-sign-editor),
     /// Spawns a cluster of particles at a specific location.
-    /// 
+    ///
     /// This is the most versatile visual packet in the protocol. It allows for
     /// precise control over particle density, spread, and speed. It can also
     /// carry extra data for complex particles like redstone dust (color) or
@@ -2749,53 +2736,52 @@ interface java-packets {
     c-ping-response(c-ping-response),
     c-place-ghost-recipe(c-place-ghost-recipe),
     /// Updates the player's movement and interaction abilities.
-    /// 
+    ///
     /// This packet informs the client about the player's state (flying, invulnerable)
     /// and sets the movement speeds. While the client applies these visuals,
     /// the server must still validate these states to prevent cheating.
     c-player-abilities(c-player-abilities),
     /// Sends a cryptographically signed player chat message to the client.
-    /// 
+    ///
     /// This packet is the backbone of the modern secure chat system. It includes
     /// tracking indices, digital signatures, and context for reporting.
     c-player-chat-message(c-player-chat-message),
     /// Updates one or more players' information on the client.
-    /// 
+    ///
     /// This packet replaces the legacy "Player Info" packet with a more efficient
     /// bitmask-driven approach. Instead of sending full data every time, the
     /// server only sends the fields specified in the `actions` bitmask.
     c-player-info-update(c-player-info-update),
     c-player-look-at(c-player-look-at),
     /// Updates the player's position and rotation on the client.
-    /// 
+    ///
     /// Commonly known as the "Teleport Packet," this is sent by the server to
     /// force a change in the player's location. The client must respond with a
     /// `Teleport Confirm` packet matching the `teleport_id`.
     c-player-position(c-player-position),
     /// Sent by the server to remove one or more players from the client's player list (tab list).
-    /// 
+    ///
     /// This packet is typically used when a player leaves the server or becomes invisible
     /// to the recipient (e.g., moving out of tracking range).
     c-remove-player-info(c-remove-player-info),
     c-player-rotation(c-player-rotation),
     /// Sent by the server to set the client's default spawn point and compass target.
-    /// 
+    ///
     /// This packet updates where the player will respawn upon death (if no bed or anchor is set)
     /// and dictates the coordinates that a compass will point toward.
     c-player-spawn-position(c-player-spawn-position),
-    c-post-effects(c-post-effects),
     c-projectile-power(c-projectile-power),
     /// Clientbound packet that adds recipes to the client's recipe book.
     /// `replace = true` means the client replaces its current recipe list.
     c-recipe-book-add(c-recipe-book-add),
     c-recipe-book-remove(c-recipe-book-remove),
     /// Sent by the server to update the player's recipe book open/filter state.
-    /// 
+    ///
     /// Wire format: 4 `TypeSettings` pairs (crafting, furnace, `blast_furnace`, smoker),
     /// each pair is (`is_open`: bool, `is_filtering`: bool).
     c-recipe-book-settings(c-recipe-book-settings),
     /// Sent by the server to instruct the client to remove (despawn) one or more entities.
-    /// 
+    ///
     /// This is typically sent when an entity leaves the player's tracking range,
     /// is killed, or is otherwise removed from the world.
     c-remove-entities(c-remove-entities),
@@ -2858,24 +2844,24 @@ interface java-packets {
     c-update-objectives(c-update-objectives),
     c-update-recipes(c-update-recipes),
     /// Sent by the server to create or update a score for an entity on a specific objective.
-    /// 
+    ///
     /// This packet is the primary way to manage scoreboard data. In the latest protocol,
     /// it also supports optional custom formatting for how the numeric score is displayed.
     c-update-score(c-update-score),
     /// Syncs tracked waypoints (`ClientboundTrackedWaypointPacket`) to client.
     c-waypoint(c-waypoint),
     /// Sent by the server to trigger a specific sound or particle effect at a world location.
-    /// 
+    ///
     /// This is used for a wide variety of effects, from breaking blocks and firework
     /// explosions to splashing water or record playing.
     c-world-event(c-world-event),
     /// Sent by the server to complete a latency check initiated by a `SStatusPingRequest`.
-    /// 
+    ///
     /// This is the final packet in the Server List Ping (SLP) sequence. It allows the
     /// client to calculate the round-trip time (ping) to the server.
     status-c-ping-response(status-c-ping-response),
     /// Sent by the server in response to a `SStatusRequest`.
-    /// 
+    ///
     /// This packet provides the client with the information required to display the
     /// server in the multiplayer menu, including the MOTD, player count, and icon
     status-c-status-response(status-c-status-response),

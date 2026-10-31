@@ -25,6 +25,12 @@ pub struct ConduitBlockEntity {
 }
 
 impl ConduitBlockEntity {
+    const VALID_BLOCKS: &[pumpkin_data::BlockId] = &[
+        pumpkin_data::BlockId::PRISMARINE,
+        pumpkin_data::BlockId::PRISMARINE_BRICKS,
+        pumpkin_data::BlockId::SEA_LANTERN,
+        pumpkin_data::BlockId::DARK_PRISMARINE,
+    ];
     pub const ID: &'static str = "minecraft:conduit";
     const BLOCK_REFRESH_RATE: i64 = 2;
     const EFFECT_DURATION: i32 = 13;
@@ -83,10 +89,7 @@ impl ConduitBlockEntity {
                         if !Self::ensure_shape_position_loaded(world, pos) {
                             return None;
                         }
-                        if world
-                            .get_block(&pos)
-                            .has_tag(&tag::Block::MINECRAFT_CONDUIT_EFFECT_BLOCK)
-                        {
+                        if Self::VALID_BLOCKS.contains(&world.get_block(&pos).id) {
                             effect_blocks.push(pos);
                         }
                     }

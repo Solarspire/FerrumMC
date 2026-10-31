@@ -570,8 +570,8 @@ mod tests {
     }
 
     #[test]
-    fn particle_metadata_id_stays_latest_for_26_3() {
-        let (particle_id, data) = encoded_particle(JavaMinecraftVersion::V_26_3);
+    fn particle_metadata_id_stays_latest_for_26_2() {
+        let (particle_id, data) = encoded_particle(JavaMinecraftVersion::V_26_2);
 
         assert_eq!(particle_id, VarInt(29));
         assert_eq!(data, [0x12, 0x34, 0x56, 0x78]);

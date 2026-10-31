@@ -59,7 +59,7 @@ fn try_convert_to_mud(
     face: BlockDirection,
     block: &Block,
 ) -> BlockActionResult {
-    if face == BlockDirection::Down || !block.has_tag(&tag::Block::MINECRAFT_CONVERTIBLE_TO_MUD) {
+    if face == BlockDirection::Down || !block.has_tag(&tag::Block::MINECRAFT_CONVERTABLE_TO_MUD) {
         return BlockActionResult::Pass;
     }
 

@@ -1596,13 +1596,13 @@ mod tests {
     }
 
     #[test]
-    fn data_component_metadata_matches_vanilla_26_3() {
-        // In vanilla 26.3, only minecraft:damage ignores swap animation
+    fn data_component_metadata_matches_vanilla_26_2() {
+        // In vanilla 26.2, only minecraft:damage ignores swap animation
         assert!(DataComponent::Damage.ignore_swap_animation());
         assert!(!DataComponent::MaxDamage.ignore_swap_animation());
         assert!(!DataComponent::CustomData.ignore_swap_animation());
 
-        // In vanilla 26.3, exactly 3 components are transient:
+        // In vanilla 26.2, exactly 3 components are transient:
         // creative_slot_lock, additional_trade_cost, and map_post_processing
         assert!(DataComponent::CreativeSlotLock.is_transient());
         assert!(!DataComponent::CreativeSlotLock.is_persistent());

@@ -1,0 +1,5341 @@
+[
+  {
+    "reagent": {
+      "item": "minecraft:stone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:cobweb"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:slime_block"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:thick"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:sugar"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:ghast_tear"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:nether_wart"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:awkward"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:blaze_powder"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:magma_cream"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:breeze_rod"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:rabbit_foot"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:stone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:cobweb"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:slime_block"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:thick"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:sugar"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:ghast_tear"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:nether_wart"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:awkward"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:blaze_powder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:magma_cream"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:breeze_rod"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:rabbit_foot"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:stone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:cobweb"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:slime_block"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:thick"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:sugar"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:ghast_tear"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:nether_wart"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:awkward"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:blaze_powder"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:magma_cream"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:breeze_rod"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:rabbit_foot"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:mundane"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:mundane"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:mundane"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:thick"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:thick"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:thick"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:thick"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:stone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:infested"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:cobweb"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weaving"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:slime_block"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:oozing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:phantom_membrane"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:turtle_helmet"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:awkward"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:pufferfish"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:sugar"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:ghast_tear"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:blaze_powder"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:magma_cream"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:breeze_rod"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:wind_charged"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:golden_carrot"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:rabbit_foot"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:stone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:infested"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:cobweb"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weaving"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:slime_block"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:oozing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:phantom_membrane"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:turtle_helmet"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:pufferfish"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:sugar"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:ghast_tear"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:blaze_powder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:magma_cream"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:breeze_rod"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:wind_charged"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:golden_carrot"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:rabbit_foot"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:awkward"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:stone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:infested"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:cobweb"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weaving"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:slime_block"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:oozing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:phantom_membrane"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:turtle_helmet"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:pufferfish"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:sugar"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:ghast_tear"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:blaze_powder"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:magma_cream"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:breeze_rod"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:wind_charged"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:golden_carrot"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:rabbit_foot"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:awkward"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_night_vision"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_night_vision"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:invisibility"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:invisibility"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:invisibility"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:invisibility"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:invisibility"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_invisibility"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_invisibility"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_invisibility"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_leaping"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_leaping"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:fire_resistance"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:fire_resistance"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:fire_resistance"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:fire_resistance"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:fire_resistance"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_fire_resistance"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_fire_resistance"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_fire_resistance"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_swiftness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_swiftness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_slowness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_slowness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_turtle_master"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_turtle_master"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water_breathing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:water_breathing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water_breathing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:water_breathing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:water_breathing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_water_breathing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_water_breathing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_water_breathing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_healing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_healing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:harming"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:harming"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:harming"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:harming"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:harming"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_harming"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_harming"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_poison"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_harming"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_poison"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_regeneration"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_regeneration"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:strong_strength"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:strong_strength"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:weakness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:weakness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:weakness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:weakness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:weakness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_weakness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_weakness"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_weakness"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:luck"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:luck"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:luck"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:luck"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:slow_falling"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:slow_falling"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:slow_falling"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:slow_falling"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:redstone"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:lingering_potion",
+      "potion_contents": {
+        "potion": "minecraft:slow_falling"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:long_slow_falling"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_slow_falling"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:long_slow_falling"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:wind_charged"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:wind_charged"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:wind_charged"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:wind_charged"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weaving"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:weaving"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:weaving"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:weaving"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:oozing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:oozing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:oozing"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:oozing"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:gunpowder"
+    },
+    "output": {
+      "id": "minecraft:splash_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:infested"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:potion",
+      "potion_contents": {
+        "potion": "minecraft:infested"
+      }
+    }
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dragon_breath"
+    },
+    "output": {
+      "id": "minecraft:lingering_potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:infested"
+        }
+      }
+    },
+    "input": {
+      "item": "minecraft:splash_potion",
+      "potion_contents": {
+        "potion": "minecraft:infested"
+      }
+    }
+  }
+]

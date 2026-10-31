@@ -80,7 +80,6 @@ pub const DYNAMIC_REGISTRIES: &[(&str, &[&str])] = &[
         "minecraft:item_modifier",
         &["item_modifier", "item_modifiers"],
     ),
-    ("minecraft:slot_source", &["slot_source", "slot_sources"]),
     ("minecraft:jukebox_song", &["jukebox_song", "jukebox_songs"]),
     ("minecraft:dialog", &["dialog", "dialogs"]),
     ("minecraft:timeline", &["timeline", "timelines"]),
@@ -98,27 +97,12 @@ pub const DYNAMIC_REGISTRIES: &[(&str, &[&str])] = &[
         &["sulfur_cube_archetype", "sulfur_cube_archetypes"],
     ),
     (
-        "minecraft:block_transformer",
-        &["block_transformer", "block_transformers"],
-    ),
-    (
-        "minecraft:block_sound_set",
-        &["block_sound_set", "block_sound_sets"],
-    ),
-    (
         "minecraft:trial_spawner",
         &["trial_spawner", "trial_spawners"],
     ),
     (
         "minecraft:worldgen/biome",
         &["worldgen/biome", "worldgen/biomes"],
-    ),
-    (
-        "minecraft:worldgen/block_state_provider",
-        &[
-            "worldgen/block_state_provider",
-            "worldgen/block_state_providers",
-        ],
     ),
     (
         "minecraft:worldgen/carver",
@@ -166,17 +150,6 @@ pub const DYNAMIC_REGISTRIES: &[(&str, &[&str])] = &[
             "worldgen/flat_level_generator_preset",
             "worldgen/flat_level_generator_presets",
         ],
-    ),
-    (
-        "minecraft:worldgen/material_condition",
-        &[
-            "worldgen/material_condition",
-            "worldgen/material_conditions",
-        ],
-    ),
-    (
-        "minecraft:worldgen/material_rule",
-        &["worldgen/material_rule", "worldgen/material_rules"],
     ),
     (
         "minecraft:worldgen/multi_noise_biome_source_parameter_list",
@@ -330,10 +303,6 @@ const EXCLUDED_REGISTRY_DIRS: &[&str] = &[
     "item_modifiers",
     "slot_source",
     "slot_sources",
-    "context_int_provider",
-    "context_int_providers",
-    "context_float_provider",
-    "context_float_providers",
     "damage_type",
     "damage_types",
     "datapacks",

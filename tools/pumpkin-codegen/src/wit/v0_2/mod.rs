@@ -52,8 +52,21 @@ pub fn main() {
 
     for (build_fn, file) in build_functions {
         println!("Generating WIT for {}", file);
-        let wit_code = build_fn();
+        let wit_code = build_fn()
+            .lines()
+            .map(str::trim_end)
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
         write_generated_wit(&wit_code, file);
+        let v1 = wit_code
+            .replace("pumpkin:plugin@0.2.0", "pumpkin:plugin@0.1.0")
+            .replace(": async func", ": func");
+        fs::write(
+            Path::new("../../crates/pumpkin-plugin-wit/v0.1").join(file),
+            v1,
+        )
+        .expect("Failed to write v0.1 WIT");
     }
 
     println!("Generating Java packet mapping");

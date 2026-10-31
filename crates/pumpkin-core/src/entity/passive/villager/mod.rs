@@ -248,8 +248,7 @@ pub(crate) fn apply_potion(stack: &mut ItemStack, potion_name: &str) {
 }
 
 /// Resolves a trade destination to its structure set, structure, fallback map
-/// name and decoration. 26.3 prefixes these with `#` and renamed several, so
-/// both spellings are accepted.
+/// name and decoration.
 fn explorer_map_target(
     destination: &str,
 ) -> Option<(
@@ -262,13 +261,13 @@ fn explorer_map_target(
 
     let destination = destination.strip_prefix('#').unwrap_or(destination);
     Some(match destination {
-        "minecraft:on_jungle_pyramid_maps" | "minecraft:on_jungle_explorer_maps" => (
+        "minecraft:on_jungle_explorer_maps" => (
             "jungle_temples",
             StructureKeys::JunglePyramid,
             "filled_map.explorer_jungle",
             32,
         ),
-        "minecraft:on_swamp_hut_maps" | "minecraft:on_swamp_explorer_maps" => (
+        "minecraft:on_swamp_explorer_maps" => (
             "swamp_huts",
             StructureKeys::SwampHut,
             "filled_map.explorer_swamp",
@@ -304,13 +303,13 @@ fn explorer_map_target(
             "filled_map.village_taiga",
             31,
         ),
-        "minecraft:on_ocean_monument_maps" | "minecraft:on_ocean_explorer_maps" => (
+        "minecraft:on_ocean_explorer_maps" => (
             "ocean_monuments",
             StructureKeys::Monument,
             "filled_map.monument",
             9,
         ),
-        "minecraft:on_buried_trial_chambers_maps" | "minecraft:on_trial_chambers_maps" => (
+        "minecraft:on_trial_chambers_maps" => (
             "trial_chambers",
             StructureKeys::TrialChambers,
             "filled_map.trial_chambers",
@@ -476,18 +475,14 @@ impl VillagerEntity {
     }
 
     pub fn count_food_points_in_inventory(&self) -> i32 {
-        use pumpkin_data::data_component_impl::VillagerFoodImpl;
-
         let inventory = self
             .inventory
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let mut total = 0;
         for stack in inventory.iter() {
-            if !stack.is_empty()
-                && let Some(food) = stack.get_data_component::<VillagerFoodImpl>()
-            {
-                total += food.nutrition * i32::from(stack.item_count);
+            if !stack.is_empty() {
+                total += data::get_food_points(stack.item) * i32::from(stack.item_count);
             }
         }
         total
@@ -504,8 +499,6 @@ impl VillagerEntity {
     }
 
     pub fn eat_until_full(&self) {
-        use pumpkin_data::data_component_impl::VillagerFoodImpl;
-
         if self.food_level.load(Ordering::Relaxed) >= BREEDING_FOOD_THRESHOLD {
             return;
         }
@@ -515,9 +508,7 @@ impl VillagerEntity {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         for stack in inventory.iter_mut() {
             if !stack.is_empty() {
-                let points = stack
-                    .get_data_component::<VillagerFoodImpl>()
-                    .map_or(0, |food| food.nutrition);
+                let points = data::get_food_points(stack.item);
                 if points > 0 {
                     while stack.item_count > 0
                         && self.food_level.load(Ordering::Relaxed) < BREEDING_FOOD_THRESHOLD
@@ -558,7 +549,7 @@ impl VillagerEntity {
         }
     }
 
-    fn create_explorer_map(&self, destination: &str, given: &ItemStack) -> Option<ItemStack> {
+    fn create_explorer_map(&self, destination: &str) -> Option<ItemStack> {
         use pumpkin_data::data_component::DataComponent;
         use pumpkin_data::data_component_impl::{DataComponentImpl, ItemNameImpl, MapIdImpl};
         use pumpkin_data::structures::StructureSet;
@@ -595,18 +586,11 @@ impl VillagerEntity {
                 display_name: None,
             });
 
-        // 26.3 trades hand out a dedicated map item that already carries its own
-        // name; older data trades a plain filled map that has to be named here.
-        let mut stack = if given.is_empty() || given.item.id == Item::FILLED_MAP.id {
-            let mut stack = ItemStack::new(1, &Item::FILLED_MAP);
-            stack.patch.push((
-                DataComponent::ItemName,
-                Some(ItemNameImpl { name: name.into() }.to_dyn()),
-            ));
-            stack
-        } else {
-            given.clone()
-        };
+        let mut stack = ItemStack::new(1, &Item::FILLED_MAP);
+        stack.patch.push((
+            DataComponent::ItemName,
+            Some(ItemNameImpl { name: name.into() }.to_dyn()),
+        ));
         stack.patch.push((
             DataComponent::MapId,
             Some(MapIdImpl { id: map_id }.to_dyn()),
@@ -688,7 +672,7 @@ impl VillagerEntity {
                         base_cost_a.set_count(count as u8);
                     }
                     DynamicTradeModifier::ExplorationMap { destination } => {
-                        let Some(map) = self.create_explorer_map(destination, &output) else {
+                        let Some(map) = self.create_explorer_map(destination) else {
                             continue;
                         };
                         output = map;
@@ -2205,7 +2189,7 @@ mod tests {
         let mut bytes = Vec::new();
 
         metadata
-            .write(&mut bytes, &JavaMinecraftVersion::V_26_3)
+            .write(&mut bytes, &JavaMinecraftVersion::V_26_2)
             .unwrap();
 
         assert_eq!(bytes, [19, 18, 2, 9, 1]);
@@ -2217,7 +2201,7 @@ mod tests {
         let mut bytes = Vec::new();
 
         metadata
-            .write(&mut bytes, &JavaMinecraftVersion::V_26_3)
+            .write(&mut bytes, &JavaMinecraftVersion::V_26_2)
             .unwrap();
 
         assert_eq!(bytes, [18, 1, 40]);

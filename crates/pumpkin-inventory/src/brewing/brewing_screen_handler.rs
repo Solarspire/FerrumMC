@@ -4,7 +4,6 @@ use std::sync::atomic::{AtomicU8, Ordering};
 
 use crate::inventory::Inventory;
 use crate::window_property::PropertyDelegate;
-use pumpkin_data::data_component_impl::BrewingFuelImpl;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::potion_brewing::BREWING_RECIPES;
@@ -17,8 +16,8 @@ use crate::screen_handler::{
 use crate::slot::Slot;
 
 #[must_use]
-pub fn is_fuel(stack: &ItemStack) -> bool {
-    stack.get_data_component::<BrewingFuelImpl>().is_some()
+pub const fn is_fuel(stack: &ItemStack) -> bool {
+    stack.item.id == pumpkin_data::item::Item::BLAZE_POWDER.id
 }
 
 #[must_use]

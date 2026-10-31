@@ -5,7 +5,7 @@ use pumpkin_data::block_properties::{
     CopperGolemStatueLikeProperties, DoubleBlockHalf, EnumVariants, HorizontalFacing,
     IronChainLikeProperties, LanternLikeProperties, LightningRodLikeProperties,
     MangroveRootsLikeProperties, OakDoorLikeProperties, OakFenceLikeProperties,
-    OakTrapdoorLikeProperties, WhiteWoolSlabLikeProperties, WhiteWoolStairsLikeProperties,
+    OakStairsLikeProperties, OakTrapdoorLikeProperties, ResinBrickSlabLikeProperties,
 };
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::fluid::Fluid;
@@ -350,13 +350,13 @@ pub fn with_properties_of(
 
     // 2. Stairs
     if from_block.has_tag(&pumpkin_data::tag::Block::MINECRAFT_STAIRS) {
-        let props = WhiteWoolStairsLikeProperties::from_state_id(from_state_id);
+        let props = OakStairsLikeProperties::from_state_id(from_state_id);
         return props.to_state_id(to_block);
     }
 
     // 3. Slabs
     if from_block.has_tag(&pumpkin_data::tag::Block::MINECRAFT_SLABS) {
-        let props = WhiteWoolSlabLikeProperties::from_state_id(from_state_id);
+        let props = ResinBrickSlabLikeProperties::from_state_id(from_state_id);
         return props.to_state_id(to_block);
     }
 

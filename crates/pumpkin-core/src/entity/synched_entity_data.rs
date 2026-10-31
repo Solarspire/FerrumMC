@@ -42,7 +42,7 @@ impl<T: MetadataSerializer + Clone + Send + Sync + 'static> ErasedSerializer
     fn write_canonical(&self, index: TrackedId, r#type: MetaDataType) -> Vec<u8> {
         let mut buf = Vec::new();
         let meta = Metadata::new_raw(index, r#type, &self.value);
-        let _ = meta.write(&mut buf, &JavaMinecraftVersion::V_26_3);
+        let _ = meta.write(&mut buf, &JavaMinecraftVersion::V_26_2);
         buf
     }
 }
@@ -244,7 +244,7 @@ mod test {
         data.define(PLAYER_MODE_CUSTOMISATION, 0u8);
         assert!(data.set(PLAYER_MODE_CUSTOMISATION, 0x7Fu8));
 
-        let current = data.get_non_default_values_for_version(&JavaMinecraftVersion::V_26_3);
+        let current = data.get_non_default_values_for_version(&JavaMinecraftVersion::V_26_2);
         let legacy = data.get_non_default_values_for_version(&JavaMinecraftVersion::V_1_20_5);
         assert!(current.is_some());
         assert_eq!(current, legacy);
@@ -261,7 +261,7 @@ mod test {
         data.define(PLAYER_MODE_CUSTOMISATION, 0u8);
 
         assert!(
-            data.get_non_default_values_for_version(&JavaMinecraftVersion::V_26_3)
+            data.get_non_default_values_for_version(&JavaMinecraftVersion::V_26_2)
                 .is_none()
         );
     }

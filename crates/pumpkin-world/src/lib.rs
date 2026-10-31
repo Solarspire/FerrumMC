@@ -22,7 +22,7 @@ pub mod world_info;
 
 pub use clip::{BlockHitResult, ClipBlock, ClipContext, ClipFluid};
 
-pub const CURRENT_MC_VERSION: &str = "26.3";
+pub const CURRENT_MC_VERSION: &str = "26.2";
 
 #[macro_export]
 macro_rules! global_path {

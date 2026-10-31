@@ -107,7 +107,7 @@ pub(crate) fn try_wax_block(world: &Arc<World>, location: BlockPos, block: &Bloc
                     BlockFlags::NOTIFY_LISTENERS,
                 );
                 world.emit_game_event(GameEvent::BlockChange.name(), neighbor_pos.to_f64());
-                world.sync_world_event(WorldEvent::ParticlesWaxOn, neighbor_pos, 0);
+                world.sync_world_event(WorldEvent::ParticlesAndSoundWaxOn, neighbor_pos, 0);
                 world.play_sound(
                     Sound::ItemHoneycombWaxOn,
                     SoundCategory::Blocks,
@@ -119,12 +119,7 @@ pub(crate) fn try_wax_block(world: &Arc<World>, location: BlockPos, block: &Bloc
 
     world.set_block_state(&location, new_state_id, BlockFlags::NOTIFY_ALL);
     world.emit_game_event(GameEvent::BlockChange.name(), location.to_f64());
-    world.sync_world_event(WorldEvent::ParticlesWaxOn, location, 0);
-    world.play_sound(
-        Sound::ItemHoneycombWaxOn,
-        SoundCategory::Blocks,
-        &location.to_f64(),
-    );
+    world.sync_world_event(WorldEvent::ParticlesAndSoundWaxOn, location, 0);
     true
 }
 
@@ -142,12 +137,7 @@ impl HoneyCombItem {
 
         args.world.update_block_entity(block_entity);
         args.world
-            .sync_world_event(WorldEvent::ParticlesWaxOn, *args.position, 0);
-        args.world.play_sound(
-            Sound::ItemHoneycombWaxOn,
-            SoundCategory::Blocks,
-            &args.position.to_f64(),
-        );
+            .sync_world_event(WorldEvent::ParticlesAndSoundWaxOn, *args.position, 0);
 
         BlockActionResult::Success
     }

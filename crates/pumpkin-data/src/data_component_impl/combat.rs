@@ -1219,45 +1219,7 @@ impl DataComponentImpl for SwingAnimationImpl {
         NbtTag::Compound(compound)
     }
 
-    default_impl!(AttackAnimation);
-}
-
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct InteractAnimationImpl {
-    pub animation_type: SwingAnimationType,
-    pub duration: i32,
-}
-
-impl Default for InteractAnimationImpl {
-    fn default() -> Self {
-        Self::DEFAULT
-    }
-}
-
-impl InteractAnimationImpl {
-    pub const DEFAULT: Self = Self {
-        animation_type: SwingAnimationType::Whack,
-        duration: 6,
-    };
-
-    pub fn read_data(data: &NbtTag) -> Option<Self> {
-        let swing = SwingAnimationImpl::read_data(data)?;
-        Some(Self {
-            animation_type: swing.animation_type,
-            duration: swing.duration,
-        })
-    }
-}
-
-impl DataComponentImpl for InteractAnimationImpl {
-    fn write_data(&self) -> NbtTag {
-        let mut compound = NbtCompound::new();
-        compound.put_string("type", self.animation_type.to_name().to_string());
-        compound.put_int("duration", self.duration);
-        NbtTag::Compound(compound)
-    }
-
-    default_impl!(InteractAnimation);
+    default_impl!(SwingAnimation);
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Default)]
@@ -1279,46 +1241,6 @@ impl DataComponentImpl for AdditionalTradeCostImpl {
         get_i32_hash(self.cost) as i32
     }
     default_impl!(AdditionalTradeCost);
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct MobVisibilityImpl {
-    pub targeting_entity_types: IDSet<EntityType>,
-    pub visibility: f32,
-}
-impl Hash for MobVisibilityImpl {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        get_idset_hash(&self.targeting_entity_types).hash(state);
-        self.visibility.to_bits().hash(state);
-    }
-}
-impl MobVisibilityImpl {
-    pub fn read_data(data: &NbtTag) -> Option<Self> {
-        let compound = data.extract_compound()?;
-        let targeting_entity_types =
-            IDSet::<EntityType>::read(compound.get("targeting_entity_types")?)?;
-        let visibility = compound.get_float("visibility")?;
-        Some(Self {
-            targeting_entity_types,
-            visibility,
-        })
-    }
-}
-impl DataComponentImpl for MobVisibilityImpl {
-    fn write_data(&self) -> NbtTag {
-        let mut compound = NbtCompound::new();
-        self.targeting_entity_types
-            .write(&mut compound, "targeting_entity_types");
-        compound.put_float("visibility", self.visibility);
-        NbtTag::Compound(compound)
-    }
-    fn get_hash(&self) -> i32 {
-        let mut digest = Digest::new();
-        digest.update(&get_idset_hash(&self.targeting_entity_types).to_le_bytes());
-        digest.update(&get_f32_hash(self.visibility).to_le_bytes());
-        digest.finalize() as i32
-    }
-    default_impl!(MobVisibility);
 }
 
 #[derive(Clone, Hash, PartialEq, Eq)]

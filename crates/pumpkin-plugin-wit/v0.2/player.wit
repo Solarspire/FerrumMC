@@ -177,7 +177,6 @@ interface player {
         v-1-21-11,
         v-26-1,
         v-26-2,
-        v-26-3,
         unknown,
     }
 
@@ -518,17 +517,11 @@ interface player {
         // Post Effects (Shaders)
 
         /// Returns all active post-processing shader effects on this player.
-        get-post-effects: func () -> list<string>;
         /// Checks if this player currently has the specified post-processing shader effect.
-        has-post-effect: func (effect: string) -> bool;
         /// Adds a post-processing shader effect to this player and syncs it to the client. Returns true if added.
-        add-post-effect: async func (effect: string) -> bool;
         /// Removes a post-processing shader effect from this player and syncs it to the client. Returns true if removed.
-        remove-post-effect: async func (effect: string) -> bool;
         /// Clears all post-processing shader effects from this player. Returns the number of cleared effects.
-        clear-post-effects: async func () -> u32;
         /// Resends the current post-processing shader effects to the client.
-        send-post-effects: async func ();
 
         // Health & Damage
 

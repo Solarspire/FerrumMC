@@ -8,7 +8,7 @@ if ($PrepareOnly) {
     Write-Output "Scratch config prepared at $smokeDir/ferrummc.toml; an enabled NeoForge bridge is required."
     return
 }
-& cargo test --locked -p pumpkin-core net::java::compatibility::tests
-if ($LASTEXITCODE -ne 0) { throw 'Protocol translator tests failed' }
+& cargo test --locked -p pumpkin-core net::java::registry_remap::tests
+if ($LASTEXITCODE -ne 0) { throw 'Native registry remap tests failed' }
 & "$PSScriptRoot/test-neoforge-client.ps1" -Port $Port -TimeoutSeconds $TimeoutSeconds -SkipBuild -VanillaOnly
-Write-Output 'PASS vanilla 776/777 rejection, status, codecs and translator tests'
+Write-Output 'PASS native 776 status/codecs, vanilla NeoForge gate, and unsupported protocol rejection'

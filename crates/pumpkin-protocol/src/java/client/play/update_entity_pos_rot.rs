@@ -47,11 +47,7 @@ impl ClientPacket for CUpdateEntityPosRot {
         } else {
             write.write_var_int(&self.entity_id)?;
         }
-        // Since 26.3 the on ground flag and the delta step count are packed into a var int in
-        // front of the delta, 0 steps being a single linear delta.
-        if *version >= JavaMinecraftVersion::V_26_3 {
-            write.write_var_int(&VarInt(i32::from(self.on_ground)))?;
-        }
+
         if *version >= JavaMinecraftVersion::V_1_9 {
             write.write_i16_be(self.delta.x)?;
             write.write_i16_be(self.delta.y)?;
@@ -63,7 +59,7 @@ impl ClientPacket for CUpdateEntityPosRot {
         }
         write.write_u8(self.yaw)?;
         write.write_u8(self.pitch)?;
-        if *version >= JavaMinecraftVersion::V_1_8 && *version < JavaMinecraftVersion::V_26_3 {
+        if *version >= JavaMinecraftVersion::V_1_8 {
             write.write_bool(self.on_ground)?;
         }
         Ok(())

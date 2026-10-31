@@ -52,7 +52,7 @@ mod tests {
         let chunk = ChunkData::empty(0, 0);
         let packet = CChunkData(&chunk);
 
-        let versions = [JavaMinecraftVersion::V_26_3];
+        let versions = [JavaMinecraftVersion::V_26_2];
 
         for version in versions {
             let mut buf = Vec::new();
@@ -90,7 +90,7 @@ mod tests {
 
         let packet = CChunkData(&chunk);
 
-        let versions = [JavaMinecraftVersion::V_26_3];
+        let versions = [JavaMinecraftVersion::V_26_2];
 
         for version in versions {
             let mut buf = Vec::new();

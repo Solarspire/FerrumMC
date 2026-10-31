@@ -6,7 +6,7 @@ use std::{collections::BTreeMap, fs};
 use crate::version::JavaMinecraftVersion;
 
 /// The newest protocol version used as the fallback for unknown versions in `PacketId::to_id`.
-const LATEST_VERSION: JavaMinecraftVersion = JavaMinecraftVersion::V_26_3;
+const LATEST_VERSION: JavaMinecraftVersion = JavaMinecraftVersion::V_26_2;
 
 /// Represents the protocol_id object within the JSON.
 #[derive(Deserialize)]
@@ -27,7 +27,7 @@ pub struct PhaseData {
 #[derive(Deserialize)]
 pub struct Packets(pub BTreeMap<String, PhaseData>);
 
-/// Compact dump used by `assets/packets.json` / `26_3_packets.json`.
+/// Compact dump used by `assets/packets.json` / `26_2_packets.json`.
 #[derive(Deserialize)]
 struct CompactPackets {
     #[serde(default)]
@@ -94,7 +94,7 @@ fn parse_packets(path: &str, content: &str) -> Packets {
 /// Generates the `TokenStream` for the `PacketId` struct, `CURRENT_MC_VERSION`, and
 /// all `serverbound`/`clientbound` packet ID constants.
 pub(crate) fn build() -> TokenStream {
-    let assets = [(JavaMinecraftVersion::V_26_3, "26_3_packets.json")];
+    let assets = [(JavaMinecraftVersion::V_26_2, "26_2_packets.json")];
 
     // Parse available packet files into a BTreeMap keyed by JavaMinecraftVersion
     let mut versions = BTreeMap::new();
@@ -242,9 +242,9 @@ fn generate_phase_modules(
                 ("STEER_BOAT", "PADDLE_BOAT"),
                 ("PLAYER_DIGGING", "PLAYER_ACTION"),
                 ("ENTITY_ACTION", "PLAYER_COMMAND"),
-                ("SWING_ARM", "PUNCH"),
-                ("ANIMATION", "PUNCH"),
-                ("SWING", "PUNCH"),
+                ("SWING_ARM", "SWING"),
+                ("ANIMATION", "SWING"),
+                ("SWING", "SWING"),
                 ("DEBUG_SAMPLE_SUBSCRIPTION", "DEBUG_SUBSCRIPTION_REQUEST"),
                 ("PLAYER_BLOCK_PLACEMENT", "USE_ITEM_ON"),
                 ("SPECTATE", "SPECTATOR_ACTION"),

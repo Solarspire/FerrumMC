@@ -5,8 +5,6 @@
     "minecraft:orange_candle",
     "minecraft:orange_carpet",
     "minecraft:orange_concrete",
-    "minecraft:orange_concrete_slab",
-    "minecraft:orange_concrete_stairs",
     "minecraft:orange_concrete_powder",
     "minecraft:orange_glazed_terracotta",
     "minecraft:orange_shulker_box",
@@ -14,8 +12,6 @@
     "minecraft:orange_stained_glass_pane",
     "minecraft:orange_terracotta",
     "minecraft:orange_wool",
-    "minecraft:orange_wool_slab",
-    "minecraft:orange_wool_stairs",
     "minecraft:orange_wall_banner"
   ]
 }

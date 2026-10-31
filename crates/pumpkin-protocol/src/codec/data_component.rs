@@ -1003,13 +1003,14 @@ pub fn deserialize(
         DataComponent::BlocksAttacks => Ok(BlocksAttacksImpl::deserialize(seq)?.to_dyn()),
         DataComponent::PiercingWeapon => Ok(PiercingWeaponImpl::deserialize(seq)?.to_dyn()),
         DataComponent::KineticWeapon => Ok(KineticWeaponImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::AttackAnimation => Ok(SwingAnimationImpl::deserialize(seq)?.to_dyn()),
+        DataComponent::SwingAnimation => Ok(SwingAnimationImpl::deserialize(seq)?.to_dyn()),
         DataComponent::AdditionalTradeCost => {
             Ok(AdditionalTradeCostImpl::deserialize(seq)?.to_dyn())
         }
         DataComponent::StoredEnchantments => Ok(StoredEnchantmentsImpl::deserialize(seq)?.to_dyn()),
         DataComponent::Dye => Ok(DyeImpl::deserialize(seq)?.to_dyn()),
         DataComponent::DyedColor => Ok(DyedColorImpl::deserialize(seq)?.to_dyn()),
+        DataComponent::MapColor => Ok(MapColorImpl::deserialize(seq)?.to_dyn()),
         DataComponent::MapId => Ok(MapIdImpl::deserialize(seq)?.to_dyn()),
         DataComponent::MapDecorations => Ok(MapDecorationsImpl::deserialize(seq)?.to_dyn()),
         DataComponent::MapPostProcessing => Ok(MapPostProcessingImpl::deserialize(seq)?.to_dyn()),
@@ -1097,20 +1098,6 @@ pub fn deserialize(
         DataComponent::CatCollar => Ok(CatCollarImpl::deserialize(seq)?.to_dyn()),
         DataComponent::SheepColor => Ok(SheepColorImpl::deserialize(seq)?.to_dyn()),
         DataComponent::ShulkerColor => Ok(ShulkerColorImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::InteractAnimation => Ok(InteractAnimationImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::BlockTransformer => Ok(BlockTransformerImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::VillagerFood => Ok(VillagerFoodImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::MobVisibility => Ok(MobVisibilityImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::ProvidesPotteryPattern => {
-            Ok(ProvidesPotteryPatternImpl::deserialize(seq)?.to_dyn())
-        }
-        DataComponent::SignTextFront => Ok(SignTextFrontImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::SignTextBack => Ok(SignTextBackImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::CushionColor => Ok(CushionColorImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::Compostable => Ok(CompostableImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::CookingFuel => Ok(CookingFuelImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::BrewingFuel => Ok(BrewingFuelImpl::deserialize(seq)?.to_dyn()),
-        DataComponent::Waxed => Ok(WaxedImpl::deserialize(seq)?.to_dyn()),
     }
 }
 
@@ -1165,11 +1152,12 @@ pub fn serialize(
         DataComponent::BlocksAttacks => get::<BlocksAttacksImpl>(value).serialize(seq),
         DataComponent::PiercingWeapon => get::<PiercingWeaponImpl>(value).serialize(seq),
         DataComponent::KineticWeapon => get::<KineticWeaponImpl>(value).serialize(seq),
-        DataComponent::AttackAnimation => get::<SwingAnimationImpl>(value).serialize(seq),
+        DataComponent::SwingAnimation => get::<SwingAnimationImpl>(value).serialize(seq),
         DataComponent::AdditionalTradeCost => get::<AdditionalTradeCostImpl>(value).serialize(seq),
         DataComponent::StoredEnchantments => get::<StoredEnchantmentsImpl>(value).serialize(seq),
         DataComponent::Dye => get::<DyeImpl>(value).serialize(seq),
         DataComponent::DyedColor => get::<DyedColorImpl>(value).serialize(seq),
+        DataComponent::MapColor => get::<MapColorImpl>(value).serialize(seq),
         DataComponent::MapId => get::<MapIdImpl>(value).serialize(seq),
         DataComponent::MapDecorations => get::<MapDecorationsImpl>(value).serialize(seq),
         DataComponent::MapPostProcessing => get::<MapPostProcessingImpl>(value).serialize(seq),
@@ -1249,20 +1237,6 @@ pub fn serialize(
         DataComponent::CatCollar => get::<CatCollarImpl>(value).serialize(seq),
         DataComponent::SheepColor => get::<SheepColorImpl>(value).serialize(seq),
         DataComponent::ShulkerColor => get::<ShulkerColorImpl>(value).serialize(seq),
-        DataComponent::InteractAnimation => get::<InteractAnimationImpl>(value).serialize(seq),
-        DataComponent::BlockTransformer => get::<BlockTransformerImpl>(value).serialize(seq),
-        DataComponent::VillagerFood => get::<VillagerFoodImpl>(value).serialize(seq),
-        DataComponent::MobVisibility => get::<MobVisibilityImpl>(value).serialize(seq),
-        DataComponent::ProvidesPotteryPattern => {
-            get::<ProvidesPotteryPatternImpl>(value).serialize(seq)
-        }
-        DataComponent::SignTextFront => get::<SignTextFrontImpl>(value).serialize(seq),
-        DataComponent::SignTextBack => get::<SignTextBackImpl>(value).serialize(seq),
-        DataComponent::CushionColor => get::<CushionColorImpl>(value).serialize(seq),
-        DataComponent::Compostable => get::<CompostableImpl>(value).serialize(seq),
-        DataComponent::CookingFuel => get::<CookingFuelImpl>(value).serialize(seq),
-        DataComponent::BrewingFuel => get::<BrewingFuelImpl>(value).serialize(seq),
-        DataComponent::Waxed => get::<WaxedImpl>(value).serialize(seq),
     }
 }
 
@@ -1942,11 +1916,17 @@ impl DataComponentCodec<Self> for UseRemainderImpl {
 
 impl DataComponentCodec<Self> for DamageResistantImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_string(self.res_type.as_str())
+        seq.write_var_int(&VarInt(0))?;
+        seq.write_string(self.res_type.as_str().trim_start_matches('#'))
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let tag = seq.get_str()?;
+        if seq.get_var_int()?.0 != 0 {
+            return Err(ReadingError::Message(
+                "Inline damage resistance set unsupported".into(),
+            ));
+        }
+        let tag = format!("#{}", seq.get_str()?);
         Ok(Self {
             res_type: DamageResistantType::from_tag(&tag),
         })
@@ -3097,339 +3077,14 @@ impl DataComponentCodec<Self> for BreakSoundImpl {
     }
 }
 
-impl DataComponentCodec<Self> for InteractAnimationImpl {
+impl DataComponentCodec<Self> for MapColorImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_var_int(&VarInt::from(self.animation_type.to_id()))?;
-        seq.write_var_int(&VarInt::from(self.duration))
+        seq.write_i32_be(self.id)
     }
-
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let anim_id = seq.get_var_int()?.0;
-        let animation_type = pumpkin_data::data_component_impl::SwingAnimationType::from_id(
-            anim_id,
-        )
-        .ok_or_else(|| ReadingError::Message(format!("Invalid SwingAnimationType id {anim_id}")))?;
-        let duration = seq.get_var_int()?.0;
         Ok(Self {
-            animation_type,
-            duration,
+            id: seq.get_i32_be()?,
         })
-    }
-}
-
-impl DataComponentCodec<Self> for BlockTransformerImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        let id = match self.transformer.as_ref() {
-            "minecraft:hoe" | "hoe" => 1,
-            "minecraft:shovel" | "shovel" => 2,
-            _ => 0,
-        };
-        seq.write_var_int(&VarInt(id))
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let id = seq.get_var_int()?.0;
-        let transformer = match id {
-            0 => Cow::Borrowed("minecraft:axe"),
-            1 => Cow::Borrowed("minecraft:hoe"),
-            2 => Cow::Borrowed("minecraft:shovel"),
-            _ => {
-                return Err(ReadingError::Message(format!(
-                    "Invalid BlockTransformer id {id}"
-                )));
-            }
-        };
-        Ok(Self { transformer })
-    }
-}
-
-impl DataComponentCodec<Self> for VillagerFoodImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_var_int(&VarInt::from(self.nutrition))
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let nutrition = seq.get_var_int()?.0;
-        Ok(Self { nutrition })
-    }
-}
-
-impl DataComponentCodec<Self> for MobVisibilityImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        serialize_idset(&self.targeting_entity_types, seq)?;
-        seq.write_f32(self.visibility)
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let targeting_entity_types = deserialize_idset(seq)?;
-        let visibility = seq.get_f32()?;
-        Ok(Self {
-            targeting_entity_types,
-            visibility,
-        })
-    }
-}
-
-impl DataComponentCodec<Self> for ProvidesPotteryPatternImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        let id = pumpkin_data::decorated_pot_pattern::DecoratedPotPattern::from_name(&self.pattern)
-            .map_or(0, |p| p.id() as i32);
-        seq.write_var_int(&VarInt(id))
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let id = seq.get_var_int()?.0;
-        let pattern = usize::try_from(id)
-            .ok()
-            .and_then(|idx| {
-                pumpkin_data::decorated_pot_pattern::DecoratedPotPattern::all().get(idx)
-            })
-            .map_or(Cow::Borrowed("minecraft:angler"), |p| {
-                Cow::Owned(format!("minecraft:{}", p.to_name()))
-            });
-        Ok(Self { pattern })
-    }
-}
-
-fn serialize_sign_messages(
-    messages: &[Cow<'static, str>; 4],
-    filtered_messages: Option<&[Cow<'static, str>; 4]>,
-    color: pumpkin_data::dye_color::DyeColor,
-    has_glowing_text: bool,
-    seq: &mut impl NetworkWriteExt,
-) -> Result<(), WritingError> {
-    for msg in messages {
-        seq.write_nbt(NbtTag::String(msg.to_string().into()))?;
-    }
-    if let Some(filtered) = filtered_messages {
-        seq.write_bool(true)?;
-        for msg in filtered {
-            seq.write_nbt(NbtTag::String(msg.to_string().into()))?;
-        }
-    } else {
-        seq.write_bool(false)?;
-    }
-    seq.write_var_int(&VarInt::from(color.id() as i32))?;
-    seq.write_bool(has_glowing_text)
-}
-
-type DeserializedSignData = (
-    [Cow<'static, str>; 4],
-    Option<[Cow<'static, str>; 4]>,
-    pumpkin_data::dye_color::DyeColor,
-    bool,
-);
-
-fn deserialize_sign_messages(
-    seq: &mut impl NetworkReadExt,
-) -> Result<DeserializedSignData, ReadingError> {
-    let mut messages = [
-        Cow::Borrowed(""),
-        Cow::Borrowed(""),
-        Cow::Borrowed(""),
-        Cow::Borrowed(""),
-    ];
-    for slot in &mut messages {
-        let tag = seq.get_nbt_with_version(&JavaMinecraftVersion::V_26_2)?;
-        if let Some(t) = tag {
-            *slot = Cow::Owned(pumpkin_util::text::TextComponent::from_nbt(&t).get_text());
-        }
-    }
-    let filtered_messages = if seq.get_bool()? {
-        let mut filtered = [
-            Cow::Borrowed(""),
-            Cow::Borrowed(""),
-            Cow::Borrowed(""),
-            Cow::Borrowed(""),
-        ];
-        for slot in &mut filtered {
-            let tag = seq.get_nbt_with_version(&JavaMinecraftVersion::V_26_2)?;
-            if let Some(t) = tag {
-                *slot = Cow::Owned(pumpkin_util::text::TextComponent::from_nbt(&t).get_text());
-            }
-        }
-        Some(filtered)
-    } else {
-        None
-    };
-    let color_id = seq.get_var_int()?.0;
-    let color = u8::try_from(color_id)
-        .ok()
-        .and_then(pumpkin_data::dye_color::DyeColor::by_id)
-        .ok_or_else(|| ReadingError::Message(format!("Invalid SignText DyeColor {color_id}")))?;
-    let has_glowing_text = seq.get_bool()?;
-    Ok((messages, filtered_messages, color, has_glowing_text))
-}
-
-impl DataComponentCodec<Self> for SignTextFrontImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        serialize_sign_messages(
-            &self.messages,
-            self.filtered_messages.as_ref(),
-            self.color,
-            self.has_glowing_text,
-            seq,
-        )
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let (messages, filtered_messages, color, has_glowing_text) =
-            deserialize_sign_messages(seq)?;
-        Ok(Self {
-            messages,
-            filtered_messages,
-            color,
-            has_glowing_text,
-        })
-    }
-}
-
-impl DataComponentCodec<Self> for SignTextBackImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        serialize_sign_messages(
-            &self.messages,
-            self.filtered_messages.as_ref(),
-            self.color,
-            self.has_glowing_text,
-            seq,
-        )
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let (messages, filtered_messages, color, has_glowing_text) =
-            deserialize_sign_messages(seq)?;
-        Ok(Self {
-            messages,
-            filtered_messages,
-            color,
-            has_glowing_text,
-        })
-    }
-}
-
-impl DataComponentCodec<Self> for CushionColorImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_var_int(&VarInt::from(self.color.id() as i32))
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let id = seq.get_var_int()?.0;
-        let color = u8::try_from(id)
-            .ok()
-            .and_then(pumpkin_data::dye_color::DyeColor::by_id)
-            .ok_or_else(|| ReadingError::Message(format!("Invalid CushionColor id {id}")))?;
-        Ok(Self { color })
-    }
-}
-
-impl DataComponentCodec<Self> for CompostableImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        let layers = match self.chance {
-            0.3 => "minecraft:compostable/low",
-            0.5 => "minecraft:compostable/low_medium",
-            0.65 => "minecraft:compostable/medium",
-            0.85 => "minecraft:compostable/medium_high",
-            _ => "minecraft:compostable/always_add_one",
-        };
-        seq.write_bool(false)?;
-        seq.write_string(layers)
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let is_direct = seq.get_bool()?;
-        let chance = if is_direct {
-            let val = seq.get_i32()?;
-            if val > 0 { 1.0 } else { 0.3 }
-        } else {
-            let key = seq.get_str()?;
-            match key.strip_prefix("minecraft:").unwrap_or(&key) {
-                "compostable/low" => 0.3,
-                "compostable/low_medium" => 0.5,
-                "compostable/medium" => 0.65,
-                "compostable/medium_high" => 0.85,
-                _ => 1.0,
-            }
-        };
-        Ok(Self { chance })
-    }
-}
-
-impl DataComponentCodec<Self> for CookingFuelImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        match &self.burn_time {
-            pumpkin_data::data_component_impl::IntProvider::Inline(val) => {
-                seq.write_bool(true)?;
-                seq.write_i32(*val)?;
-            }
-            pumpkin_data::data_component_impl::IntProvider::Id(id) => {
-                seq.write_bool(false)?;
-                seq.write_string(id)?;
-            }
-        }
-        match &self.speed_multiplier {
-            pumpkin_data::data_component_impl::FloatProvider::Inline(val) => {
-                seq.write_bool(true)?;
-                seq.write_f32(*val)
-            }
-            pumpkin_data::data_component_impl::FloatProvider::Id(id) => {
-                seq.write_bool(false)?;
-                seq.write_string(id)
-            }
-        }
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let burn_time = if seq.get_bool()? {
-            pumpkin_data::data_component_impl::IntProvider::Inline(seq.get_i32()?)
-        } else {
-            pumpkin_data::data_component_impl::IntProvider::Id(Cow::Owned(
-                seq.get_str()?.to_string(),
-            ))
-        };
-        let speed_multiplier = if seq.get_bool()? {
-            pumpkin_data::data_component_impl::FloatProvider::Inline(seq.get_f32()?)
-        } else {
-            pumpkin_data::data_component_impl::FloatProvider::Id(Cow::Owned(
-                seq.get_str()?.to_string(),
-            ))
-        };
-        Ok(Self {
-            burn_time,
-            speed_multiplier,
-        })
-    }
-}
-
-impl DataComponentCodec<Self> for BrewingFuelImpl {
-    fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_bool(false)?;
-        seq.write_string("minecraft:brewing/uses_default")?;
-        seq.write_bool(false)?;
-        seq.write_string("minecraft:brewing/speed_default")
-    }
-
-    fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        if seq.get_bool()? {
-            let _uses = seq.get_i32()?;
-        } else {
-            let _uses_key = seq.get_str()?;
-        }
-        if seq.get_bool()? {
-            let _speed = seq.get_f32()?;
-        } else {
-            let _speed_key = seq.get_str()?;
-        }
-        Ok(Self)
-    }
-}
-
-impl DataComponentCodec<Self> for WaxedImpl {
-    fn serialize(&self, _seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        Ok(())
-    }
-
-    fn deserialize(_seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        Ok(Self)
     }
 }
 

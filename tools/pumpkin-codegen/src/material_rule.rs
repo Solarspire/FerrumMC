@@ -601,20 +601,20 @@ pub fn build() -> TokenStream {
     let cond_dir =
         std::path::Path::new("../../assets/datapack/data/minecraft/worldgen/material_condition");
 
-    let top_level_rules = [
-        "bedrock_floor",
-        "bedrock_roof",
-        "end",
-        "nether",
-        "overworld",
-        "overworld_caves",
-        "overworld_floating_islands",
-    ];
+    let top_level_rules = ["end", "nether", "overworld"];
 
     let mut const_defs = TokenStream::new();
 
     for rule_name in top_level_rules {
-        let raw = RawMaterialRule::Ref(format!("minecraft:{}", rule_name));
+        let settings: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(format!(
+                "../../assets/datapack/data/minecraft/worldgen/noise_settings/{rule_name}.json"
+            ))
+            .unwrap(),
+        )
+        .unwrap();
+        let raw: RawMaterialRule =
+            serde_json::from_value(settings["surface_rule"].clone()).unwrap();
         let resolved = resolve_rule(&raw, rule_dir, cond_dir)
             .unwrap_or_else(|| panic!("Failed to resolve material rule {}", rule_name));
 
@@ -673,10 +673,6 @@ pub fn build() -> TokenStream {
                     "overworld" | "amplified" | "large_biomes" => Some(&OVERWORLD),
                     "nether" => Some(&NETHER),
                     "end" => Some(&END),
-                    "bedrock_floor" => Some(&BEDROCK_FLOOR),
-                    "bedrock_roof" => Some(&BEDROCK_ROOF),
-                    "overworld_caves" => Some(&OVERWORLD_CAVES),
-                    "overworld_floating_islands" => Some(&OVERWORLD_FLOATING_ISLANDS),
                     _ => None,
                 }
             }

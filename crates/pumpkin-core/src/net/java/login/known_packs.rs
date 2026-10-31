@@ -22,15 +22,7 @@ impl PendingConnection {
             return;
         }
         let version = CURRENT_MC_VERSION;
-        let synced = if self.version.load() == pumpkin_util::version::JavaMinecraftVersion::V_26_2
-            && !server
-                .plugin_manager
-                .has_handlers::<crate::plugin::server::packet::ConnectionPacketSentEvent>()
-        {
-            pumpkin_data::registry::Registry::get_synced(self.version.load())
-        } else {
-            server.datapack_manager.get_all_synced_registries()
-        };
+        let synced = server.datapack_manager.get_all_synced_registries();
         for reg in &synced {
             self.send_packet_now(&CRegistryData::new(&reg.registry_id, &reg.registry_entries))
                 .await;

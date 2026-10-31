@@ -71,7 +71,9 @@ impl From<ChunkStatus> for StagedChunkEnum {
             ChunkStatus::StructureStarts => Self::StructureStart,
             ChunkStatus::StructureReferences => Self::StructureReferences,
             ChunkStatus::Biomes => Self::Biomes,
-            ChunkStatus::Terrain => Self::Noise,
+            ChunkStatus::Noise => Self::Noise,
+            ChunkStatus::Surface => Self::Surface,
+            ChunkStatus::Carvers => Self::Carvers,
             ChunkStatus::Features => Self::Features,
             ChunkStatus::InitializeLight | ChunkStatus::Light => Self::Lighting,
             ChunkStatus::Spawn => Self::Spawn,
@@ -88,9 +90,9 @@ impl From<StagedChunkEnum> for ChunkStatus {
             StagedChunkEnum::StructureStart => Self::StructureStarts,
             StagedChunkEnum::StructureReferences => Self::StructureReferences,
             StagedChunkEnum::Biomes => Self::Biomes,
-            StagedChunkEnum::Noise | StagedChunkEnum::Surface | StagedChunkEnum::Carvers => {
-                Self::Terrain
-            }
+            StagedChunkEnum::Noise => Self::Noise,
+            StagedChunkEnum::Surface => Self::Surface,
+            StagedChunkEnum::Carvers => Self::Carvers,
             StagedChunkEnum::Features => Self::Features,
             StagedChunkEnum::Lighting => Self::Light,
             StagedChunkEnum::Spawn => Self::Spawn,

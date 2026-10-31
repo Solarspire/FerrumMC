@@ -15,14 +15,14 @@ fn canonicalize_type_name(name: &str) -> String {
         "quaternion_f" | "quaternion" => "quaternion".to_string(),
         "rotation" | "rotations" => "rotations".to_string(),
         "particle_list" | "particles" => "particles".to_string(),
-        "copper_golem_state" | "weathering_copper_state" => "weathering_copper_state".to_string(),
+        "weathering_copper_state" => "weathering_copper_state".to_string(),
         "profile" | "resolvable_profile" => "resolvable_profile".to_string(),
         "arm" | "humanoid_arm" => "humanoid_arm".to_string(),
         other => other.to_string(),
     }
 }
 
-/// Generates the `TokenStream` for the `MetaDataType` struct for Minecraft 26.3.
+/// Generates the `TokenStream` for the `MetaDataType` struct for Minecraft 26.2.
 pub fn build() -> TokenStream {
     let path = "../../assets/meta_data_type.json";
     let parsed: BTreeMap<String, i32> = serde_json::from_str(
@@ -55,7 +55,6 @@ pub fn build() -> TokenStream {
         pub const QUATERNION_F: MetaDataType = Self::QUATERNION;
         pub const ROTATION: MetaDataType = Self::ROTATIONS;
         pub const PARTICLE_LIST: MetaDataType = Self::PARTICLES;
-        pub const COPPER_GOLEM_STATE: MetaDataType = Self::WEATHERING_COPPER_STATE;
         pub const PROFILE: MetaDataType = Self::RESOLVABLE_PROFILE;
         pub const ARM: MetaDataType = Self::HUMANOID_ARM;
     };

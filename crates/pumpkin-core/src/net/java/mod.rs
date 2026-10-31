@@ -57,7 +57,6 @@ pub type JavaReadHalf = Box<dyn AsyncRead + Send + Sync + Unpin>;
 pub type JavaWriteHalf = Box<dyn AsyncWrite + Send + Sync + Unpin>;
 
 pub mod chunk_data;
-mod compatibility;
 pub mod handshake;
 pub mod login;
 mod neoforge;
@@ -65,6 +64,7 @@ mod outgoing;
 pub mod pending;
 pub mod play;
 pub mod recipe_helper;
+mod registry_remap;
 pub mod status;
 
 pub use chunk_data::{CChunkData, ChunkLightExt};
@@ -125,8 +125,6 @@ pub struct JavaClient {
     ///
     /// Whether we are waiting for a response after sending a keep alive packet.
     pub wait_for_keep_alive: AtomicBool,
-    /// Entities this 26.2 client never saw spawn, see `compatibility::HiddenEntities`.
-    hidden_entities: compatibility::HiddenEntities,
     /// Set to `true` when any movement packet is received this tick.
     /// On `SClientTickEnd` (≥1.21.4), if still `false`, the player's known
     /// movement is zeroed (they stood still). Matches vanilla's `receivedMovementThisTick`.
@@ -175,7 +173,6 @@ impl JavaClient {
             brand: ArcSwap::from_pointee(pending.brand),
             player: ArcSwap::from_pointee(None),
             wait_for_keep_alive: AtomicBool::new(false),
-            hidden_entities: compatibility::HiddenEntities::default(),
             received_movement_this_tick: AtomicBool::new(false),
             keep_alive_id: AtomicCell::new(0),
             last_keep_alive_time: AtomicCell::new(Instant::now()),
@@ -459,7 +456,7 @@ impl JavaClient {
     }
 
     /// `PacketSentEvent` for clients the multiversion plugin admitted below
-    /// `CURRENT_MC_VERSION`: it gets the 26.3 id + payload and rewrites both.
+    /// `CURRENT_MC_VERSION`: it gets the native 26.2 id + payload and rewrites both.
     /// `None` when cancelled.
     ///
     /// For clients on `CURRENT_MC_VERSION` the event is fired as a read-only observation
@@ -471,15 +468,14 @@ impl JavaClient {
         if translated_by_plugin {
             return Some(packet_data);
         }
-        match compatibility::outgoing(
+        match registry_remap::outgoing(
             self.version.load(),
             self.connection_state.load(),
             packet_data,
-            &self.hidden_entities,
         ) {
             Ok(data) => data,
             Err(error) => {
-                warn!("26.2 packet translation failed: {error}");
+                warn!("NeoForge packet remap failed: {error}");
                 // A bad play packet is dropped; only handshake-critical phases end the connection.
                 if !matches!(self.connection_state.load(), ConnectionState::Play) {
                     self.close();
@@ -835,15 +831,15 @@ impl JavaClient {
         let translated_packet = if rewritten {
             observed_packet
         } else {
-            match compatibility::incoming(
+            match registry_remap::incoming(
                 self.version.load(),
                 self.connection_state.load(),
                 &observed_packet,
             ) {
                 Ok(packet) => packet,
                 Err(error) => {
-                    let id = compatibility::engine_play_id(self.version.load(), packet.id);
-                    if compatibility::carries_item(id) {
+                    let id = packet.id;
+                    if registry_remap::carries_item(id) {
                         // A client stack the engine cannot read is dropped, as vanilla ignores a bad creative slot.
                         warn!(
                             "Ignoring unreadable item packet {id} from {}: {error}",

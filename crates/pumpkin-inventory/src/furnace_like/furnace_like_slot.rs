@@ -9,9 +9,7 @@
 use std::sync::{Arc, atomic::AtomicU8};
 
 use crate::{inventory::Inventory, window_property::ExperienceContainer};
-use pumpkin_data::{
-    data_component_impl::CookingFuelImpl, item::Item, statistic::StatisticCategory,
-};
+use pumpkin_data::{item::Item, statistic::StatisticCategory};
 
 use tracing::debug;
 
@@ -75,8 +73,7 @@ impl Slot for FurnaceLikeSlot {
         match self.slot_type {
             FurnaceLikeSlotType::Top => true,
             FurnaceLikeSlotType::Bottom => {
-                stack.get_data_component::<CookingFuelImpl>().is_some()
-                    || stack.item.id == Item::BUCKET.id
+                pumpkin_data::fuels::is_fuel(stack.item.id) || stack.item.id == Item::BUCKET.id
             }
         }
     }

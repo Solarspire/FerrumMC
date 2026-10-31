@@ -1,8 +1,3 @@
 {
-  "values": [
-    {
-      "id": "#minecraft:mushrooms",
-      "required": false
-    }
-  ]
+  "values": []
 }
