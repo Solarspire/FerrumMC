@@ -290,6 +290,9 @@ impl Generator {
 }
 
 fn collect_json_files(dir: &Path, files: &mut Vec<std::path::PathBuf>) {
+    if !dir.is_dir() {
+        return;
+    }
     for entry in fs::read_dir(dir).unwrap().flatten() {
         let path = entry.path();
         if path.is_dir() {

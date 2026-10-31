@@ -488,32 +488,6 @@ impl DataComponentImpl for UseRemainderImpl {
     default_impl!(UseRemainder);
 }
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct VillagerFoodImpl {
-    pub nutrition: i32,
-}
-impl VillagerFoodImpl {
-    pub fn read_data(data: &NbtTag) -> Option<Self> {
-        let nutrition = match data {
-            NbtTag::Int(n) => *n,
-            NbtTag::Compound(c) => c.get_int("nutrition")?,
-            _ => return None,
-        };
-        Some(Self { nutrition })
-    }
-}
-impl DataComponentImpl for VillagerFoodImpl {
-    fn write_data(&self) -> NbtTag {
-        let mut compound = NbtCompound::new();
-        compound.put_int("nutrition", self.nutrition);
-        NbtTag::Compound(compound)
-    }
-    fn get_hash(&self) -> i32 {
-        get_i32_hash(self.nutrition) as i32
-    }
-    default_impl!(VillagerFood);
-}
-
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct UseCooldownImpl {
     pub seconds: f32,

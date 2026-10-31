@@ -38,9 +38,8 @@ mod cat_variant;
 mod chat_type;
 mod chunk_status;
 mod chunk_view_lut;
-mod compatibility;
+mod composter_increase_chance;
 mod configured_feature;
-mod context_provider;
 mod damage_type;
 pub mod data_component;
 mod decorated_pot_pattern;
@@ -57,6 +56,7 @@ mod environment_attribute;
 mod flower_pot_transformations;
 mod fluid;
 mod frog_variant;
+mod fuels;
 mod game_event;
 mod game_rules;
 mod instrument;
@@ -81,6 +81,7 @@ mod potion_brewing;
 mod processor_list;
 mod recipes;
 mod registry;
+mod registry_ids;
 mod scoreboard_slot;
 mod screen;
 mod sdk;
@@ -137,7 +138,7 @@ pub fn main() {
     let mut build_functions: Vec<(BuilderFn, &str)> = vec![
         (advancement::build, "advancement.rs"),
         (packet::build, "packet.rs"),
-        (compatibility::build, "compatibility.rs"),
+        (registry_ids::build, "registry_ids.rs"),
         (screen::build, "screen.rs"),
         (particle::build, "particle.rs"),
         (sound::build, "sound.rs"),
@@ -171,10 +172,14 @@ pub fn main() {
         (structure_template::build, "structure_template.rs"),
         (test_instance::build, "test_instance.rs"),
         (painting_variant::build, "painting_variant.rs"),
-        (context_provider::build, "context_provider.rs"),
         (material_rule::build, "material_rule.rs"),
         (noise_settings::build, "noise_settings.rs"),
         (fluid::build, "fluid.rs"),
+        (
+            composter_increase_chance::build,
+            "composter_increase_chance.rs",
+        ),
+        (fuels::build, "fuels.rs"),
         (entity_status::build, "entity_status.rs"),
         (tag::build, "tag.rs"),
         (noise_router::build, "noise_router.rs"),

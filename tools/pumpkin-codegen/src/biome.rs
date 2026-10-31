@@ -49,7 +49,7 @@ pub struct Biome {
     /// Per-entity spawn cost budget entries, keyed by namespaced entity ID.
     #[serde(default)]
     spawn_costs: BTreeMap<String, SpawnCosts>,
-    /// Environment attributes; 26.3 stores natural mob spawns here.
+    /// Environment attributes.
     #[serde(default)]
     attributes: BTreeMap<String, Value>,
     /// Numeric registry ID assigned to this biome.

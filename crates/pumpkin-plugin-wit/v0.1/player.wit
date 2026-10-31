@@ -177,7 +177,6 @@ interface player {
         v-1-21-11,
         v-26-1,
         v-26-2,
-        v-26-3,
         unknown,
     }
 

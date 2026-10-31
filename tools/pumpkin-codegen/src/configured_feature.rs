@@ -12,7 +12,7 @@ use crate::placed_feature::{
 };
 
 fn load_configured_features() -> BTreeMap<String, Value> {
-    let dir = Path::new("../../assets/datapack/data/minecraft/worldgen/feature");
+    let dir = Path::new("../../assets/datapack/data/minecraft/worldgen/configured_feature");
     let mut map = BTreeMap::new();
     collect_configured_features(dir, "", &mut map);
     map
@@ -20,7 +20,7 @@ fn load_configured_features() -> BTreeMap<String, Value> {
 
 fn collect_configured_features(dir: &Path, prefix: &str, map: &mut BTreeMap<String, Value>) {
     let mut entries: Vec<_> = fs::read_dir(dir)
-        .expect("Missing worldgen/feature directory")
+        .expect("Missing worldgen/configured_feature directory")
         .flatten()
         .collect();
     entries.sort_by_key(|e| e.path());
@@ -38,6 +38,7 @@ fn collect_configured_features(dir: &Path, prefix: &str, map: &mut BTreeMap<Stri
                 fs::read_to_string(&path).expect("Failed to read configured_feature file");
             let val: Value =
                 serde_json::from_str(&content).expect("Failed to parse configured_feature JSON");
+            let val = serde_json::json!({"type":val["type"], "config":val["config"]});
             map.insert(key, val);
         }
     }
@@ -189,7 +190,6 @@ pub fn build() -> TokenStream {
                     forking::ForkingTrunkPlacer,
                     giant::GiantTrunkPlacer,
                     mega_jungle::MegaJungleTrunkPlacer,
-                    poplar::PoplarTrunkPlacer,
                     straight::StraightTrunkPlacer,
                     upwards_branching::UpwardsBranchingTrunkPlacer,
                 },
@@ -203,7 +203,6 @@ pub fn build() -> TokenStream {
                     jungle::JungleFoliagePlacer,
                     mega_pine::MegaPineFoliagePlacer,
                     pine::PineFoliagePlacer,
-                    poplar::PoplarFoliagePlacer,
                     random_spread::RandomSpreadFoliagePlacer,
                     spruce::SpruceFoliagePlacer,
                 },
@@ -1662,16 +1661,7 @@ fn value_to_trunk_placer(v: &Value) -> TokenStream {
                 })
             }
         }
-        "minecraft:poplar_trunk_placer" => {
-            let above = value_to_int_provider(&v["trunk_height_above_branches"]);
-            let branches = value_to_int_provider(&v["branch_amount"]);
-            quote! {
-                TrunkType::Poplar(PoplarTrunkPlacer {
-                    trunk_height_above_branches: #above,
-                    branch_amount: #branches,
-                })
-            }
-        }
+
         _ => quote! { TrunkType::Straight(StraightTrunkPlacer) },
     };
     quote! {
@@ -1753,16 +1743,7 @@ fn value_to_foliage_placer(v: &Value) -> TokenStream {
                 })
             }
         }
-        "minecraft:poplar_foliage_placer" => {
-            let height = value_to_int_provider(&v["height"]);
-            let side_hole_chance = v["side_hole_chance"].as_f64().unwrap_or(0.0) as f32;
-            quote! {
-                FoliageType::Poplar(PoplarFoliagePlacer {
-                    height: #height,
-                    side_hole_chance: #side_hole_chance,
-                })
-            }
-        }
+
         _ => {
             let h = v["height"].as_i64().unwrap_or(3) as i32;
             quote! { FoliageType::Blob(BlobFoliagePlacer { height: #h }) }

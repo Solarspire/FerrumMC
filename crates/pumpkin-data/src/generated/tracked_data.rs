@@ -6125,60 +6125,6 @@ pub mod creeper {
     pub const FROZEN_TICKS: TrackedData = DATA_TICKS_FROZEN;
     pub const SLEEPING_POS: TrackedData = SLEEPING_POS_ID;
 }
-pub mod cushion {
-    use super::*;
-    pub const DATA_AIR_SUPPLY_ID: TrackedData = TrackedData {
-        id: TrackedId(1u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_COLOR: TrackedData = TrackedData {
-        id: TrackedId(8u8),
-        r#type: MetaDataType::DYE_COLOR,
-    };
-    pub const DATA_CUSTOM_NAME: TrackedData = TrackedData {
-        id: TrackedId(2u8),
-        r#type: MetaDataType::OPTIONAL_COMPONENT,
-    };
-    pub const DATA_CUSTOM_NAME_VISIBLE: TrackedData = TrackedData {
-        id: TrackedId(3u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_NO_GRAVITY: TrackedData = TrackedData {
-        id: TrackedId(5u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_POSE: TrackedData = TrackedData {
-        id: TrackedId(6u8),
-        r#type: MetaDataType::POSE,
-    };
-    pub const DATA_SHARED_FLAGS_ID: TrackedData = TrackedData {
-        id: TrackedId(0u8),
-        r#type: MetaDataType::BYTE,
-    };
-    pub const DATA_SILENT: TrackedData = TrackedData {
-        id: TrackedId(4u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_TICKS_FROZEN: TrackedData = TrackedData {
-        id: TrackedId(7u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const AIR_SUPPLY_ID: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const DATA_AIR_SUPPLY: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const AIR_SUPPLY: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const AIR: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const COLOR: TrackedData = DATA_COLOR;
-    pub const CUSTOM_NAME: TrackedData = DATA_CUSTOM_NAME;
-    pub const CUSTOM_NAME_VISIBLE: TrackedData = DATA_CUSTOM_NAME_VISIBLE;
-    pub const NO_GRAVITY: TrackedData = DATA_NO_GRAVITY;
-    pub const POSE: TrackedData = DATA_POSE;
-    pub const SHARED_FLAGS_ID: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const DATA_SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const SILENT: TrackedData = DATA_SILENT;
-    pub const TICKS_FROZEN: TrackedData = DATA_TICKS_FROZEN;
-    pub const FROZEN_TICKS: TrackedData = DATA_TICKS_FROZEN;
-}
 pub mod dark_oak_boat {
     use super::*;
     pub const DATA_AIR_SUPPLY_ID: TrackedData = TrackedData {
@@ -7242,6 +7188,121 @@ pub mod ender_dragon {
     pub const DATA_SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
     pub const SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
     pub const SILENT: TrackedData = DATA_SILENT;
+    pub const STINGER_COUNT_ID: TrackedData = DATA_STINGER_COUNT_ID;
+    pub const DATA_STINGER_COUNT: TrackedData = DATA_STINGER_COUNT_ID;
+    pub const STINGER_COUNT: TrackedData = DATA_STINGER_COUNT_ID;
+    pub const TICKS_FROZEN: TrackedData = DATA_TICKS_FROZEN;
+    pub const FROZEN_TICKS: TrackedData = DATA_TICKS_FROZEN;
+    pub const SLEEPING_POS: TrackedData = SLEEPING_POS_ID;
+}
+pub mod ender_man {
+    use super::*;
+    pub const DATA_AIR_SUPPLY_ID: TrackedData = TrackedData {
+        id: TrackedId(1u8),
+        r#type: MetaDataType::INT,
+    };
+    pub const DATA_ARROW_COUNT_ID: TrackedData = TrackedData {
+        id: TrackedId(12u8),
+        r#type: MetaDataType::INT,
+    };
+    pub const DATA_CARRY_STATE: TrackedData = TrackedData {
+        id: TrackedId(16u8),
+        r#type: MetaDataType::OPTIONAL_BLOCK_STATE,
+    };
+    pub const DATA_CREEPY: TrackedData = TrackedData {
+        id: TrackedId(17u8),
+        r#type: MetaDataType::BOOLEAN,
+    };
+    pub const DATA_CUSTOM_NAME: TrackedData = TrackedData {
+        id: TrackedId(2u8),
+        r#type: MetaDataType::OPTIONAL_COMPONENT,
+    };
+    pub const DATA_CUSTOM_NAME_VISIBLE: TrackedData = TrackedData {
+        id: TrackedId(3u8),
+        r#type: MetaDataType::BOOLEAN,
+    };
+    pub const DATA_EFFECT_AMBIENCE_ID: TrackedData = TrackedData {
+        id: TrackedId(11u8),
+        r#type: MetaDataType::BOOLEAN,
+    };
+    pub const DATA_EFFECT_PARTICLES: TrackedData = TrackedData {
+        id: TrackedId(10u8),
+        r#type: MetaDataType::PARTICLES,
+    };
+    pub const DATA_HEALTH_ID: TrackedData = TrackedData {
+        id: TrackedId(9u8),
+        r#type: MetaDataType::FLOAT,
+    };
+    pub const DATA_LIVING_ENTITY_FLAGS: TrackedData = TrackedData {
+        id: TrackedId(8u8),
+        r#type: MetaDataType::BYTE,
+    };
+    pub const DATA_MOB_FLAGS_ID: TrackedData = TrackedData {
+        id: TrackedId(15u8),
+        r#type: MetaDataType::BYTE,
+    };
+    pub const DATA_NO_GRAVITY: TrackedData = TrackedData {
+        id: TrackedId(5u8),
+        r#type: MetaDataType::BOOLEAN,
+    };
+    pub const DATA_POSE: TrackedData = TrackedData {
+        id: TrackedId(6u8),
+        r#type: MetaDataType::POSE,
+    };
+    pub const DATA_SHARED_FLAGS_ID: TrackedData = TrackedData {
+        id: TrackedId(0u8),
+        r#type: MetaDataType::BYTE,
+    };
+    pub const DATA_SILENT: TrackedData = TrackedData {
+        id: TrackedId(4u8),
+        r#type: MetaDataType::BOOLEAN,
+    };
+    pub const DATA_STARED_AT: TrackedData = TrackedData {
+        id: TrackedId(18u8),
+        r#type: MetaDataType::BOOLEAN,
+    };
+    pub const DATA_STINGER_COUNT_ID: TrackedData = TrackedData {
+        id: TrackedId(13u8),
+        r#type: MetaDataType::INT,
+    };
+    pub const DATA_TICKS_FROZEN: TrackedData = TrackedData {
+        id: TrackedId(7u8),
+        r#type: MetaDataType::INT,
+    };
+    pub const SLEEPING_POS_ID: TrackedData = TrackedData {
+        id: TrackedId(14u8),
+        r#type: MetaDataType::OPTIONAL_BLOCK_POS,
+    };
+    pub const AIR_SUPPLY_ID: TrackedData = DATA_AIR_SUPPLY_ID;
+    pub const DATA_AIR_SUPPLY: TrackedData = DATA_AIR_SUPPLY_ID;
+    pub const AIR_SUPPLY: TrackedData = DATA_AIR_SUPPLY_ID;
+    pub const AIR: TrackedData = DATA_AIR_SUPPLY_ID;
+    pub const ARROW_COUNT_ID: TrackedData = DATA_ARROW_COUNT_ID;
+    pub const DATA_ARROW_COUNT: TrackedData = DATA_ARROW_COUNT_ID;
+    pub const ARROW_COUNT: TrackedData = DATA_ARROW_COUNT_ID;
+    pub const CARRY_STATE: TrackedData = DATA_CARRY_STATE;
+    pub const CREEPY: TrackedData = DATA_CREEPY;
+    pub const CUSTOM_NAME: TrackedData = DATA_CUSTOM_NAME;
+    pub const CUSTOM_NAME_VISIBLE: TrackedData = DATA_CUSTOM_NAME_VISIBLE;
+    pub const EFFECT_AMBIENCE_ID: TrackedData = DATA_EFFECT_AMBIENCE_ID;
+    pub const DATA_EFFECT_AMBIENCE: TrackedData = DATA_EFFECT_AMBIENCE_ID;
+    pub const EFFECT_AMBIENCE: TrackedData = DATA_EFFECT_AMBIENCE_ID;
+    pub const EFFECT_PARTICLES: TrackedData = DATA_EFFECT_PARTICLES;
+    pub const HEALTH_ID: TrackedData = DATA_HEALTH_ID;
+    pub const DATA_HEALTH: TrackedData = DATA_HEALTH_ID;
+    pub const HEALTH: TrackedData = DATA_HEALTH_ID;
+    pub const LIVING_ENTITY_FLAGS: TrackedData = DATA_LIVING_ENTITY_FLAGS;
+    pub const LIVING_FLAGS: TrackedData = DATA_LIVING_ENTITY_FLAGS;
+    pub const MOB_FLAGS_ID: TrackedData = DATA_MOB_FLAGS_ID;
+    pub const DATA_MOB_FLAGS: TrackedData = DATA_MOB_FLAGS_ID;
+    pub const MOB_FLAGS: TrackedData = DATA_MOB_FLAGS_ID;
+    pub const NO_GRAVITY: TrackedData = DATA_NO_GRAVITY;
+    pub const POSE: TrackedData = DATA_POSE;
+    pub const SHARED_FLAGS_ID: TrackedData = DATA_SHARED_FLAGS_ID;
+    pub const DATA_SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
+    pub const SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
+    pub const SILENT: TrackedData = DATA_SILENT;
+    pub const STARED_AT: TrackedData = DATA_STARED_AT;
     pub const STINGER_COUNT_ID: TrackedData = DATA_STINGER_COUNT_ID;
     pub const DATA_STINGER_COUNT: TrackedData = DATA_STINGER_COUNT_ID;
     pub const STINGER_COUNT: TrackedData = DATA_STINGER_COUNT_ID;
@@ -14849,170 +14910,6 @@ pub mod polar_bear {
     pub const TICKS_FROZEN: TrackedData = DATA_TICKS_FROZEN;
     pub const FROZEN_TICKS: TrackedData = DATA_TICKS_FROZEN;
     pub const SLEEPING_POS: TrackedData = SLEEPING_POS_ID;
-}
-pub mod poplar_boat {
-    use super::*;
-    pub const DATA_AIR_SUPPLY_ID: TrackedData = TrackedData {
-        id: TrackedId(1u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_CUSTOM_NAME: TrackedData = TrackedData {
-        id: TrackedId(2u8),
-        r#type: MetaDataType::OPTIONAL_COMPONENT,
-    };
-    pub const DATA_CUSTOM_NAME_VISIBLE: TrackedData = TrackedData {
-        id: TrackedId(3u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_ID_BUBBLE_TIME: TrackedData = TrackedData {
-        id: TrackedId(13u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_ID_DAMAGE: TrackedData = TrackedData {
-        id: TrackedId(10u8),
-        r#type: MetaDataType::FLOAT,
-    };
-    pub const DATA_ID_HURT: TrackedData = TrackedData {
-        id: TrackedId(8u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_ID_HURTDIR: TrackedData = TrackedData {
-        id: TrackedId(9u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_ID_PADDLE_LEFT: TrackedData = TrackedData {
-        id: TrackedId(11u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_ID_PADDLE_RIGHT: TrackedData = TrackedData {
-        id: TrackedId(12u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_NO_GRAVITY: TrackedData = TrackedData {
-        id: TrackedId(5u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_POSE: TrackedData = TrackedData {
-        id: TrackedId(6u8),
-        r#type: MetaDataType::POSE,
-    };
-    pub const DATA_SHARED_FLAGS_ID: TrackedData = TrackedData {
-        id: TrackedId(0u8),
-        r#type: MetaDataType::BYTE,
-    };
-    pub const DATA_SILENT: TrackedData = TrackedData {
-        id: TrackedId(4u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_TICKS_FROZEN: TrackedData = TrackedData {
-        id: TrackedId(7u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const AIR_SUPPLY_ID: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const DATA_AIR_SUPPLY: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const AIR_SUPPLY: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const AIR: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const CUSTOM_NAME: TrackedData = DATA_CUSTOM_NAME;
-    pub const CUSTOM_NAME_VISIBLE: TrackedData = DATA_CUSTOM_NAME_VISIBLE;
-    pub const ID_BUBBLE_TIME: TrackedData = DATA_ID_BUBBLE_TIME;
-    pub const ID_DAMAGE: TrackedData = DATA_ID_DAMAGE;
-    pub const DAMAGE_WOBBLE_STRENGTH: TrackedData = DATA_ID_DAMAGE;
-    pub const ID_HURT: TrackedData = DATA_ID_HURT;
-    pub const DAMAGE_WOBBLE_TICKS: TrackedData = DATA_ID_HURT;
-    pub const ID_HURTDIR: TrackedData = DATA_ID_HURTDIR;
-    pub const DAMAGE_WOBBLE_SIDE: TrackedData = DATA_ID_HURTDIR;
-    pub const ID_PADDLE_LEFT: TrackedData = DATA_ID_PADDLE_LEFT;
-    pub const ID_PADDLE_RIGHT: TrackedData = DATA_ID_PADDLE_RIGHT;
-    pub const NO_GRAVITY: TrackedData = DATA_NO_GRAVITY;
-    pub const POSE: TrackedData = DATA_POSE;
-    pub const SHARED_FLAGS_ID: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const DATA_SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const SILENT: TrackedData = DATA_SILENT;
-    pub const TICKS_FROZEN: TrackedData = DATA_TICKS_FROZEN;
-    pub const FROZEN_TICKS: TrackedData = DATA_TICKS_FROZEN;
-}
-pub mod poplar_chest_boat {
-    use super::*;
-    pub const DATA_AIR_SUPPLY_ID: TrackedData = TrackedData {
-        id: TrackedId(1u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_CUSTOM_NAME: TrackedData = TrackedData {
-        id: TrackedId(2u8),
-        r#type: MetaDataType::OPTIONAL_COMPONENT,
-    };
-    pub const DATA_CUSTOM_NAME_VISIBLE: TrackedData = TrackedData {
-        id: TrackedId(3u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_ID_BUBBLE_TIME: TrackedData = TrackedData {
-        id: TrackedId(13u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_ID_DAMAGE: TrackedData = TrackedData {
-        id: TrackedId(10u8),
-        r#type: MetaDataType::FLOAT,
-    };
-    pub const DATA_ID_HURT: TrackedData = TrackedData {
-        id: TrackedId(8u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_ID_HURTDIR: TrackedData = TrackedData {
-        id: TrackedId(9u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const DATA_ID_PADDLE_LEFT: TrackedData = TrackedData {
-        id: TrackedId(11u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_ID_PADDLE_RIGHT: TrackedData = TrackedData {
-        id: TrackedId(12u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_NO_GRAVITY: TrackedData = TrackedData {
-        id: TrackedId(5u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_POSE: TrackedData = TrackedData {
-        id: TrackedId(6u8),
-        r#type: MetaDataType::POSE,
-    };
-    pub const DATA_SHARED_FLAGS_ID: TrackedData = TrackedData {
-        id: TrackedId(0u8),
-        r#type: MetaDataType::BYTE,
-    };
-    pub const DATA_SILENT: TrackedData = TrackedData {
-        id: TrackedId(4u8),
-        r#type: MetaDataType::BOOLEAN,
-    };
-    pub const DATA_TICKS_FROZEN: TrackedData = TrackedData {
-        id: TrackedId(7u8),
-        r#type: MetaDataType::INT,
-    };
-    pub const AIR_SUPPLY_ID: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const DATA_AIR_SUPPLY: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const AIR_SUPPLY: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const AIR: TrackedData = DATA_AIR_SUPPLY_ID;
-    pub const CUSTOM_NAME: TrackedData = DATA_CUSTOM_NAME;
-    pub const CUSTOM_NAME_VISIBLE: TrackedData = DATA_CUSTOM_NAME_VISIBLE;
-    pub const ID_BUBBLE_TIME: TrackedData = DATA_ID_BUBBLE_TIME;
-    pub const ID_DAMAGE: TrackedData = DATA_ID_DAMAGE;
-    pub const DAMAGE_WOBBLE_STRENGTH: TrackedData = DATA_ID_DAMAGE;
-    pub const ID_HURT: TrackedData = DATA_ID_HURT;
-    pub const DAMAGE_WOBBLE_TICKS: TrackedData = DATA_ID_HURT;
-    pub const ID_HURTDIR: TrackedData = DATA_ID_HURTDIR;
-    pub const DAMAGE_WOBBLE_SIDE: TrackedData = DATA_ID_HURTDIR;
-    pub const ID_PADDLE_LEFT: TrackedData = DATA_ID_PADDLE_LEFT;
-    pub const ID_PADDLE_RIGHT: TrackedData = DATA_ID_PADDLE_RIGHT;
-    pub const NO_GRAVITY: TrackedData = DATA_NO_GRAVITY;
-    pub const POSE: TrackedData = DATA_POSE;
-    pub const SHARED_FLAGS_ID: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const DATA_SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const SHARED_FLAGS: TrackedData = DATA_SHARED_FLAGS_ID;
-    pub const SILENT: TrackedData = DATA_SILENT;
-    pub const TICKS_FROZEN: TrackedData = DATA_TICKS_FROZEN;
-    pub const FROZEN_TICKS: TrackedData = DATA_TICKS_FROZEN;
 }
 pub mod primed_tnt {
     use super::*;

@@ -196,7 +196,7 @@ impl Dimension {
         bed_rule: BedRule {
             can_sleep: BedRuleOption::Never,
             can_set_spawn: BedRuleOption::Never,
-            explodes: false,
+            explodes: true,
         },
         timelines: Some("#minecraft:in_end"),
     };
@@ -235,10 +235,16 @@ impl Dimension {
         bed_rule: BedRule {
             can_sleep: BedRuleOption::Never,
             can_set_spawn: BedRuleOption::Never,
-            explodes: false,
+            explodes: true,
         },
         timelines: Some("#minecraft:in_nether"),
     };
+    pub const ALL: &[Self] = &[
+        Self::OVERWORLD,
+        Self::OVERWORLD_CAVES,
+        Self::THE_END,
+        Self::THE_NETHER,
+    ];
     pub fn from_name(name: &str) -> Option<&'static Self> {
         match name {
             "minecraft:overworld" => Some(&Self::OVERWORLD),

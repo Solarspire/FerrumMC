@@ -14,10 +14,10 @@ impl MetaDataType {
     pub const CHICKEN_SOUND_VARIANT: MetaDataType = MetaDataType { id: 31i32 };
     pub const CHICKEN_VARIANT: MetaDataType = MetaDataType { id: 30i32 };
     pub const COMPONENT: MetaDataType = MetaDataType { id: 5i32 };
+    pub const COPPER_GOLEM_STATE: MetaDataType = MetaDataType { id: 37i32 };
     pub const COW_SOUND_VARIANT: MetaDataType = MetaDataType { id: 24i32 };
     pub const COW_VARIANT: MetaDataType = MetaDataType { id: 23i32 };
     pub const DIRECTION: MetaDataType = MetaDataType { id: 12i32 };
-    pub const DYE_COLOR: MetaDataType = MetaDataType { id: 43i32 };
     pub const FLOAT: MetaDataType = MetaDataType { id: 3i32 };
     pub const FROG_VARIANT: MetaDataType = MetaDataType { id: 27i32 };
     pub const HUMANOID_ARM: MetaDataType = MetaDataType { id: 42i32 };
@@ -57,7 +57,6 @@ impl MetaDataType {
     pub const QUATERNION_F: MetaDataType = Self::QUATERNION;
     pub const ROTATION: MetaDataType = Self::ROTATIONS;
     pub const PARTICLE_LIST: MetaDataType = Self::PARTICLES;
-    pub const COPPER_GOLEM_STATE: MetaDataType = Self::WEATHERING_COPPER_STATE;
     pub const PROFILE: MetaDataType = Self::RESOLVABLE_PROFILE;
     pub const ARM: MetaDataType = Self::HUMANOID_ARM;
     #[must_use]

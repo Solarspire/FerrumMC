@@ -35,8 +35,8 @@ pub mod packet;
 
 #[cfg(feature = "packet")]
 #[rustfmt::skip]
-#[path = "generated/compatibility.rs"]
-pub mod compatibility;
+#[path = "generated/registry_ids.rs"]
+pub mod registry_ids;
 
 #[cfg(feature = "jukebox_song")]
 #[rustfmt::skip]
@@ -323,10 +323,6 @@ pub mod test_instance;
 #[path = "generated/painting_variant.rs"]
 pub mod painting_variant;
 
-#[cfg(feature = "context_provider")]
-#[rustfmt::skip]
-#[path = "generated/context_provider.rs"]
-pub mod context_provider;
 
 #[cfg(feature = "instrument")]
 #[rustfmt::skip]
@@ -535,3 +531,11 @@ pub mod trial_spawner;
 
 #[cfg(feature = "block")]
 pub mod runtime;
+
+#[rustfmt::skip]
+#[path = "generated/fuels.rs"]
+pub mod fuels;
+
+#[rustfmt::skip]
+#[path = "generated/composter_increase_chance.rs"]
+pub mod composter_increase_chance;

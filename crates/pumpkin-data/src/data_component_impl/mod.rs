@@ -608,6 +608,7 @@ pub fn read_data(id: DataComponent, data: &NbtTag) -> Option<Box<dyn DataCompone
         DataComponent::UseCooldown => Some(UseCooldownImpl::read_data(data)?.to_dyn()),
         DataComponent::RepairCost => Some(RepairCostImpl::read_data(data)?.to_dyn()),
         DataComponent::Repairable => Some(RepairableImpl::read_data(data)?.to_dyn()),
+        DataComponent::MapColor => Some(MapColorImpl::read_data(data)?.to_dyn()),
         DataComponent::MapId => Some(MapIdImpl::read_data(data)?.to_dyn()),
         DataComponent::MapPostProcessing => Some(MapPostProcessingImpl::read_data(data)?.to_dyn()),
         DataComponent::ChargedProjectiles => {
@@ -681,7 +682,7 @@ pub fn read_data(id: DataComponent, data: &NbtTag) -> Option<Box<dyn DataCompone
         DataComponent::Trim => Some(TrimImpl::read_data(data)?.to_dyn()),
         DataComponent::CanPlaceOn => Some(CanPlaceOnImpl::read_data(data)?.to_dyn()),
         DataComponent::CanBreak => Some(CanBreakImpl::read_data(data)?.to_dyn()),
-        DataComponent::AttackAnimation => Some(SwingAnimationImpl::read_data(data)?.to_dyn()),
+        DataComponent::SwingAnimation => Some(SwingAnimationImpl::read_data(data)?.to_dyn()),
         DataComponent::Rarity => Some(RarityImpl::read_data(data)?.to_dyn()),
         DataComponent::BannerPatterns => Some(BannerPatternsImpl::read_data(data)?.to_dyn()),
         DataComponent::UseEffects => Some(UseEffectsImpl::read_data(data)?.to_dyn()),
@@ -718,20 +719,6 @@ pub fn read_data(id: DataComponent, data: &NbtTag) -> Option<Box<dyn DataCompone
         DataComponent::AttributeModifiers => {
             Some(AttributeModifiersImpl::read_data(data)?.to_dyn())
         }
-        DataComponent::BrewingFuel => Some(BrewingFuelImpl::read_data(data)?.to_dyn()),
-        DataComponent::CookingFuel => Some(CookingFuelImpl::read_data(data)?.to_dyn()),
-        DataComponent::Compostable => Some(CompostableImpl::read_data(data)?.to_dyn()),
-        DataComponent::Waxed => Some(WaxedImpl::read_data(data)?.to_dyn()),
-        DataComponent::InteractAnimation => Some(InteractAnimationImpl::read_data(data)?.to_dyn()),
-        DataComponent::BlockTransformer => Some(BlockTransformerImpl::read_data(data)?.to_dyn()),
-        DataComponent::VillagerFood => Some(VillagerFoodImpl::read_data(data)?.to_dyn()),
-        DataComponent::MobVisibility => Some(MobVisibilityImpl::read_data(data)?.to_dyn()),
-        DataComponent::ProvidesPotteryPattern => {
-            Some(ProvidesPotteryPatternImpl::read_data(data)?.to_dyn())
-        }
-        DataComponent::SignTextFront => Some(SignTextFrontImpl::read_data(data)?.to_dyn()),
-        DataComponent::SignTextBack => Some(SignTextBackImpl::read_data(data)?.to_dyn()),
-        DataComponent::CushionColor => Some(CushionColorImpl::read_data(data)?.to_dyn()),
     }
 }
 
@@ -912,24 +899,6 @@ mod tests {
         assert_round_trip(
             IntangibleProjectileImpl,
             IntangibleProjectileImpl::read_data,
-        );
-        assert_round_trip(BrewingFuelImpl, BrewingFuelImpl::read_data);
-        assert_round_trip(WaxedImpl, WaxedImpl::read_data);
-        assert_round_trip(
-            CookingFuelImpl {
-                burn_time: IntProvider::Id(Cow::Borrowed("minecraft:cooking/time_coal")),
-                speed_multiplier: FloatProvider::Id(Cow::Borrowed(
-                    "minecraft:cooking/speed_default",
-                )),
-            },
-            CookingFuelImpl::read_data,
-        );
-        assert_round_trip(
-            CookingFuelImpl {
-                burn_time: IntProvider::Inline(1600),
-                speed_multiplier: FloatProvider::Inline(1.5),
-            },
-            CookingFuelImpl::read_data,
         );
     }
 

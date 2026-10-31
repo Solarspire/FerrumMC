@@ -65,15 +65,6 @@ pub fn serialize_java_packet(
                 .unwrap();
             Some(buf.into())
         }
-        ClientboundPacket::ConfigCConfigPostEffects(data) => {
-            let p = pumpkin_protocol::java::client::config::CConfigPostEffects {
-                effects: &data.effects,
-            };
-            let mut buf = Vec::new();
-            pumpkin_core::net::java::JavaClient::write_packet_for_version(&p, version, &mut buf)
-                .unwrap();
-            Some(buf.into())
-        }
         ClientboundPacket::ConfigCTransfer(data) => {
             let var_int_port = VarInt(data.port);
             let p = pumpkin_protocol::java::client::config::CTransfer {
@@ -646,15 +637,6 @@ pub fn serialize_java_packet(
                 ),
                 yaw: data.yaw.try_into().unwrap(),
                 pitch: data.pitch.try_into().unwrap(),
-            };
-            let mut buf = Vec::new();
-            pumpkin_core::net::java::JavaClient::write_packet_for_version(&p, version, &mut buf)
-                .unwrap();
-            Some(buf.into())
-        }
-        ClientboundPacket::CPostEffects(data) => {
-            let p = pumpkin_protocol::java::client::play::CPostEffects {
-                effects: &data.effects,
             };
             let mut buf = Vec::new();
             pumpkin_core::net::java::JavaClient::write_packet_for_version(&p, version, &mut buf)
@@ -1788,16 +1770,6 @@ impl ToWitClientboundJava for pumpkin_protocol::java::client::config::CPluginMes
     }
 }
 
-impl ToWitClientboundJava for pumpkin_protocol::java::client::config::CConfigPostEffects<'_> {
-    fn to_wit(&self) -> ClientboundPacket {
-        ClientboundPacket::ConfigCConfigPostEffects(
-            crate::pumpkin::plugin::java_packets::ConfigCConfigPostEffects {
-                effects: self.effects.iter().map(|s| s.to_string()).collect(),
-            },
-        )
-    }
-}
-
 impl ToWitClientboundJava for pumpkin_protocol::java::client::config::CTransfer<'_> {
     fn to_wit(&self) -> ClientboundPacket {
         ClientboundPacket::ConfigCTransfer(crate::pumpkin::plugin::java_packets::ConfigCTransfer {
@@ -2321,14 +2293,6 @@ impl ToWitClientboundJava for pumpkin_protocol::java::client::play::CPlayerSpawn
     }
 }
 
-impl ToWitClientboundJava for pumpkin_protocol::java::client::play::CPostEffects<'_> {
-    fn to_wit(&self) -> ClientboundPacket {
-        ClientboundPacket::CPostEffects(crate::pumpkin::plugin::java_packets::CPostEffects {
-            effects: self.effects.iter().map(|s| s.to_string()).collect(),
-        })
-    }
-}
-
 impl ToWitClientboundJava for pumpkin_protocol::java::client::play::CProjectilePower {
     fn to_wit(&self) -> ClientboundPacket {
         ClientboundPacket::CProjectilePower(
@@ -2747,11 +2711,6 @@ pub fn clientbound_java_any_to_wit(any: &dyn Any) -> Option<ClientboundPacket> {
     if let Some(p) = any.downcast_ref::<pumpkin_protocol::java::client::config::CPluginMessage>() {
         return Some(p.to_wit());
     }
-    if let Some(p) =
-        any.downcast_ref::<pumpkin_protocol::java::client::config::CConfigPostEffects>()
-    {
-        return Some(p.to_wit());
-    }
     if let Some(p) = any.downcast_ref::<pumpkin_protocol::java::client::config::CTransfer>() {
         return Some(p.to_wit());
     }
@@ -2915,9 +2874,6 @@ pub fn clientbound_java_any_to_wit(any: &dyn Any) -> Option<ClientboundPacket> {
     if let Some(p) =
         any.downcast_ref::<pumpkin_protocol::java::client::play::CPlayerSpawnPosition>()
     {
-        return Some(p.to_wit());
-    }
-    if let Some(p) = any.downcast_ref::<pumpkin_protocol::java::client::play::CPostEffects>() {
         return Some(p.to_wit());
     }
     if let Some(p) = any.downcast_ref::<pumpkin_protocol::java::client::play::CProjectilePower>() {

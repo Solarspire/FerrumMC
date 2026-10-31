@@ -47,25 +47,10 @@ struct BrewingOutputPotionContents {
 
 /// Generates the `TokenStream` for `BREWING_RECIPES`, `POTION_RECIPES` and `ITEM_RECIPES`.
 pub fn build() -> TokenStream {
-    // 2. Load 26.3 data-driven brewing recipes from datapack
-    let brewing_dir = Path::new("../../assets/datapack/data/minecraft/recipe/brewing");
-    let mut entries: Vec<_> = fs::read_dir(brewing_dir)
-        .expect("Missing brewing recipe directory")
-        .flatten()
-        .filter(|e| e.path().extension().is_some_and(|ext| ext == "json"))
-        .collect();
-    entries.sort_by_key(|e| e.path());
-
+    let recipes: Vec<DataDrivenBrewingRecipe> =
+        serde_json::from_str(&fs::read_to_string("../../assets/brewing.json").unwrap()).unwrap();
     let mut brewing_tokens = Vec::new();
-    for entry in entries {
-        let content = fs::read_to_string(entry.path()).expect("Failed to read brewing recipe");
-        let recipe: DataDrivenBrewingRecipe = serde_json::from_str(&content).unwrap_or_else(|e| {
-            panic!(
-                "Failed to parse brewing recipe {}: {e}",
-                entry.path().display()
-            )
-        });
-
+    for recipe in recipes {
         let from_item = format_ident!(
             "{}",
             recipe

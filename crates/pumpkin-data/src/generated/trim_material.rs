@@ -76,17 +76,17 @@ impl TrimMaterial {
     #[must_use]
     pub const fn palette_id(&self) -> &'static str {
         match self {
-            Self::Amethyst => "minecraft:trim/amethyst",
-            Self::Copper => "minecraft:trim/copper",
-            Self::Diamond => "minecraft:trim/diamond",
-            Self::Emerald => "minecraft:trim/emerald",
-            Self::Gold => "minecraft:trim/gold",
-            Self::Iron => "minecraft:trim/iron",
-            Self::Lapis => "minecraft:trim/lapis",
-            Self::Netherite => "minecraft:trim/netherite",
-            Self::Quartz => "minecraft:trim/quartz",
-            Self::Redstone => "minecraft:trim/redstone",
-            Self::Resin => "minecraft:trim/resin",
+            Self::Amethyst => "amethyst",
+            Self::Copper => "copper",
+            Self::Diamond => "diamond",
+            Self::Emerald => "emerald",
+            Self::Gold => "gold",
+            Self::Iron => "iron",
+            Self::Lapis => "lapis",
+            Self::Netherite => "netherite",
+            Self::Quartz => "quartz",
+            Self::Redstone => "redstone",
+            Self::Resin => "resin",
         }
     }
     #[doc = "Returns the hex color code for this material."]

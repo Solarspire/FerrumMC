@@ -10,6 +10,7 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 struct TrimMaterialJson {
     description: TrimDescriptionJson,
+    #[serde(rename = "asset_name")]
     palette_id: String,
 }
 

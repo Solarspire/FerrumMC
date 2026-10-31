@@ -57,7 +57,6 @@ default = [
     "trial_spawner",
     "test_instance",
     "painting_variant",
-    "context_provider",
     "instrument",
     "wolf_variant",
     "cat_variant",
@@ -98,7 +97,6 @@ trim_pattern = []
 banner_pattern = []
 decorated_pot_pattern = []
 chat_type = []
-context_provider = []
 painting_variant = []
 test_instance = []
 trial_spawner = []

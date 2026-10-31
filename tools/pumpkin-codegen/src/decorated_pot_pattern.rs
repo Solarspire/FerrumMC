@@ -13,30 +13,10 @@ struct DecoratedPotPatternJson {
 }
 
 pub fn build() -> TokenStream {
-    let dir = Path::new("../../assets/datapack/data/minecraft/decorated_pot_pattern");
-
-    let mut patterns: BTreeMap<String, DecoratedPotPatternJson> = BTreeMap::new();
-
-    let mut entries = fs::read_dir(dir)
-        .expect("read decorated_pot_pattern dir")
-        .filter_map(Result::ok)
-        .collect::<Vec<_>>();
-    entries.sort_by_key(|e| e.file_name());
-
-    for entry in entries {
-        let path = entry.path();
-        if !path.extension().is_some_and(|ext| ext == "json") {
-            continue;
-        }
-
-        let stem = path.file_stem().unwrap().to_string_lossy().to_string();
-        let content = fs::read_to_string(&path).expect("read decorated_pot_pattern file");
-        let json: DecoratedPotPatternJson =
-            serde_json::from_str(&content).expect("parse decorated_pot_pattern JSON");
-
-        patterns.insert(stem, json);
-    }
-
+    let patterns: BTreeMap<String, DecoratedPotPatternJson> = serde_json::from_str(
+        &fs::read_to_string("../../assets/decorated_pot_patterns.json").unwrap(),
+    )
+    .unwrap();
     let mut enum_variants = Vec::new();
     let mut from_name_arms = Vec::new();
     let mut to_name_arms = Vec::new();

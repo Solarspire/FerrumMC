@@ -3,8 +3,6 @@
 pub enum EntityStatus {
     ArmadilloPeek = 64,
     ArmorstandWobble = 32,
-    BoatLaunch = 72,
-    BoatSink = 71,
     BodyBreak = 65,
     CancelShakeWetness = 56,
     ChestBreak = 50,

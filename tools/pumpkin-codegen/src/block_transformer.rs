@@ -233,24 +233,57 @@ pub fn build() -> TokenStream {
             .expect("Failed to parse blocks.json");
     let valid_blocks: HashSet<String> = blocks_assets.blocks.into_iter().map(|b| b.name).collect();
 
-    let dir = Path::new("../../assets/datapack/data/minecraft/block_transformer");
-    let mut files: Vec<(String, Vec<TransformerEntryJson>)> = Vec::new();
-
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir).expect("Failed to read block_transformer dir") {
-            let entry = entry.expect("DirEntry error");
-            let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("json") {
-                let stem = path.file_stem().unwrap().to_str().unwrap().to_string();
-                let content = fs::read_to_string(&path)
-                    .unwrap_or_else(|_| panic!("Failed to read {}", path.display()));
-                let entries: Vec<TransformerEntryJson> = serde_json::from_str(&content)
-                    .unwrap_or_else(|e| panic!("Failed to parse {}: {e}", path.display()));
-                files.push((stem, entries));
-            }
-        }
-    }
-
+    let entry = |file: &str,
+                 sound: &str,
+                 particle: Option<&str>,
+                 require_air: bool|
+     -> TransformerEntryJson {
+        let values: std::collections::BTreeMap<String, String> =
+            serde_json::from_str(&fs::read_to_string(format!("../../assets/{file}.json")).unwrap())
+                .unwrap();
+        let rules: Vec<_> = values.into_iter().map(|(source,target)| {
+            let predicate=serde_json::json!({"type":"minecraft:matching_blocks","blocks":source});
+            let predicate=if require_air {serde_json::json!({"type":"minecraft:all_of","predicates":[predicate,{"type":"minecraft:matching_blocks","blocks":"minecraft:air","offset":[0,1,0]}]})}else{predicate};
+            serde_json::json!({"if_true":predicate,"then":{"type":"minecraft:copy_properties","source":{"state":target}}})
+        }).collect();
+        serde_json::from_value(serde_json::json!({"block_state_provider":{"type":"minecraft:rule_based_state_provider","rules":rules},"sound":sound,"particle":particle,"disallowed_faces":if require_air {vec!["down"]}else{vec![]}})).unwrap()
+    };
+    let hoe_rules = serde_json::json!([
+        {"if_true":{"type":"minecraft:all_of","predicates":[{"type":"minecraft:matching_blocks","blocks":["minecraft:grass_block","minecraft:dirt_path","minecraft:dirt"]},{"type":"minecraft:matching_blocks","blocks":"minecraft:air","offset":[0,1,0]}]},"then":{"state":"minecraft:farmland"}},
+        {"if_true":{"type":"minecraft:all_of","predicates":[{"type":"minecraft:matching_blocks","blocks":"minecraft:coarse_dirt"},{"type":"minecraft:matching_blocks","blocks":"minecraft:air","offset":[0,1,0]}]},"then":{"state":"minecraft:dirt"}},
+        {"if_true":{"type":"minecraft:matching_blocks","blocks":"minecraft:rooted_dirt"},"then":{"state":"minecraft:dirt"}}
+    ]);
+    let hoe:TransformerEntryJson=serde_json::from_value(serde_json::json!({"block_state_provider":{"type":"minecraft:rule_based_state_provider","rules":hoe_rules},"sound":"minecraft:item.hoe.till","disallowed_faces":["down"]})).unwrap();
+    let mut files = vec![
+        (
+            "axe".to_owned(),
+            vec![
+                entry("strippables", "minecraft:item.axe.strip", None, false),
+                entry(
+                    "scrapables",
+                    "minecraft:item.axe.scrape",
+                    Some("scrape"),
+                    false,
+                ),
+                entry(
+                    "unwaxables",
+                    "minecraft:item.axe.wax_off",
+                    Some("wax_off"),
+                    false,
+                ),
+            ],
+        ),
+        (
+            "shovel".to_owned(),
+            vec![entry(
+                "flattenables",
+                "minecraft:item.shovel.flatten",
+                None,
+                true,
+            )],
+        ),
+        ("hoe".to_owned(), vec![hoe]),
+    ];
     files.sort_by(|a, b| a.0.cmp(&b.0));
 
     let mut generated_transformers = Vec::new();

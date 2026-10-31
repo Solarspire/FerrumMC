@@ -76,6 +76,7 @@ pub fn build() -> TokenStream {
 
     let mut variants = TokenStream::new();
     let mut name_to_type = TokenStream::new();
+    let mut all = Vec::new();
 
     // Iterate with index to generate a unique numeric ID
     for (id, (name, dim)) in dimensions.into_iter().enumerate() {
@@ -328,6 +329,7 @@ pub fn build() -> TokenStream {
             };
         });
 
+        all.push(quote! {Self::#format_name});
         name_to_type.extend(quote! {
             #minecraft_name => Some(&Self::#format_name),
         });
@@ -415,6 +417,7 @@ pub fn build() -> TokenStream {
 
         impl Dimension {
             #variants
+            pub const ALL: &[Self] = &[#(#all),*];
 
             pub fn from_name(name: &str) -> Option<&'static Self> {
                 match name {

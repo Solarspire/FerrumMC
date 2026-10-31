@@ -5,8 +5,6 @@
     "minecraft:cyan_candle",
     "minecraft:cyan_carpet",
     "minecraft:cyan_concrete",
-    "minecraft:cyan_concrete_slab",
-    "minecraft:cyan_concrete_stairs",
     "minecraft:cyan_concrete_powder",
     "minecraft:cyan_glazed_terracotta",
     "minecraft:cyan_shulker_box",
@@ -14,8 +12,6 @@
     "minecraft:cyan_stained_glass_pane",
     "minecraft:cyan_terracotta",
     "minecraft:cyan_wool",
-    "minecraft:cyan_wool_slab",
-    "minecraft:cyan_wool_stairs",
     "minecraft:cyan_wall_banner"
   ]
 }

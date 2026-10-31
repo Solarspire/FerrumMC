@@ -26,7 +26,7 @@ fn load_placed_features() -> BTreeMap<String, Value> {
     map
 }
 
-/// Reads placed_feature files from 26.3 datapack and emits the complete `PlacedFeature` enum `TokenStream`.
+/// Reads placed_feature files from 26.2 datapack and emits the complete `PlacedFeature` enum `TokenStream`.
 pub fn build_enum() -> TokenStream {
     let json = load_placed_features();
 
@@ -83,7 +83,7 @@ pub fn build_enum() -> TokenStream {
     }
 }
 
-/// Reads placed_feature files from 26.3 datapack and emits the complete `build_placed_features()` function `TokenStream`.
+/// Reads placed_feature files from 26.2 datapack and emits the complete `build_placed_features()` function `TokenStream`.
 pub fn build() -> TokenStream {
     let json = load_placed_features();
 

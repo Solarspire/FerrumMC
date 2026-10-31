@@ -2241,7 +2241,11 @@ fn parse_metric(s: &str) -> DistanceMetric {
     }
 }
 
-fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> DensityFunctionRepr {
+fn parse_vanilla_df(
+    cell_size: (i32, i32),
+    base_df_dir: &std::path::Path,
+    val: &serde_json::Value,
+) -> DensityFunctionRepr {
     match val {
         serde_json::Value::Number(n) => DensityFunctionRepr::Constant {
             value: HashableF32(n.as_f64().unwrap_or(0.0) as f32),
@@ -2264,7 +2268,7 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                 }
             } else {
                 let loaded = load_df_json(base_df_dir, s);
-                parse_vanilla_df(base_df_dir, &loaded)
+                parse_vanilla_df(cell_size, base_df_dir, &loaded)
             }
         }
         serde_json::Value::Object(obj) => {
@@ -2361,12 +2365,21 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                     }
                 }
                 "lerp" => {
-                    let alpha =
-                        parse_vanilla_df(base_df_dir, obj.get("alpha").expect("Missing alpha"));
-                    let first =
-                        parse_vanilla_df(base_df_dir, obj.get("first").expect("Missing first"));
-                    let second =
-                        parse_vanilla_df(base_df_dir, obj.get("second").expect("Missing second"));
+                    let alpha = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("alpha").expect("Missing alpha"),
+                    );
+                    let first = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("first").expect("Missing first"),
+                    );
+                    let second = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("second").expect("Missing second"),
+                    );
                     DensityFunctionRepr::Lerp {
                         alpha: Box::new(alpha),
                         first: Box::new(first),
@@ -2385,9 +2398,9 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                         .get("input")
                         .or_else(|| obj.get("argument"))
                         .expect("Missing input");
-                    let input = parse_vanilla_df(base_df_dir, input_node);
+                    let input = parse_vanilla_df(cell_size, base_df_dir, input_node);
                     let multiple = if let Some(m) = obj.get("multiple") {
-                        parse_vanilla_df(base_df_dir, m)
+                        parse_vanilla_df(cell_size, base_df_dir, m)
                     } else {
                         DensityFunctionRepr::Constant {
                             value: HashableF32((1.0) as f32),
@@ -2406,8 +2419,11 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                         .get("coordinate")
                         .and_then(|v| v.as_i64())
                         .expect("Missing coordinate") as i32;
-                    let input =
-                        parse_vanilla_df(base_df_dir, obj.get("input").expect("Missing input"));
+                    let input = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("input").expect("Missing input"),
+                    );
                     DensityFunctionRepr::Slice {
                         axis,
                         coordinate,
@@ -2450,8 +2466,8 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                         .or_else(|| obj.get("argument2"))
                         .or_else(|| obj.get("exponent"))
                         .expect("Missing right/argument2/exponent");
-                    let arg1 = parse_vanilla_df(base_df_dir, arg1_node);
-                    let arg2 = parse_vanilla_df(base_df_dir, arg2_node);
+                    let arg1 = parse_vanilla_df(cell_size, base_df_dir, arg1_node);
+                    let arg2 = parse_vanilla_df(cell_size, base_df_dir, arg2_node);
                     let min_value = obj
                         .get("min_value")
                         .and_then(|v| v.as_f64())
@@ -2532,7 +2548,7 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                         .get("argument")
                         .or_else(|| obj.get("input"))
                         .expect("Missing argument/input");
-                    let input = parse_vanilla_df(base_df_dir, input_node);
+                    let input = parse_vanilla_df(cell_size, base_df_dir, input_node);
                     let min_value = obj
                         .get("min_value")
                         .and_then(|v| v.as_f64())
@@ -2555,7 +2571,7 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                         .get("input")
                         .or_else(|| obj.get("argument"))
                         .expect("Missing input");
-                    let input = parse_vanilla_df(base_df_dir, input_node);
+                    let input = parse_vanilla_df(cell_size, base_df_dir, input_node);
                     let min_val = obj
                         .get("min")
                         .or_else(|| obj.get("min_value"))
@@ -2575,8 +2591,11 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                     }
                 }
                 "range_choice" => {
-                    let input =
-                        parse_vanilla_df(base_df_dir, obj.get("input").expect("Missing input"));
+                    let input = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("input").expect("Missing input"),
+                    );
                     let min_inc = obj
                         .get("min_inclusive")
                         .and_then(|v| v.as_f64())
@@ -2586,10 +2605,12 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                         .and_then(|v| v.as_f64())
                         .unwrap_or(f64::INFINITY);
                     let when_in = parse_vanilla_df(
+                        cell_size,
                         base_df_dir,
                         obj.get("when_in_range").expect("Missing when_in_range"),
                     );
                     let when_out = parse_vanilla_df(
+                        cell_size,
                         base_df_dir,
                         obj.get("when_out_of_range")
                             .expect("Missing when_out_of_range"),
@@ -2605,8 +2626,11 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                     }
                 }
                 "interval_select" => {
-                    let input =
-                        parse_vanilla_df(base_df_dir, obj.get("input").expect("Missing input"));
+                    let input = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("input").expect("Missing input"),
+                    );
                     let thresholds: Vec<HashableF32> = obj
                         .get("thresholds")
                         .and_then(|v| v.as_array())
@@ -2619,7 +2643,7 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                         .and_then(|v| v.as_array())
                         .expect("Missing functions array")
                         .iter()
-                        .map(|v| parse_vanilla_df(base_df_dir, v))
+                        .map(|v| parse_vanilla_df(cell_size, base_df_dir, v))
                         .collect();
 
                     DensityFunctionRepr::IntervalSelect {
@@ -2630,7 +2654,7 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                 }
                 "spline" => {
                     let spline_node = obj.get("spline").expect("Missing spline");
-                    let spline = parse_vanilla_spline(base_df_dir, spline_node);
+                    let spline = parse_vanilla_spline(cell_size, base_df_dir, spline_node);
                     let min_value = obj
                         .get("min_value")
                         .and_then(|v| v.as_f64())
@@ -2661,12 +2685,21 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                         || obj.contains_key("shift_y")
                         || obj.contains_key("shift_z")
                     {
-                        let shift_x =
-                            parse_vanilla_df(base_df_dir, obj.get("shift_x").unwrap_or(&zero));
-                        let shift_y =
-                            parse_vanilla_df(base_df_dir, obj.get("shift_y").unwrap_or(&zero));
-                        let shift_z =
-                            parse_vanilla_df(base_df_dir, obj.get("shift_z").unwrap_or(&zero));
+                        let shift_x = parse_vanilla_df(
+                            cell_size,
+                            base_df_dir,
+                            obj.get("shift_x").unwrap_or(&zero),
+                        );
+                        let shift_y = parse_vanilla_df(
+                            cell_size,
+                            base_df_dir,
+                            obj.get("shift_y").unwrap_or(&zero),
+                        );
+                        let shift_z = parse_vanilla_df(
+                            cell_size,
+                            base_df_dir,
+                            obj.get("shift_z").unwrap_or(&zero),
+                        );
                         DensityFunctionRepr::ShiftedNoise {
                             shift_x: Box::new(shift_x),
                             shift_y: Box::new(shift_y),
@@ -2688,12 +2721,21 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                     }
                 }
                 "shifted_noise" => {
-                    let shift_x =
-                        parse_vanilla_df(base_df_dir, obj.get("shift_x").expect("Missing shift_x"));
-                    let shift_y =
-                        parse_vanilla_df(base_df_dir, obj.get("shift_y").expect("Missing shift_y"));
-                    let shift_z =
-                        parse_vanilla_df(base_df_dir, obj.get("shift_z").expect("Missing shift_z"));
+                    let shift_x = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("shift_x").expect("Missing shift_x"),
+                    );
+                    let shift_y = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("shift_y").expect("Missing shift_y"),
+                    );
+                    let shift_z = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("shift_z").expect("Missing shift_z"),
+                    );
                     let noise_name = obj
                         .get("noise")
                         .and_then(|v| v.as_str())
@@ -2745,6 +2787,7 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                 "blend_offset" => DensityFunctionRepr::BlendOffset,
                 "blend_density" => {
                     let input = parse_vanilla_df(
+                        cell_size,
                         base_df_dir,
                         obj.get("input")
                             .or_else(|| obj.get("argument"))
@@ -2759,23 +2802,16 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                 "cache" | "interpolated" | "flat_cache" | "cache_flat" | "cache_2d"
                 | "cache_once" | "cache_all_in_cell" => {
                     let input = parse_vanilla_df(
+                        cell_size,
                         base_df_dir,
                         obj.get("input")
                             .or_else(|| obj.get("argument"))
                             .expect("Missing input/argument"),
                     );
                     let wrapper = if clean_type == "interpolated" {
-                        let cell_size_xz =
-                            obj.get("cell_size_xz")
-                                .and_then(|v| v.as_i64())
-                                .expect("Missing cell_size_xz") as i32;
-                        let cell_size_y =
-                            obj.get("cell_size_y")
-                                .and_then(|v| v.as_i64())
-                                .expect("Missing cell_size_y") as i32;
                         WrapperType::Interpolated {
-                            cell_size_xz,
-                            cell_size_y,
+                            cell_size_xz: cell_size.0,
+                            cell_size_y: cell_size.1,
                         }
                     } else {
                         WrapperType::Cache
@@ -2786,9 +2822,13 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
                     }
                 }
                 "find_top_surface" | "weird_utility_density" => {
-                    let density =
-                        parse_vanilla_df(base_df_dir, obj.get("density").expect("Missing density"));
+                    let density = parse_vanilla_df(
+                        cell_size,
+                        base_df_dir,
+                        obj.get("density").expect("Missing density"),
+                    );
                     let upper_bound = parse_vanilla_df(
+                        cell_size,
                         base_df_dir,
                         obj.get("upper_bound").expect("Missing upper_bound"),
                     );
@@ -2814,7 +2854,11 @@ fn parse_vanilla_df(base_df_dir: &std::path::Path, val: &serde_json::Value) -> D
     }
 }
 
-fn parse_vanilla_spline(base_df_dir: &std::path::Path, val: &serde_json::Value) -> SplineRepr {
+fn parse_vanilla_spline(
+    cell_size: (i32, i32),
+    base_df_dir: &std::path::Path,
+    val: &serde_json::Value,
+) -> SplineRepr {
     if let Some(n) = val.as_f64() {
         return SplineRepr::Fixed {
             value: HashableF32(n as f32),
@@ -2822,9 +2866,10 @@ fn parse_vanilla_spline(base_df_dir: &std::path::Path, val: &serde_json::Value) 
     }
     if let Some(obj) = val.as_object() {
         if obj.contains_key("value") && !obj.contains_key("points") {
-            return parse_vanilla_spline(base_df_dir, &obj["value"]);
+            return parse_vanilla_spline(cell_size, base_df_dir, &obj["value"]);
         }
         let loc_fn = parse_vanilla_df(
+            cell_size,
             base_df_dir,
             obj.get("coordinate").expect("Missing coordinate in spline"),
         );
@@ -2839,7 +2884,7 @@ fn parse_vanilla_spline(base_df_dir: &std::path::Path, val: &serde_json::Value) 
 
         for pt in points {
             locations.push(HashableF32(pt["location"].as_f64().unwrap() as f32));
-            values.push(parse_vanilla_spline(base_df_dir, &pt["value"]));
+            values.push(parse_vanilla_spline(cell_size, base_df_dir, &pt["value"]));
             derivatives.push(HashableF32(pt["derivative"].as_f64().unwrap() as f32));
         }
 
@@ -2867,6 +2912,16 @@ fn load_vanilla_noise_router(
             path.display()
         )
     });
+    let cell_size = (
+        (val["noise"]["size_horizontal"]
+            .as_i64()
+            .expect("Missing horizontal noise cell size") as i32)
+            << 2,
+        (val["noise"]["size_vertical"]
+            .as_i64()
+            .expect("Missing vertical noise cell size") as i32)
+            << 2,
+    );
     let nr = val
         .get("noise_router")
         .expect("Missing noise_router in noise_settings");
@@ -2928,21 +2983,45 @@ fn load_vanilla_noise_router(
     });
 
     NoiseRouterRepr {
-        barrier_noise: parse_vanilla_df(base_df_dir, barrier),
-        fluid_level_floodedness_noise: parse_vanilla_df(base_df_dir, fluid_level_floodedness),
-        fluid_level_spread_noise: parse_vanilla_df(base_df_dir, fluid_level_spread),
-        lava_noise: parse_vanilla_df(base_df_dir, lava),
-        temperature: parse_vanilla_df(base_df_dir, nr.get("temperature").unwrap_or(&zero)),
-        vegetation: parse_vanilla_df(base_df_dir, nr.get("vegetation").unwrap_or(&zero)),
-        continents: parse_vanilla_df(base_df_dir, nr.get("continents").unwrap_or(&zero)),
-        erosion: parse_vanilla_df(base_df_dir, nr.get("erosion").unwrap_or(&zero)),
-        depth: parse_vanilla_df(base_df_dir, nr.get("depth").unwrap_or(&zero)),
-        ridges: parse_vanilla_df(base_df_dir, nr.get("ridges").unwrap_or(&zero)),
-        preliminary_surface_level: parse_vanilla_df(base_df_dir, preliminary_surface_level),
-        final_density: parse_vanilla_df(base_df_dir, nr.get("final_density").unwrap_or(&zero)),
-        vein_toggle: parse_vanilla_df(base_df_dir, &vein_toggle),
-        vein_ridged: parse_vanilla_df(base_df_dir, &vein_ridged),
-        vein_gap: parse_vanilla_df(base_df_dir, &vein_gap),
+        barrier_noise: parse_vanilla_df(cell_size, base_df_dir, barrier),
+        fluid_level_floodedness_noise: parse_vanilla_df(
+            cell_size,
+            base_df_dir,
+            fluid_level_floodedness,
+        ),
+        fluid_level_spread_noise: parse_vanilla_df(cell_size, base_df_dir, fluid_level_spread),
+        lava_noise: parse_vanilla_df(cell_size, base_df_dir, lava),
+        temperature: parse_vanilla_df(
+            cell_size,
+            base_df_dir,
+            nr.get("temperature").unwrap_or(&zero),
+        ),
+        vegetation: parse_vanilla_df(
+            cell_size,
+            base_df_dir,
+            nr.get("vegetation").unwrap_or(&zero),
+        ),
+        continents: parse_vanilla_df(
+            cell_size,
+            base_df_dir,
+            nr.get("continents").unwrap_or(&zero),
+        ),
+        erosion: parse_vanilla_df(cell_size, base_df_dir, nr.get("erosion").unwrap_or(&zero)),
+        depth: parse_vanilla_df(cell_size, base_df_dir, nr.get("depth").unwrap_or(&zero)),
+        ridges: parse_vanilla_df(cell_size, base_df_dir, nr.get("ridges").unwrap_or(&zero)),
+        preliminary_surface_level: parse_vanilla_df(
+            cell_size,
+            base_df_dir,
+            preliminary_surface_level,
+        ),
+        final_density: parse_vanilla_df(
+            cell_size,
+            base_df_dir,
+            nr.get("final_density").unwrap_or(&zero),
+        ),
+        vein_toggle: parse_vanilla_df(cell_size, base_df_dir, &vein_toggle),
+        vein_ridged: parse_vanilla_df(cell_size, base_df_dir, &vein_ridged),
+        vein_gap: parse_vanilla_df(cell_size, base_df_dir, &vein_gap),
     }
 }
 

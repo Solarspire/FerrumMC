@@ -26,7 +26,7 @@ pub struct RawChatType {
 //     parameters: Vec<String>,
 // }
 
-/// Generates the `TokenStream` for message type `u8` constants from 26.3 datapack, including a synthetic `RAW` variant.
+/// Generates the `TokenStream` for message type `u8` constants from 26.2 datapack, including a synthetic `RAW` variant.
 pub fn build() -> TokenStream {
     let dir = std::path::Path::new("../../assets/datapack/data/minecraft/chat_type");
     let mut entries: Vec<_> = fs::read_dir(dir)

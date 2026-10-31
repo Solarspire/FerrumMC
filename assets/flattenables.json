@@ -1,0 +1,8 @@
+{
+  "minecraft:coarse_dirt": "minecraft:dirt_path",
+  "minecraft:dirt": "minecraft:dirt_path",
+  "minecraft:grass_block": "minecraft:dirt_path",
+  "minecraft:mycelium": "minecraft:dirt_path",
+  "minecraft:podzol": "minecraft:dirt_path",
+  "minecraft:rooted_dirt": "minecraft:dirt_path"
+}

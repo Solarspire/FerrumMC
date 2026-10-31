@@ -60,7 +60,7 @@ pub mod java {
     pub const ADVMODE_SETCOMMAND_DISABLED: &str = "advMode.setCommand.disabled";
     #[doc = "Command set: %s"]
     pub const ADVMODE_SETCOMMAND_SUCCESS: &str = "advMode.setCommand.success";
-    #[doc = "Track Output"]
+    #[doc = "Track output"]
     pub const ADVMODE_TRACKOUTPUT: &str = "advMode.trackOutput";
     #[doc = "Triggering"]
     pub const ADVMODE_TRIGGERING: &str = "advMode.triggering";
@@ -758,7 +758,7 @@ pub mod java {
     #[doc = "Upgrade your Pickaxe"]
     pub const ADVANCEMENTS_STORY_IRON_TOOLS_DESCRIPTION: &str =
         "advancements.story.iron_tools.description";
-    #[doc = "Isn't It Iron Pick?"]
+    #[doc = "Isn't It Iron Pick"]
     pub const ADVANCEMENTS_STORY_IRON_TOOLS_TITLE: &str = "advancements.story.iron_tools.title";
     #[doc = "Fill a Bucket with lava"]
     pub const ADVANCEMENTS_STORY_LAVA_BUCKET_DESCRIPTION: &str =
@@ -950,7 +950,7 @@ pub mod java {
     pub const ARGUMENT_ENTITY_SELECTOR_UNKNOWN: &str = "argument.entity.selector.unknown";
     #[doc = "Only one entity is allowed, but the provided selector allows more than one"]
     pub const ARGUMENT_ENTITY_TOOMANY: &str = "argument.entity.toomany";
-    #[doc = "Invalid value '%s'"]
+    #[doc = "Invalid value \"%s\""]
     pub const ARGUMENT_ENUM_INVALID: &str = "argument.enum.invalid";
     #[doc = "Float must not be more than %s: found %s"]
     pub const ARGUMENT_FLOAT_BIG: &str = "argument.float.big";
@@ -1004,9 +1004,9 @@ pub mod java {
     pub const ARGUMENT_POS_MISSING_DOUBLE: &str = "argument.pos.missing.double";
     #[doc = "Expected a block position"]
     pub const ARGUMENT_POS_MISSING_INT: &str = "argument.pos.missing.int";
-    #[doc = "Cannot mix world and local coordinates (everything must either use ^ or not)"]
+    #[doc = "Cannot mix world & local coordinates (everything must either use ^ or not)"]
     pub const ARGUMENT_POS_MIXED: &str = "argument.pos.mixed";
-    #[doc = "That position is outside the allowed boundaries"]
+    #[doc = "That position is outside the allowed boundaries."]
     pub const ARGUMENT_POS_OUTOFBOUNDS: &str = "argument.pos.outofbounds";
     #[doc = "That position is out of this world!"]
     pub const ARGUMENT_POS_OUTOFWORLD: &str = "argument.pos.outofworld";
@@ -1049,8 +1049,6 @@ pub mod java {
         "argument.scoreboardDisplaySlot.invalid";
     #[doc = "Invalid style: %s"]
     pub const ARGUMENT_STYLE_INVALID: &str = "argument.style.invalid";
-    #[doc = "Unknown swing animation type: %s"]
-    pub const ARGUMENT_SWING_ANIMATION_INVALID: &str = "argument.swing_animation.invalid";
     #[doc = "The tick count must be non-negative"]
     pub const ARGUMENT_TIME_INVALID_TICK_COUNT: &str = "argument.time.invalid_tick_count";
     #[doc = "Invalid unit"]
@@ -1307,8 +1305,6 @@ pub mod java {
     pub const BIOME_MINECRAFT_COLD_OCEAN: &str = "biome.minecraft.cold_ocean";
     #[doc = "Crimson Forest"]
     pub const BIOME_MINECRAFT_CRIMSON_FOREST: &str = "biome.minecraft.crimson_forest";
-    #[doc = "Dappled Forest"]
-    pub const BIOME_MINECRAFT_DAPPLED_FOREST: &str = "biome.minecraft.dappled_forest";
     #[doc = "Dark Forest"]
     pub const BIOME_MINECRAFT_DARK_FOREST: &str = "biome.minecraft.dark_forest";
     #[doc = "Deep Cold Ocean"]
@@ -3484,10 +3480,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_BLACK_CONCRETE: &str = "block.minecraft.black_concrete";
     #[doc = "Black Concrete Powder"]
     pub const BLOCK_MINECRAFT_BLACK_CONCRETE_POWDER: &str = "block.minecraft.black_concrete_powder";
-    #[doc = "Black Concrete Slab"]
-    pub const BLOCK_MINECRAFT_BLACK_CONCRETE_SLAB: &str = "block.minecraft.black_concrete_slab";
-    #[doc = "Black Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_BLACK_CONCRETE_STAIRS: &str = "block.minecraft.black_concrete_stairs";
     #[doc = "Black Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_BLACK_GLAZED_TERRACOTTA: &str =
         "block.minecraft.black_glazed_terracotta";
@@ -3502,10 +3494,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_BLACK_TERRACOTTA: &str = "block.minecraft.black_terracotta";
     #[doc = "Black Wool"]
     pub const BLOCK_MINECRAFT_BLACK_WOOL: &str = "block.minecraft.black_wool";
-    #[doc = "Black Wool Slab"]
-    pub const BLOCK_MINECRAFT_BLACK_WOOL_SLAB: &str = "block.minecraft.black_wool_slab";
-    #[doc = "Black Wool Stairs"]
-    pub const BLOCK_MINECRAFT_BLACK_WOOL_STAIRS: &str = "block.minecraft.black_wool_stairs";
     #[doc = "Blackstone"]
     pub const BLOCK_MINECRAFT_BLACKSTONE: &str = "block.minecraft.blackstone";
     #[doc = "Blackstone Slab"]
@@ -3530,10 +3518,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_BLUE_CONCRETE: &str = "block.minecraft.blue_concrete";
     #[doc = "Blue Concrete Powder"]
     pub const BLOCK_MINECRAFT_BLUE_CONCRETE_POWDER: &str = "block.minecraft.blue_concrete_powder";
-    #[doc = "Blue Concrete Slab"]
-    pub const BLOCK_MINECRAFT_BLUE_CONCRETE_SLAB: &str = "block.minecraft.blue_concrete_slab";
-    #[doc = "Blue Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_BLUE_CONCRETE_STAIRS: &str = "block.minecraft.blue_concrete_stairs";
     #[doc = "Blue Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_BLUE_GLAZED_TERRACOTTA: &str =
         "block.minecraft.blue_glazed_terracotta";
@@ -3552,10 +3536,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_BLUE_TERRACOTTA: &str = "block.minecraft.blue_terracotta";
     #[doc = "Blue Wool"]
     pub const BLOCK_MINECRAFT_BLUE_WOOL: &str = "block.minecraft.blue_wool";
-    #[doc = "Blue Wool Slab"]
-    pub const BLOCK_MINECRAFT_BLUE_WOOL_SLAB: &str = "block.minecraft.blue_wool_slab";
-    #[doc = "Blue Wool Stairs"]
-    pub const BLOCK_MINECRAFT_BLUE_WOOL_STAIRS: &str = "block.minecraft.blue_wool_stairs";
     #[doc = "Bone Block"]
     pub const BLOCK_MINECRAFT_BONE_BLOCK: &str = "block.minecraft.bone_block";
     #[doc = "Bookshelf"]
@@ -3592,10 +3572,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_BROWN_CONCRETE: &str = "block.minecraft.brown_concrete";
     #[doc = "Brown Concrete Powder"]
     pub const BLOCK_MINECRAFT_BROWN_CONCRETE_POWDER: &str = "block.minecraft.brown_concrete_powder";
-    #[doc = "Brown Concrete Slab"]
-    pub const BLOCK_MINECRAFT_BROWN_CONCRETE_SLAB: &str = "block.minecraft.brown_concrete_slab";
-    #[doc = "Brown Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_BROWN_CONCRETE_STAIRS: &str = "block.minecraft.brown_concrete_stairs";
     #[doc = "Brown Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_BROWN_GLAZED_TERRACOTTA: &str =
         "block.minecraft.brown_glazed_terracotta";
@@ -3614,10 +3590,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_BROWN_TERRACOTTA: &str = "block.minecraft.brown_terracotta";
     #[doc = "Brown Wool"]
     pub const BLOCK_MINECRAFT_BROWN_WOOL: &str = "block.minecraft.brown_wool";
-    #[doc = "Brown Wool Slab"]
-    pub const BLOCK_MINECRAFT_BROWN_WOOL_SLAB: &str = "block.minecraft.brown_wool_slab";
-    #[doc = "Brown Wool Stairs"]
-    pub const BLOCK_MINECRAFT_BROWN_WOOL_STAIRS: &str = "block.minecraft.brown_wool_stairs";
     #[doc = "Bubble Column"]
     pub const BLOCK_MINECRAFT_BUBBLE_COLUMN: &str = "block.minecraft.bubble_column";
     #[doc = "Bubble Coral"]
@@ -3922,10 +3894,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_CYAN_CONCRETE: &str = "block.minecraft.cyan_concrete";
     #[doc = "Cyan Concrete Powder"]
     pub const BLOCK_MINECRAFT_CYAN_CONCRETE_POWDER: &str = "block.minecraft.cyan_concrete_powder";
-    #[doc = "Cyan Concrete Slab"]
-    pub const BLOCK_MINECRAFT_CYAN_CONCRETE_SLAB: &str = "block.minecraft.cyan_concrete_slab";
-    #[doc = "Cyan Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_CYAN_CONCRETE_STAIRS: &str = "block.minecraft.cyan_concrete_stairs";
     #[doc = "Cyan Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_CYAN_GLAZED_TERRACOTTA: &str =
         "block.minecraft.cyan_glazed_terracotta";
@@ -3940,10 +3908,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_CYAN_TERRACOTTA: &str = "block.minecraft.cyan_terracotta";
     #[doc = "Cyan Wool"]
     pub const BLOCK_MINECRAFT_CYAN_WOOL: &str = "block.minecraft.cyan_wool";
-    #[doc = "Cyan Wool Slab"]
-    pub const BLOCK_MINECRAFT_CYAN_WOOL_SLAB: &str = "block.minecraft.cyan_wool_slab";
-    #[doc = "Cyan Wool Stairs"]
-    pub const BLOCK_MINECRAFT_CYAN_WOOL_STAIRS: &str = "block.minecraft.cyan_wool_stairs";
     #[doc = "Damaged Anvil"]
     pub const BLOCK_MINECRAFT_DAMAGED_ANVIL: &str = "block.minecraft.damaged_anvil";
     #[doc = "Dandelion"]
@@ -4254,10 +4218,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_GRAY_CONCRETE: &str = "block.minecraft.gray_concrete";
     #[doc = "Gray Concrete Powder"]
     pub const BLOCK_MINECRAFT_GRAY_CONCRETE_POWDER: &str = "block.minecraft.gray_concrete_powder";
-    #[doc = "Gray Concrete Slab"]
-    pub const BLOCK_MINECRAFT_GRAY_CONCRETE_SLAB: &str = "block.minecraft.gray_concrete_slab";
-    #[doc = "Gray Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_GRAY_CONCRETE_STAIRS: &str = "block.minecraft.gray_concrete_stairs";
     #[doc = "Gray Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_GRAY_GLAZED_TERRACOTTA: &str =
         "block.minecraft.gray_glazed_terracotta";
@@ -4272,10 +4232,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_GRAY_TERRACOTTA: &str = "block.minecraft.gray_terracotta";
     #[doc = "Gray Wool"]
     pub const BLOCK_MINECRAFT_GRAY_WOOL: &str = "block.minecraft.gray_wool";
-    #[doc = "Gray Wool Slab"]
-    pub const BLOCK_MINECRAFT_GRAY_WOOL_SLAB: &str = "block.minecraft.gray_wool_slab";
-    #[doc = "Gray Wool Stairs"]
-    pub const BLOCK_MINECRAFT_GRAY_WOOL_STAIRS: &str = "block.minecraft.gray_wool_stairs";
     #[doc = "Green Banner"]
     pub const BLOCK_MINECRAFT_GREEN_BANNER: &str = "block.minecraft.green_banner";
     #[doc = "Green Bed"]
@@ -4290,10 +4246,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_GREEN_CONCRETE: &str = "block.minecraft.green_concrete";
     #[doc = "Green Concrete Powder"]
     pub const BLOCK_MINECRAFT_GREEN_CONCRETE_POWDER: &str = "block.minecraft.green_concrete_powder";
-    #[doc = "Green Concrete Slab"]
-    pub const BLOCK_MINECRAFT_GREEN_CONCRETE_SLAB: &str = "block.minecraft.green_concrete_slab";
-    #[doc = "Green Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_GREEN_CONCRETE_STAIRS: &str = "block.minecraft.green_concrete_stairs";
     #[doc = "Green Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_GREEN_GLAZED_TERRACOTTA: &str =
         "block.minecraft.green_glazed_terracotta";
@@ -4308,10 +4260,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_GREEN_TERRACOTTA: &str = "block.minecraft.green_terracotta";
     #[doc = "Green Wool"]
     pub const BLOCK_MINECRAFT_GREEN_WOOL: &str = "block.minecraft.green_wool";
-    #[doc = "Green Wool Slab"]
-    pub const BLOCK_MINECRAFT_GREEN_WOOL_SLAB: &str = "block.minecraft.green_wool_slab";
-    #[doc = "Green Wool Stairs"]
-    pub const BLOCK_MINECRAFT_GREEN_WOOL_STAIRS: &str = "block.minecraft.green_wool_stairs";
     #[doc = "Grindstone"]
     pub const BLOCK_MINECRAFT_GRINDSTONE: &str = "block.minecraft.grindstone";
     #[doc = "Hanging Roots"]
@@ -4455,12 +4403,6 @@ pub mod java {
     #[doc = "Light Blue Concrete Powder"]
     pub const BLOCK_MINECRAFT_LIGHT_BLUE_CONCRETE_POWDER: &str =
         "block.minecraft.light_blue_concrete_powder";
-    #[doc = "Light Blue Concrete Slab"]
-    pub const BLOCK_MINECRAFT_LIGHT_BLUE_CONCRETE_SLAB: &str =
-        "block.minecraft.light_blue_concrete_slab";
-    #[doc = "Light Blue Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_LIGHT_BLUE_CONCRETE_STAIRS: &str =
-        "block.minecraft.light_blue_concrete_stairs";
     #[doc = "Light Blue Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_LIGHT_BLUE_GLAZED_TERRACOTTA: &str =
         "block.minecraft.light_blue_glazed_terracotta";
@@ -4477,11 +4419,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_LIGHT_BLUE_TERRACOTTA: &str = "block.minecraft.light_blue_terracotta";
     #[doc = "Light Blue Wool"]
     pub const BLOCK_MINECRAFT_LIGHT_BLUE_WOOL: &str = "block.minecraft.light_blue_wool";
-    #[doc = "Light Blue Wool Slab"]
-    pub const BLOCK_MINECRAFT_LIGHT_BLUE_WOOL_SLAB: &str = "block.minecraft.light_blue_wool_slab";
-    #[doc = "Light Blue Wool Stairs"]
-    pub const BLOCK_MINECRAFT_LIGHT_BLUE_WOOL_STAIRS: &str =
-        "block.minecraft.light_blue_wool_stairs";
     #[doc = "Light Gray Banner"]
     pub const BLOCK_MINECRAFT_LIGHT_GRAY_BANNER: &str = "block.minecraft.light_gray_banner";
     #[doc = "Light Gray Bed"]
@@ -4498,12 +4435,6 @@ pub mod java {
     #[doc = "Light Gray Concrete Powder"]
     pub const BLOCK_MINECRAFT_LIGHT_GRAY_CONCRETE_POWDER: &str =
         "block.minecraft.light_gray_concrete_powder";
-    #[doc = "Light Gray Concrete Slab"]
-    pub const BLOCK_MINECRAFT_LIGHT_GRAY_CONCRETE_SLAB: &str =
-        "block.minecraft.light_gray_concrete_slab";
-    #[doc = "Light Gray Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_LIGHT_GRAY_CONCRETE_STAIRS: &str =
-        "block.minecraft.light_gray_concrete_stairs";
     #[doc = "Light Gray Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_LIGHT_GRAY_GLAZED_TERRACOTTA: &str =
         "block.minecraft.light_gray_glazed_terracotta";
@@ -4520,11 +4451,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_LIGHT_GRAY_TERRACOTTA: &str = "block.minecraft.light_gray_terracotta";
     #[doc = "Light Gray Wool"]
     pub const BLOCK_MINECRAFT_LIGHT_GRAY_WOOL: &str = "block.minecraft.light_gray_wool";
-    #[doc = "Light Gray Wool Slab"]
-    pub const BLOCK_MINECRAFT_LIGHT_GRAY_WOOL_SLAB: &str = "block.minecraft.light_gray_wool_slab";
-    #[doc = "Light Gray Wool Stairs"]
-    pub const BLOCK_MINECRAFT_LIGHT_GRAY_WOOL_STAIRS: &str =
-        "block.minecraft.light_gray_wool_stairs";
     #[doc = "Light Weighted Pressure Plate"]
     pub const BLOCK_MINECRAFT_LIGHT_WEIGHTED_PRESSURE_PLATE: &str =
         "block.minecraft.light_weighted_pressure_plate";
@@ -4550,10 +4476,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_LIME_CONCRETE: &str = "block.minecraft.lime_concrete";
     #[doc = "Lime Concrete Powder"]
     pub const BLOCK_MINECRAFT_LIME_CONCRETE_POWDER: &str = "block.minecraft.lime_concrete_powder";
-    #[doc = "Lime Concrete Slab"]
-    pub const BLOCK_MINECRAFT_LIME_CONCRETE_SLAB: &str = "block.minecraft.lime_concrete_slab";
-    #[doc = "Lime Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_LIME_CONCRETE_STAIRS: &str = "block.minecraft.lime_concrete_stairs";
     #[doc = "Lime Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_LIME_GLAZED_TERRACOTTA: &str =
         "block.minecraft.lime_glazed_terracotta";
@@ -4568,10 +4490,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_LIME_TERRACOTTA: &str = "block.minecraft.lime_terracotta";
     #[doc = "Lime Wool"]
     pub const BLOCK_MINECRAFT_LIME_WOOL: &str = "block.minecraft.lime_wool";
-    #[doc = "Lime Wool Slab"]
-    pub const BLOCK_MINECRAFT_LIME_WOOL_SLAB: &str = "block.minecraft.lime_wool_slab";
-    #[doc = "Lime Wool Stairs"]
-    pub const BLOCK_MINECRAFT_LIME_WOOL_STAIRS: &str = "block.minecraft.lime_wool_stairs";
     #[doc = "Lodestone"]
     pub const BLOCK_MINECRAFT_LODESTONE: &str = "block.minecraft.lodestone";
     #[doc = "Loom"]
@@ -4591,11 +4509,6 @@ pub mod java {
     #[doc = "Magenta Concrete Powder"]
     pub const BLOCK_MINECRAFT_MAGENTA_CONCRETE_POWDER: &str =
         "block.minecraft.magenta_concrete_powder";
-    #[doc = "Magenta Concrete Slab"]
-    pub const BLOCK_MINECRAFT_MAGENTA_CONCRETE_SLAB: &str = "block.minecraft.magenta_concrete_slab";
-    #[doc = "Magenta Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_MAGENTA_CONCRETE_STAIRS: &str =
-        "block.minecraft.magenta_concrete_stairs";
     #[doc = "Magenta Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_MAGENTA_GLAZED_TERRACOTTA: &str =
         "block.minecraft.magenta_glazed_terracotta";
@@ -4610,10 +4523,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_MAGENTA_TERRACOTTA: &str = "block.minecraft.magenta_terracotta";
     #[doc = "Magenta Wool"]
     pub const BLOCK_MINECRAFT_MAGENTA_WOOL: &str = "block.minecraft.magenta_wool";
-    #[doc = "Magenta Wool Slab"]
-    pub const BLOCK_MINECRAFT_MAGENTA_WOOL_SLAB: &str = "block.minecraft.magenta_wool_slab";
-    #[doc = "Magenta Wool Stairs"]
-    pub const BLOCK_MINECRAFT_MAGENTA_WOOL_STAIRS: &str = "block.minecraft.magenta_wool_stairs";
     #[doc = "Magma Block"]
     pub const BLOCK_MINECRAFT_MAGMA_BLOCK: &str = "block.minecraft.magma_block";
     #[doc = "Mangrove Button"]
@@ -4795,16 +4704,9 @@ pub mod java {
     #[doc = "Orange Concrete Powder"]
     pub const BLOCK_MINECRAFT_ORANGE_CONCRETE_POWDER: &str =
         "block.minecraft.orange_concrete_powder";
-    #[doc = "Orange Concrete Slab"]
-    pub const BLOCK_MINECRAFT_ORANGE_CONCRETE_SLAB: &str = "block.minecraft.orange_concrete_slab";
-    #[doc = "Orange Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_ORANGE_CONCRETE_STAIRS: &str =
-        "block.minecraft.orange_concrete_stairs";
     #[doc = "Orange Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_ORANGE_GLAZED_TERRACOTTA: &str =
         "block.minecraft.orange_glazed_terracotta";
-    #[doc = "Orange Poplar Leaves"]
-    pub const BLOCK_MINECRAFT_ORANGE_POPLAR_LEAVES: &str = "block.minecraft.orange_poplar_leaves";
     #[doc = "Orange Shulker Box"]
     pub const BLOCK_MINECRAFT_ORANGE_SHULKER_BOX: &str = "block.minecraft.orange_shulker_box";
     #[doc = "Orange Stained Glass"]
@@ -4818,10 +4720,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_ORANGE_TULIP: &str = "block.minecraft.orange_tulip";
     #[doc = "Orange Wool"]
     pub const BLOCK_MINECRAFT_ORANGE_WOOL: &str = "block.minecraft.orange_wool";
-    #[doc = "Orange Wool Slab"]
-    pub const BLOCK_MINECRAFT_ORANGE_WOOL_SLAB: &str = "block.minecraft.orange_wool_slab";
-    #[doc = "Orange Wool Stairs"]
-    pub const BLOCK_MINECRAFT_ORANGE_WOOL_STAIRS: &str = "block.minecraft.orange_wool_stairs";
     #[doc = "Oxeye Daisy"]
     pub const BLOCK_MINECRAFT_OXEYE_DAISY: &str = "block.minecraft.oxeye_daisy";
     #[doc = "Oxidized Chiseled Copper"]
@@ -4933,10 +4831,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_PINK_CONCRETE: &str = "block.minecraft.pink_concrete";
     #[doc = "Pink Concrete Powder"]
     pub const BLOCK_MINECRAFT_PINK_CONCRETE_POWDER: &str = "block.minecraft.pink_concrete_powder";
-    #[doc = "Pink Concrete Slab"]
-    pub const BLOCK_MINECRAFT_PINK_CONCRETE_SLAB: &str = "block.minecraft.pink_concrete_slab";
-    #[doc = "Pink Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_PINK_CONCRETE_STAIRS: &str = "block.minecraft.pink_concrete_stairs";
     #[doc = "Pink Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_PINK_GLAZED_TERRACOTTA: &str =
         "block.minecraft.pink_glazed_terracotta";
@@ -4955,10 +4849,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_PINK_TULIP: &str = "block.minecraft.pink_tulip";
     #[doc = "Pink Wool"]
     pub const BLOCK_MINECRAFT_PINK_WOOL: &str = "block.minecraft.pink_wool";
-    #[doc = "Pink Wool Slab"]
-    pub const BLOCK_MINECRAFT_PINK_WOOL_SLAB: &str = "block.minecraft.pink_wool_slab";
-    #[doc = "Pink Wool Stairs"]
-    pub const BLOCK_MINECRAFT_PINK_WOOL_STAIRS: &str = "block.minecraft.pink_wool_stairs";
     #[doc = "Piston"]
     pub const BLOCK_MINECRAFT_PISTON: &str = "block.minecraft.piston";
     #[doc = "Piston Head"]
@@ -5069,43 +4959,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_POLISHED_TUFF_STAIRS: &str = "block.minecraft.polished_tuff_stairs";
     #[doc = "Polished Tuff Wall"]
     pub const BLOCK_MINECRAFT_POLISHED_TUFF_WALL: &str = "block.minecraft.polished_tuff_wall";
-    #[doc = "Poplar Button"]
-    pub const BLOCK_MINECRAFT_POPLAR_BUTTON: &str = "block.minecraft.poplar_button";
-    #[doc = "Poplar Door"]
-    pub const BLOCK_MINECRAFT_POPLAR_DOOR: &str = "block.minecraft.poplar_door";
-    #[doc = "Poplar Fence"]
-    pub const BLOCK_MINECRAFT_POPLAR_FENCE: &str = "block.minecraft.poplar_fence";
-    #[doc = "Poplar Fence Gate"]
-    pub const BLOCK_MINECRAFT_POPLAR_FENCE_GATE: &str = "block.minecraft.poplar_fence_gate";
-    #[doc = "Poplar Hanging Sign"]
-    pub const BLOCK_MINECRAFT_POPLAR_HANGING_SIGN: &str = "block.minecraft.poplar_hanging_sign";
-    #[doc = "Poplar Leaves"]
-    pub const BLOCK_MINECRAFT_POPLAR_LEAVES: &str = "block.minecraft.poplar_leaves";
-    #[doc = "Poplar Log"]
-    pub const BLOCK_MINECRAFT_POPLAR_LOG: &str = "block.minecraft.poplar_log";
-    #[doc = "Poplar Planks"]
-    pub const BLOCK_MINECRAFT_POPLAR_PLANKS: &str = "block.minecraft.poplar_planks";
-    #[doc = "Poplar Pressure Plate"]
-    pub const BLOCK_MINECRAFT_POPLAR_PRESSURE_PLATE: &str = "block.minecraft.poplar_pressure_plate";
-    #[doc = "Poplar Sapling"]
-    pub const BLOCK_MINECRAFT_POPLAR_SAPLING: &str = "block.minecraft.poplar_sapling";
-    #[doc = "Poplar Shelf"]
-    pub const BLOCK_MINECRAFT_POPLAR_SHELF: &str = "block.minecraft.poplar_shelf";
-    #[doc = "Poplar Sign"]
-    pub const BLOCK_MINECRAFT_POPLAR_SIGN: &str = "block.minecraft.poplar_sign";
-    #[doc = "Poplar Slab"]
-    pub const BLOCK_MINECRAFT_POPLAR_SLAB: &str = "block.minecraft.poplar_slab";
-    #[doc = "Poplar Stairs"]
-    pub const BLOCK_MINECRAFT_POPLAR_STAIRS: &str = "block.minecraft.poplar_stairs";
-    #[doc = "Poplar Trapdoor"]
-    pub const BLOCK_MINECRAFT_POPLAR_TRAPDOOR: &str = "block.minecraft.poplar_trapdoor";
-    #[doc = "Poplar Wall Hanging Sign"]
-    pub const BLOCK_MINECRAFT_POPLAR_WALL_HANGING_SIGN: &str =
-        "block.minecraft.poplar_wall_hanging_sign";
-    #[doc = "Poplar Wall Sign"]
-    pub const BLOCK_MINECRAFT_POPLAR_WALL_SIGN: &str = "block.minecraft.poplar_wall_sign";
-    #[doc = "Poplar Wood"]
-    pub const BLOCK_MINECRAFT_POPLAR_WOOD: &str = "block.minecraft.poplar_wood";
     #[doc = "Poppy"]
     pub const BLOCK_MINECRAFT_POPPY: &str = "block.minecraft.poppy";
     #[doc = "Potatoes"]
@@ -5178,8 +5031,6 @@ pub mod java {
         "block.minecraft.potted_pale_oak_sapling";
     #[doc = "Potted Pink Tulip"]
     pub const BLOCK_MINECRAFT_POTTED_PINK_TULIP: &str = "block.minecraft.potted_pink_tulip";
-    #[doc = "Potted Poplar Sapling"]
-    pub const BLOCK_MINECRAFT_POTTED_POPLAR_SAPLING: &str = "block.minecraft.potted_poplar_sapling";
     #[doc = "Potted Poppy"]
     pub const BLOCK_MINECRAFT_POTTED_POPPY: &str = "block.minecraft.potted_poppy";
     #[doc = "Potted Red Mushroom"]
@@ -5238,11 +5089,6 @@ pub mod java {
     #[doc = "Purple Concrete Powder"]
     pub const BLOCK_MINECRAFT_PURPLE_CONCRETE_POWDER: &str =
         "block.minecraft.purple_concrete_powder";
-    #[doc = "Purple Concrete Slab"]
-    pub const BLOCK_MINECRAFT_PURPLE_CONCRETE_SLAB: &str = "block.minecraft.purple_concrete_slab";
-    #[doc = "Purple Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_PURPLE_CONCRETE_STAIRS: &str =
-        "block.minecraft.purple_concrete_stairs";
     #[doc = "Purple Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_PURPLE_GLAZED_TERRACOTTA: &str =
         "block.minecraft.purple_glazed_terracotta";
@@ -5257,10 +5103,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_PURPLE_TERRACOTTA: &str = "block.minecraft.purple_terracotta";
     #[doc = "Purple Wool"]
     pub const BLOCK_MINECRAFT_PURPLE_WOOL: &str = "block.minecraft.purple_wool";
-    #[doc = "Purple Wool Slab"]
-    pub const BLOCK_MINECRAFT_PURPLE_WOOL_SLAB: &str = "block.minecraft.purple_wool_slab";
-    #[doc = "Purple Wool Stairs"]
-    pub const BLOCK_MINECRAFT_PURPLE_WOOL_STAIRS: &str = "block.minecraft.purple_wool_stairs";
     #[doc = "Purpur Block"]
     pub const BLOCK_MINECRAFT_PURPUR_BLOCK: &str = "block.minecraft.purpur_block";
     #[doc = "Purpur Pillar"]
@@ -5301,10 +5143,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_RED_CONCRETE: &str = "block.minecraft.red_concrete";
     #[doc = "Red Concrete Powder"]
     pub const BLOCK_MINECRAFT_RED_CONCRETE_POWDER: &str = "block.minecraft.red_concrete_powder";
-    #[doc = "Red Concrete Slab"]
-    pub const BLOCK_MINECRAFT_RED_CONCRETE_SLAB: &str = "block.minecraft.red_concrete_slab";
-    #[doc = "Red Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_RED_CONCRETE_STAIRS: &str = "block.minecraft.red_concrete_stairs";
     #[doc = "Red Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_RED_GLAZED_TERRACOTTA: &str = "block.minecraft.red_glazed_terracotta";
     #[doc = "Red Mushroom"]
@@ -5320,8 +5158,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_RED_NETHER_BRICK_WALL: &str = "block.minecraft.red_nether_brick_wall";
     #[doc = "Red Nether Bricks"]
     pub const BLOCK_MINECRAFT_RED_NETHER_BRICKS: &str = "block.minecraft.red_nether_bricks";
-    #[doc = "Red Poplar Leaves"]
-    pub const BLOCK_MINECRAFT_RED_POPLAR_LEAVES: &str = "block.minecraft.red_poplar_leaves";
     #[doc = "Red Sand"]
     pub const BLOCK_MINECRAFT_RED_SAND: &str = "block.minecraft.red_sand";
     #[doc = "Red Sandstone"]
@@ -5332,8 +5168,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_RED_SANDSTONE_STAIRS: &str = "block.minecraft.red_sandstone_stairs";
     #[doc = "Red Sandstone Wall"]
     pub const BLOCK_MINECRAFT_RED_SANDSTONE_WALL: &str = "block.minecraft.red_sandstone_wall";
-    #[doc = "Red Shrub"]
-    pub const BLOCK_MINECRAFT_RED_SHRUB: &str = "block.minecraft.red_shrub";
     #[doc = "Red Shulker Box"]
     pub const BLOCK_MINECRAFT_RED_SHULKER_BOX: &str = "block.minecraft.red_shulker_box";
     #[doc = "Red Stained Glass"]
@@ -5347,10 +5181,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_RED_TULIP: &str = "block.minecraft.red_tulip";
     #[doc = "Red Wool"]
     pub const BLOCK_MINECRAFT_RED_WOOL: &str = "block.minecraft.red_wool";
-    #[doc = "Red Wool Slab"]
-    pub const BLOCK_MINECRAFT_RED_WOOL_SLAB: &str = "block.minecraft.red_wool_slab";
-    #[doc = "Red Wool Stairs"]
-    pub const BLOCK_MINECRAFT_RED_WOOL_STAIRS: &str = "block.minecraft.red_wool_stairs";
     #[doc = "Block of Redstone"]
     pub const BLOCK_MINECRAFT_REDSTONE_BLOCK: &str = "block.minecraft.redstone_block";
     #[doc = "Redstone Lamp"]
@@ -5418,8 +5248,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_SEAGRASS: &str = "block.minecraft.seagrass";
     #[doc = "Respawn point set"]
     pub const BLOCK_MINECRAFT_SET_SPAWN: &str = "block.minecraft.set_spawn";
-    #[doc = "Shelf Mushroom"]
-    pub const BLOCK_MINECRAFT_SHELF_MUSHROOM: &str = "block.minecraft.shelf_mushroom";
     #[doc = "Short Dry Grass"]
     pub const BLOCK_MINECRAFT_SHORT_DRY_GRASS: &str = "block.minecraft.short_dry_grass";
     #[doc = "Short Grass"]
@@ -5560,8 +5388,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_STONE_STAIRS: &str = "block.minecraft.stone_stairs";
     #[doc = "Stonecutter"]
     pub const BLOCK_MINECRAFT_STONECUTTER: &str = "block.minecraft.stonecutter";
-    #[doc = "Straw Bed"]
-    pub const BLOCK_MINECRAFT_STRAW_BED: &str = "block.minecraft.straw_bed";
     #[doc = "Stripped Acacia Log"]
     pub const BLOCK_MINECRAFT_STRIPPED_ACACIA_LOG: &str = "block.minecraft.stripped_acacia_log";
     #[doc = "Stripped Acacia Wood"]
@@ -5604,10 +5430,6 @@ pub mod java {
     #[doc = "Stripped Pale Oak Wood"]
     pub const BLOCK_MINECRAFT_STRIPPED_PALE_OAK_WOOD: &str =
         "block.minecraft.stripped_pale_oak_wood";
-    #[doc = "Stripped Poplar Log"]
-    pub const BLOCK_MINECRAFT_STRIPPED_POPLAR_LOG: &str = "block.minecraft.stripped_poplar_log";
-    #[doc = "Stripped Poplar Wood"]
-    pub const BLOCK_MINECRAFT_STRIPPED_POPLAR_WOOD: &str = "block.minecraft.stripped_poplar_wood";
     #[doc = "Stripped Spruce Log"]
     pub const BLOCK_MINECRAFT_STRIPPED_SPRUCE_LOG: &str = "block.minecraft.stripped_spruce_log";
     #[doc = "Stripped Spruce Wood"]
@@ -5995,10 +5817,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_WHITE_CONCRETE: &str = "block.minecraft.white_concrete";
     #[doc = "White Concrete Powder"]
     pub const BLOCK_MINECRAFT_WHITE_CONCRETE_POWDER: &str = "block.minecraft.white_concrete_powder";
-    #[doc = "White Concrete Slab"]
-    pub const BLOCK_MINECRAFT_WHITE_CONCRETE_SLAB: &str = "block.minecraft.white_concrete_slab";
-    #[doc = "White Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_WHITE_CONCRETE_STAIRS: &str = "block.minecraft.white_concrete_stairs";
     #[doc = "White Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_WHITE_GLAZED_TERRACOTTA: &str =
         "block.minecraft.white_glazed_terracotta";
@@ -6015,10 +5833,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_WHITE_TULIP: &str = "block.minecraft.white_tulip";
     #[doc = "White Wool"]
     pub const BLOCK_MINECRAFT_WHITE_WOOL: &str = "block.minecraft.white_wool";
-    #[doc = "White Wool Slab"]
-    pub const BLOCK_MINECRAFT_WHITE_WOOL_SLAB: &str = "block.minecraft.white_wool_slab";
-    #[doc = "White Wool Stairs"]
-    pub const BLOCK_MINECRAFT_WHITE_WOOL_STAIRS: &str = "block.minecraft.white_wool_stairs";
     #[doc = "Wildflowers"]
     pub const BLOCK_MINECRAFT_WILDFLOWERS: &str = "block.minecraft.wildflowers";
     #[doc = "Wither Rose"]
@@ -6043,16 +5857,9 @@ pub mod java {
     #[doc = "Yellow Concrete Powder"]
     pub const BLOCK_MINECRAFT_YELLOW_CONCRETE_POWDER: &str =
         "block.minecraft.yellow_concrete_powder";
-    #[doc = "Yellow Concrete Slab"]
-    pub const BLOCK_MINECRAFT_YELLOW_CONCRETE_SLAB: &str = "block.minecraft.yellow_concrete_slab";
-    #[doc = "Yellow Concrete Stairs"]
-    pub const BLOCK_MINECRAFT_YELLOW_CONCRETE_STAIRS: &str =
-        "block.minecraft.yellow_concrete_stairs";
     #[doc = "Yellow Glazed Terracotta"]
     pub const BLOCK_MINECRAFT_YELLOW_GLAZED_TERRACOTTA: &str =
         "block.minecraft.yellow_glazed_terracotta";
-    #[doc = "Yellow Poplar Leaves"]
-    pub const BLOCK_MINECRAFT_YELLOW_POPLAR_LEAVES: &str = "block.minecraft.yellow_poplar_leaves";
     #[doc = "Yellow Shulker Box"]
     pub const BLOCK_MINECRAFT_YELLOW_SHULKER_BOX: &str = "block.minecraft.yellow_shulker_box";
     #[doc = "Yellow Stained Glass"]
@@ -6064,10 +5871,6 @@ pub mod java {
     pub const BLOCK_MINECRAFT_YELLOW_TERRACOTTA: &str = "block.minecraft.yellow_terracotta";
     #[doc = "Yellow Wool"]
     pub const BLOCK_MINECRAFT_YELLOW_WOOL: &str = "block.minecraft.yellow_wool";
-    #[doc = "Yellow Wool Slab"]
-    pub const BLOCK_MINECRAFT_YELLOW_WOOL_SLAB: &str = "block.minecraft.yellow_wool_slab";
-    #[doc = "Yellow Wool Stairs"]
-    pub const BLOCK_MINECRAFT_YELLOW_WOOL_STAIRS: &str = "block.minecraft.yellow_wool_stairs";
     #[doc = "Zombie Head"]
     pub const BLOCK_MINECRAFT_ZOMBIE_HEAD: &str = "block.minecraft.zombie_head";
     #[doc = "Zombie Wall Head"]
@@ -6208,11 +6011,11 @@ pub mod java {
     #[doc = "Go to the Chat Settings screen"]
     pub const CHAT_RESTRICTION_CHAT_DISABLED_BY_OPTIONS_ACTION: &str =
         "chat_restriction.chat_disabled_by_options.action";
-    #[doc = "Chat is restricted by the launcher."]
+    #[doc = "Chat is restricted by the launcher"]
     pub const CHAT_RESTRICTION_DISABLED_BY_LAUNCHER: &str = "chat_restriction.disabled_by_launcher";
     #[doc = "Chat is restricted by profile settings."]
     pub const CHAT_RESTRICTION_DISABLED_BY_PROFILE: &str = "chat_restriction.disabled_by_profile";
-    #[doc = "Go to Your Profile Settings"]
+    #[doc = "Go to your profile settings"]
     pub const CHAT_RESTRICTION_DISABLED_BY_PROFILE_ACTION: &str =
         "chat_restriction.disabled_by_profile.action";
     #[doc = "Sending commands is not allowed"]
@@ -6275,20 +6078,6 @@ pub mod java {
     pub const COLOR_MINECRAFT_WHITE: &str = "color.minecraft.white";
     #[doc = "Yellow"]
     pub const COLOR_MINECRAFT_YELLOW: &str = "color.minecraft.yellow";
-    #[doc = "%s returned value %s"]
-    pub const COMMAND_COMPUTE_RESULT_NAMED_EXACT: &str = "command.compute.result.named.exact";
-    #[doc = "%s returned invalid value (%s)"]
-    pub const COMMAND_COMPUTE_RESULT_NAMED_INVALID: &str = "command.compute.result.named.invalid";
-    #[doc = "%s returned value %s (rounded to %s)"]
-    pub const COMMAND_COMPUTE_RESULT_NAMED_ROUNDED: &str = "command.compute.result.named.rounded";
-    #[doc = "Number provider returned value %s"]
-    pub const COMMAND_COMPUTE_RESULT_UNNAMED_EXACT: &str = "command.compute.result.unnamed.exact";
-    #[doc = "Number provider returned invalid value (%s)"]
-    pub const COMMAND_COMPUTE_RESULT_UNNAMED_INVALID: &str =
-        "command.compute.result.unnamed.invalid";
-    #[doc = "Number provider returned value %s (rounded to %s)"]
-    pub const COMMAND_COMPUTE_RESULT_UNNAMED_ROUNDED: &str =
-        "command.compute.result.unnamed.rounded";
     #[doc = "<--[HERE]"]
     pub const COMMAND_CONTEXT_HERE: &str = "command.context.here";
     #[doc = "%s at position %s: %s"]
@@ -6446,7 +6235,7 @@ pub mod java {
     pub const COMMANDS_BOSSBAR_GET_VALUE: &str = "commands.bossbar.get.value";
     #[doc = "Custom bossbar %s is currently hidden"]
     pub const COMMANDS_BOSSBAR_GET_VISIBLE_HIDDEN: &str = "commands.bossbar.get.visible.hidden";
-    #[doc = "Custom bossbar %s is currently visible"]
+    #[doc = "Custom bossbar %s is currently shown"]
     pub const COMMANDS_BOSSBAR_GET_VISIBLE_VISIBLE: &str = "commands.bossbar.get.visible.visible";
     #[doc = "There are no custom bossbars active"]
     pub const COMMANDS_BOSSBAR_LIST_BARS_NONE: &str = "commands.bossbar.list.bars.none";
@@ -6460,7 +6249,7 @@ pub mod java {
     pub const COMMANDS_BOSSBAR_SET_COLOR_UNCHANGED: &str = "commands.bossbar.set.color.unchanged";
     #[doc = "Custom bossbar %s has changed maximum to %s"]
     pub const COMMANDS_BOSSBAR_SET_MAX_SUCCESS: &str = "commands.bossbar.set.max.success";
-    #[doc = "Nothing changed. That's already the maximum of this bossbar"]
+    #[doc = "Nothing changed. That's already the max of this bossbar"]
     pub const COMMANDS_BOSSBAR_SET_MAX_UNCHANGED: &str = "commands.bossbar.set.max.unchanged";
     #[doc = "Custom bossbar %s has been renamed"]
     pub const COMMANDS_BOSSBAR_SET_NAME_SUCCESS: &str = "commands.bossbar.set.name.success";
@@ -6768,8 +6557,6 @@ pub mod java {
     pub const COMMANDS_FILL_SUCCESS: &str = "commands.fill.success";
     #[doc = "Too many blocks in the specified area (maximum %s, but specified %s)"]
     pub const COMMANDS_FILL_TOOBIG: &str = "commands.fill.toobig";
-    #[doc = "No biome entries were changed"]
-    pub const COMMANDS_FILLBIOME_NO_CHANGES: &str = "commands.fillbiome.no_changes";
     #[doc = "Biomes set between %s, %s, %s and %s, %s, %s"]
     pub const COMMANDS_FILLBIOME_SUCCESS: &str = "commands.fillbiome.success";
     #[doc = "%s biome entry/entries set between %s, %s, %s and %s, %s, %s"]
@@ -6839,11 +6626,9 @@ pub mod java {
     pub const COMMANDS_GAMEMODE_SUCCESS_OTHER: &str = "commands.gamemode.success.other";
     #[doc = "Set own game mode to %s"]
     pub const COMMANDS_GAMEMODE_SUCCESS_SELF: &str = "commands.gamemode.success.self";
-    #[doc = "Game rule %s is already set to %s"]
-    pub const COMMANDS_GAMERULE_NOT_SET: &str = "commands.gamerule.not_set";
-    #[doc = "Game rule %s is currently set to %s"]
+    #[doc = "Gamerule %s is currently set to: %s"]
     pub const COMMANDS_GAMERULE_QUERY: &str = "commands.gamerule.query";
-    #[doc = "Game rule %s is now set to %s"]
+    #[doc = "Gamerule %s is now set to: %s"]
     pub const COMMANDS_GAMERULE_SET: &str = "commands.gamerule.set";
     #[doc = "Can't give more than %s of %s"]
     pub const COMMANDS_GIVE_FAILED_TOOMANYITEMS: &str = "commands.give.failed.toomanyitems";
@@ -6853,33 +6638,8 @@ pub mod java {
     pub const COMMANDS_GIVE_SUCCESS_SINGLE: &str = "commands.give.success.single";
     #[doc = "Unknown command or insufficient permissions"]
     pub const COMMANDS_HELP_FAILED: &str = "commands.help.failed";
-    #[doc = "Modified %s slot(s) at %s, %s, %s"]
-    pub const COMMANDS_ITEM_BLOCK_MODIFY_SUCCESS: &str = "commands.item.block.modify.success";
-    #[doc = "Replaced %s slot(s) at %s, %s, %s"]
-    pub const COMMANDS_ITEM_BLOCK_REPLACE_SUCCESS: &str = "commands.item.block.replace.success";
-    #[doc = "Replaced %s slot(s) at %s, %s, %s with %s"]
-    pub const COMMANDS_ITEM_BLOCK_REPLACE_SUCCESS_KNOWN_ITEM: &str =
-        "commands.item.block.replace.success.known_item";
     #[doc = "Replaced a slot at %s, %s, %s with %s"]
     pub const COMMANDS_ITEM_BLOCK_SET_SUCCESS: &str = "commands.item.block.set.success";
-    #[doc = "Modified slot(s) on %s entities"]
-    pub const COMMANDS_ITEM_ENTITY_MODIFY_SUCCESS_MULTIPLE: &str =
-        "commands.item.entity.modify.success.multiple";
-    #[doc = "Modified %s slot(s) on %s"]
-    pub const COMMANDS_ITEM_ENTITY_MODIFY_SUCCESS_SINGLE: &str =
-        "commands.item.entity.modify.success.single";
-    #[doc = "Replaced slot(s) on %s entities"]
-    pub const COMMANDS_ITEM_ENTITY_REPLACE_SUCCESS_MULTIPLE: &str =
-        "commands.item.entity.replace.success.multiple";
-    #[doc = "Replaced slot(s) on %s entities with %s"]
-    pub const COMMANDS_ITEM_ENTITY_REPLACE_SUCCESS_MULTIPLE_KNOWN_ITEM: &str =
-        "commands.item.entity.replace.success.multiple.known_item";
-    #[doc = "Replaced %s slot(s) on %s"]
-    pub const COMMANDS_ITEM_ENTITY_REPLACE_SUCCESS_SINGLE: &str =
-        "commands.item.entity.replace.success.single";
-    #[doc = "Replaced %s slot(s) on %s with %s"]
-    pub const COMMANDS_ITEM_ENTITY_REPLACE_SUCCESS_SINGLE_KNOWN_ITEM: &str =
-        "commands.item.entity.replace.success.single.known_item";
     #[doc = "Replaced a slot on %s entities with %s"]
     pub const COMMANDS_ITEM_ENTITY_SET_SUCCESS_MULTIPLE: &str =
         "commands.item.entity.set.success.multiple";
@@ -6888,16 +6648,8 @@ pub mod java {
         "commands.item.entity.set.success.single";
     #[doc = "The source does not have slot %s"]
     pub const COMMANDS_ITEM_SOURCE_NO_SUCH_SLOT: &str = "commands.item.source.no_such_slot";
-    #[doc = "The source does not have specified slots"]
-    pub const COMMANDS_ITEM_SOURCE_NO_SUCH_SLOT_UNNAMED: &str =
-        "commands.item.source.no_such_slot.unnamed";
     #[doc = "Source position %s, %s, %s is not a container"]
     pub const COMMANDS_ITEM_SOURCE_NOT_A_CONTAINER: &str = "commands.item.source.not_a_container";
-    #[doc = "No targets accepted items into specified slots"]
-    pub const COMMANDS_ITEM_TARGET_FAILED: &str = "commands.item.target.failed";
-    #[doc = "No targets accepted item %s into specified slots"]
-    pub const COMMANDS_ITEM_TARGET_FAILED_KNOWN_ITEM: &str =
-        "commands.item.target.failed.known_item";
     #[doc = "No targets accepted item %s into slot %s"]
     pub const COMMANDS_ITEM_TARGET_NO_CHANGED_KNOWN_ITEM: &str =
         "commands.item.target.no_changed.known_item";
@@ -6905,9 +6657,6 @@ pub mod java {
     pub const COMMANDS_ITEM_TARGET_NO_CHANGES: &str = "commands.item.target.no_changes";
     #[doc = "The target does not have slot %s"]
     pub const COMMANDS_ITEM_TARGET_NO_SUCH_SLOT: &str = "commands.item.target.no_such_slot";
-    #[doc = "The target does not have specified slots"]
-    pub const COMMANDS_ITEM_TARGET_NO_SUCH_SLOT_UNNAMED: &str =
-        "commands.item.target.no_such_slot.unnamed";
     #[doc = "Target position %s, %s, %s is not a container"]
     pub const COMMANDS_ITEM_TARGET_NOT_A_CONTAINER: &str = "commands.item.target.not_a_container";
     #[doc = "Failed to dump JFR recording: %s"]
@@ -6918,7 +6667,7 @@ pub mod java {
     pub const COMMANDS_JFR_STARTED: &str = "commands.jfr.started";
     #[doc = "JFR profiling stopped and dumped to %s"]
     pub const COMMANDS_JFR_STOPPED: &str = "commands.jfr.stopped";
-    #[doc = "Cannot kick the server owner in a LAN game"]
+    #[doc = "Cannot kick server owner in LAN game"]
     pub const COMMANDS_KICK_OWNER_FAILED: &str = "commands.kick.owner.failed";
     #[doc = "Cannot kick in an offline singleplayer game"]
     pub const COMMANDS_KICK_SINGLEPLAYER_FAILED: &str = "commands.kick.singleplayer.failed";
@@ -6950,7 +6699,7 @@ pub mod java {
     pub const COMMANDS_MESSAGE_DISPLAY_INCOMING: &str = "commands.message.display.incoming";
     #[doc = "You whisper to %s: %s"]
     pub const COMMANDS_MESSAGE_DISPLAY_OUTGOING: &str = "commands.message.display.outgoing";
-    #[doc = "Nothing changed. The player is already an operator"]
+    #[doc = "Nothing changed. The player already is an operator"]
     pub const COMMANDS_OP_FAILED: &str = "commands.op.failed";
     #[doc = "Made %s a server operator"]
     pub const COMMANDS_OP_SUCCESS: &str = "commands.op.success";
@@ -6976,7 +6725,7 @@ pub mod java {
     pub const COMMANDS_PERF_REPORTFAILED: &str = "commands.perf.reportFailed";
     #[doc = "Created debug report in %s"]
     pub const COMMANDS_PERF_REPORTSAVED: &str = "commands.perf.reportSaved";
-    #[doc = "Started a 10-second performance profiling run (use '/perf stop' to stop early)"]
+    #[doc = "Started 10 second performance profiling run (use '/perf stop' to stop early)"]
     pub const COMMANDS_PERF_STARTED: &str = "commands.perf.started";
     #[doc = "Stopped performance profiling after %s second(s) and %s tick(s) (%s tick(s) per second)"]
     pub const COMMANDS_PERF_STOPPED: &str = "commands.perf.stopped";
@@ -6986,8 +6735,6 @@ pub mod java {
     pub const COMMANDS_PLACE_FEATURE_INVALID: &str = "commands.place.feature.invalid";
     #[doc = "Placed \"%s\" at %s, %s, %s"]
     pub const COMMANDS_PLACE_FEATURE_SUCCESS: &str = "commands.place.feature.success";
-    #[doc = "Placed feature at %s, %s, %s"]
-    pub const COMMANDS_PLACE_FEATURE_SUCCESS_INLINE: &str = "commands.place.feature.success.inline";
     #[doc = "Failed to generate jigsaw"]
     pub const COMMANDS_PLACE_JIGSAW_FAILED: &str = "commands.place.jigsaw.failed";
     #[doc = "There is no template pool with type \"%s\""]
@@ -7012,34 +6759,6 @@ pub mod java {
     pub const COMMANDS_PLAYSOUND_SUCCESS_MULTIPLE: &str = "commands.playsound.success.multiple";
     #[doc = "Played sound %s to %s"]
     pub const COMMANDS_PLAYSOUND_SUCCESS_SINGLE: &str = "commands.playsound.success.single";
-    #[doc = "Player already has the specified post effect"]
-    pub const COMMANDS_POSTEFFECT_ADD_FAILED: &str = "commands.posteffect.add.failed";
-    #[doc = "Added post effect %s to %s players"]
-    pub const COMMANDS_POSTEFFECT_ADD_SUCCESS_MULTIPLE: &str =
-        "commands.posteffect.add.success.multiple";
-    #[doc = "Added post effect %s to %s"]
-    pub const COMMANDS_POSTEFFECT_ADD_SUCCESS_SINGLE: &str =
-        "commands.posteffect.add.success.single";
-    #[doc = "Player does not have any post effects to remove"]
-    pub const COMMANDS_POSTEFFECT_CLEAR_FAILED: &str = "commands.posteffect.clear.failed";
-    #[doc = "Removed all post effects from %s players"]
-    pub const COMMANDS_POSTEFFECT_CLEAR_SUCCESS_MULTIPLE: &str =
-        "commands.posteffect.clear.success.multiple";
-    #[doc = "Removed all post effects from %s"]
-    pub const COMMANDS_POSTEFFECT_CLEAR_SUCCESS_SINGLE: &str =
-        "commands.posteffect.clear.success.single";
-    #[doc = "Player %s does not have any post effects"]
-    pub const COMMANDS_POSTEFFECT_LIST_EMPTY: &str = "commands.posteffect.list.empty";
-    #[doc = "Player %s has %s post effects: %s"]
-    pub const COMMANDS_POSTEFFECT_LIST_SUCCESS: &str = "commands.posteffect.list.success";
-    #[doc = "Player does not have the specified post effect"]
-    pub const COMMANDS_POSTEFFECT_REMOVE_FAILED: &str = "commands.posteffect.remove.failed";
-    #[doc = "Removed post effect %s from %s players"]
-    pub const COMMANDS_POSTEFFECT_REMOVE_SUCCESS_MULTIPLE: &str =
-        "commands.posteffect.remove.success.multiple";
-    #[doc = "Removed post effect %s from %s"]
-    pub const COMMANDS_POSTEFFECT_REMOVE_SUCCESS_SINGLE: &str =
-        "commands.posteffect.remove.success.single";
     #[doc = "Copy Component"]
     pub const COMMANDS_PROFILE_FETCH_COPY_COMPONENT: &str = "commands.profile_fetch.copy_component";
     #[doc = "Failed to serialize profile: %s"]
@@ -7072,9 +6791,9 @@ pub mod java {
     pub const COMMANDS_PUBLISH_STARTED_ONLINE: &str = "commands.publish.started.online";
     #[doc = "Multiplayer game is now hosted on port %s"]
     pub const COMMANDS_PUBLISH_SUCCESS: &str = "commands.publish.success";
-    #[doc = "The range of the random value must be at most 2147483647"]
+    #[doc = "The range of the random value must be at most 2147483646"]
     pub const COMMANDS_RANDOM_ERROR_RANGE_TOO_LARGE: &str = "commands.random.error.range_too_large";
-    #[doc = "The range of the random value must be at least 1"]
+    #[doc = "The range of the random value must be at least 2"]
     pub const COMMANDS_RANDOM_ERROR_RANGE_TOO_SMALL: &str = "commands.random.error.range_too_small";
     #[doc = "Reset %s random sequence(s)"]
     pub const COMMANDS_RANDOM_RESET_ALL_SUCCESS: &str = "commands.random.reset.all.success";
@@ -7294,7 +7013,7 @@ pub mod java {
     #[doc = "The player idle timeout is now disabled"]
     pub const COMMANDS_SETIDLETIMEOUT_SUCCESS_DISABLED: &str =
         "commands.setidletimeout.success.disabled";
-    #[doc = "Can only set the world spawn for the Overworld"]
+    #[doc = "Can only set the world spawn for overworld"]
     pub const COMMANDS_SETWORLDSPAWN_FAILURE_NOT_OVERWORLD: &str =
         "commands.setworldspawn.failure.not_overworld";
     #[doc = "Set the world spawn point to %s, %s, %s [%s]"]
@@ -7349,15 +7068,15 @@ pub mod java {
         "commands.stopsound.success.sourceless.sound";
     #[doc = "Stopwatch '%s' already exists"]
     pub const COMMANDS_STOPWATCH_ALREADY_EXISTS: &str = "commands.stopwatch.already_exists";
-    #[doc = "Created stopwatch '%s'"]
+    #[doc = "Created Stopwatch '%s'"]
     pub const COMMANDS_STOPWATCH_CREATE_SUCCESS: &str = "commands.stopwatch.create.success";
     #[doc = "Stopwatch '%s' does not exist"]
     pub const COMMANDS_STOPWATCH_DOES_NOT_EXIST: &str = "commands.stopwatch.does_not_exist";
     #[doc = "Stopwatch '%s' has run for %ss"]
     pub const COMMANDS_STOPWATCH_QUERY: &str = "commands.stopwatch.query";
-    #[doc = "Removed stopwatch '%s'"]
+    #[doc = "Removed Stopwatch '%s'"]
     pub const COMMANDS_STOPWATCH_REMOVE_SUCCESS: &str = "commands.stopwatch.remove.success";
-    #[doc = "Restarted stopwatch '%s'"]
+    #[doc = "Restarted Stopwatch '%s'"]
     pub const COMMANDS_STOPWATCH_RESTART_SUCCESS: &str = "commands.stopwatch.restart.success";
     #[doc = "Unable to summon entity"]
     pub const COMMANDS_SUMMON_FAILED: &str = "commands.summon.failed";
@@ -7383,11 +7102,11 @@ pub mod java {
     pub const COMMANDS_TAG_ADD_SUCCESS_SINGLE: &str = "commands.tag.add.success.single";
     #[doc = "There are no tags on the %s entities"]
     pub const COMMANDS_TAG_LIST_MULTIPLE_EMPTY: &str = "commands.tag.list.multiple.empty";
-    #[doc = "The %s entities have %s total tag(s): %s"]
+    #[doc = "The %s entities have %s total tags: %s"]
     pub const COMMANDS_TAG_LIST_MULTIPLE_SUCCESS: &str = "commands.tag.list.multiple.success";
     #[doc = "%s has no tags"]
     pub const COMMANDS_TAG_LIST_SINGLE_EMPTY: &str = "commands.tag.list.single.empty";
-    #[doc = "%s has %s tag(s): %s"]
+    #[doc = "%s has %s tags: %s"]
     pub const COMMANDS_TAG_LIST_SINGLE_SUCCESS: &str = "commands.tag.list.single.success";
     #[doc = "Target does not have this tag"]
     pub const COMMANDS_TAG_REMOVE_FAILED: &str = "commands.tag.remove.failed";
@@ -7587,10 +7306,6 @@ pub mod java {
     pub const COMMANDS_TIME_NO_TIME_MARKER_FOUND: &str = "commands.time.no_time_marker_found";
     #[doc = "Paused clock %s"]
     pub const COMMANDS_TIME_PAUSE: &str = "commands.time.pause";
-    #[doc = "Clock %s is already paused"]
-    pub const COMMANDS_TIME_PAUSE_ALREADY_PAUSED: &str = "commands.time.pause.already_paused";
-    #[doc = "Clock %s is already running"]
-    pub const COMMANDS_TIME_PAUSE_ALREADY_RUNNING: &str = "commands.time.pause.already_running";
     #[doc = "The time is %s"]
     pub const COMMANDS_TIME_QUERY: &str = "commands.time.query";
     #[doc = "Clock %s is at %s tick(s)"]
@@ -7604,19 +7319,12 @@ pub mod java {
         "commands.time.query.timeline.repetitions";
     #[doc = "Clock %s will now advance at %sx normal rate"]
     pub const COMMANDS_TIME_RATE: &str = "commands.time.rate";
-    #[doc = "Clock %s is already advancing at %sx normal rate"]
-    pub const COMMANDS_TIME_RATE_ALREADY_SAME: &str = "commands.time.rate.already_same";
     #[doc = "Resumed clock %s"]
     pub const COMMANDS_TIME_RESUME: &str = "commands.time.resume";
     #[doc = "Set the time to %s"]
     pub const COMMANDS_TIME_SET: &str = "commands.time.set";
     #[doc = "Set %s to %s tick(s)"]
     pub const COMMANDS_TIME_SET_ABSOLUTE: &str = "commands.time.set.absolute";
-    #[doc = "Clock %s is already set to %s tick(s)"]
-    pub const COMMANDS_TIME_SET_ALREADY_AT_TIME: &str = "commands.time.set.already_at_time";
-    #[doc = "Clock %s is already at time marker %s"]
-    pub const COMMANDS_TIME_SET_ALREADY_AT_TIME_MARKER: &str =
-        "commands.time.set.already_at_time_marker";
     #[doc = "Set %s to time marker %s"]
     pub const COMMANDS_TIME_SET_TIME_MARKER: &str = "commands.time.set.time_marker";
     #[doc = "Timeline %s is not valid for clock %s"]
@@ -7703,7 +7411,7 @@ pub mod java {
     pub const COMMANDS_WEATHER_SET_CLEAR: &str = "commands.weather.set.clear";
     #[doc = "Set the weather to rain"]
     pub const COMMANDS_WEATHER_SET_RAIN: &str = "commands.weather.set.rain";
-    #[doc = "Set the weather to rain and thunder"]
+    #[doc = "Set the weather to rain & thunder"]
     pub const COMMANDS_WEATHER_SET_THUNDER: &str = "commands.weather.set.thunder";
     #[doc = "Player is already whitelisted"]
     pub const COMMANDS_WHITELIST_ADD_FAILED: &str = "commands.whitelist.add.failed";
@@ -7754,7 +7462,7 @@ pub mod java {
         "commands.worldborder.set.failed.nochange";
     #[doc = "World border cannot be smaller than 1 block wide"]
     pub const COMMANDS_WORLDBORDER_SET_FAILED_SMALL: &str = "commands.worldborder.set.failed.small";
-    #[doc = "Growing the world border to %s block(s) wide over %s second(s)"]
+    #[doc = "Growing the world border to %s blocks wide over %s seconds"]
     pub const COMMANDS_WORLDBORDER_SET_GROW: &str = "commands.worldborder.set.grow";
     #[doc = "Set the world border to %s block(s) wide"]
     pub const COMMANDS_WORLDBORDER_SET_IMMEDIATE: &str = "commands.worldborder.set.immediate";
@@ -7879,7 +7587,7 @@ pub mod java {
     pub const CONTAINER_REPAIR_EXPENSIVE: &str = "container.repair.expensive";
     #[doc = "Shulker Box"]
     pub const CONTAINER_SHULKERBOX: &str = "container.shulkerBox";
-    #[doc = "%s x %s"]
+    #[doc = "%s x%s"]
     pub const CONTAINER_SHULKERBOX_ITEMCOUNT: &str = "container.shulkerBox.itemCount";
     #[doc = "and %s more..."]
     pub const CONTAINER_SHULKERBOX_MORE: &str = "container.shulkerBox.more";
@@ -8014,7 +7722,7 @@ pub mod java {
     #[doc = "This world contains invalid or corrupted save data."]
     pub const DATAPACKFAILURE_SAFEMODE_FAILED_DESCRIPTION: &str =
         "datapackFailure.safeMode.failed.description";
-    #[doc = "Failed to load world in Safe Mode"]
+    #[doc = "Failed to load world in Safe Mode."]
     pub const DATAPACKFAILURE_SAFEMODE_FAILED_TITLE: &str = "datapackFailure.safeMode.failed.title";
     #[doc = "Errors in the currently selected data pack(s) prevented the world from loading.\nYou can either try to load it with only the vanilla data pack (\"Safe Mode\"), or go back to the title screen and fix it manually."]
     pub const DATAPACKFAILURE_TITLE: &str = "datapackFailure.title";
@@ -8178,8 +7886,6 @@ pub mod java {
     pub const DEATH_ATTACK_STING_PLAYER: &str = "death.attack.sting.player";
     #[doc = "%1$s died because not just the floor is lava"]
     pub const DEATH_ATTACK_SULFURCUBEHOT: &str = "death.attack.sulfurCubeHot";
-    #[doc = "%2$s showed %1$s that not just the floor is lava using %3$s"]
-    pub const DEATH_ATTACK_SULFURCUBEHOT_ITEM: &str = "death.attack.sulfurCubeHot.item";
     #[doc = "%2$s showed %1$s that not just the floor is lava"]
     pub const DEATH_ATTACK_SULFURCUBEHOT_PLAYER: &str = "death.attack.sulfurCubeHot.player";
     #[doc = "%1$s was poked to death by a sweet berry bush"]
@@ -8304,10 +8010,6 @@ pub mod java {
     pub const DEBUG_HELP_HELP: &str = "debug.help.help";
     #[doc = "Key bindings:"]
     pub const DEBUG_HELP_MESSAGE: &str = "debug.help.message";
-    #[doc = "Improved transparency: disabled"]
-    pub const DEBUG_IMPROVEDTRANSPARENCY_OFF: &str = "debug.improvedTransparency.off";
-    #[doc = "Improved transparency: enabled"]
-    pub const DEBUG_IMPROVEDTRANSPARENCY_ON: &str = "debug.improvedTransparency.on";
     #[doc = "Copied client-side block data to clipboard"]
     pub const DEBUG_INSPECT_CLIENT_BLOCK: &str = "debug.inspect.client.block";
     #[doc = "Copied client-side entity data to clipboard"]
@@ -8324,7 +8026,7 @@ pub mod java {
     pub const DEBUG_OPTIONS_CATEGORY_TEXT: &str = "debug.options.category.text";
     #[doc = "F3 + F6 = Edit debug options"]
     pub const DEBUG_OPTIONS_HELP: &str = "debug.options.help";
-    #[doc = "Not visible when debug info is reduced."]
+    #[doc = "Not visible when debug info is reduced"]
     pub const DEBUG_OPTIONS_NOTALLOWED_TOOLTIP: &str = "debug.options.notAllowed.tooltip";
     #[doc = "Default profile"]
     pub const DEBUG_OPTIONS_PROFILE_DEFAULT: &str = "debug.options.profile.default";
@@ -8467,7 +8169,7 @@ pub mod java {
     #[doc = "Are you sure you want to discard your pending game rule changes?"]
     pub const EDITGAMERULE_INGAME_DISCARDCHANGES_MESSAGE: &str =
         "editGamerule.inGame.discardChanges.message";
-    #[doc = "Game Rule Changes"]
+    #[doc = "Game rule Changes"]
     pub const EDITGAMERULE_INGAME_DISCARDCHANGES_TITLE: &str =
         "editGamerule.inGame.discardChanges.title";
     #[doc = "Retrieving game rules..."]
@@ -8744,8 +8446,6 @@ pub mod java {
     pub const ENTITY_MINECRAFT_CREAKING_TRANSIENT: &str = "entity.minecraft.creaking_transient";
     #[doc = "Creeper"]
     pub const ENTITY_MINECRAFT_CREEPER: &str = "entity.minecraft.creeper";
-    #[doc = "Cushion"]
-    pub const ENTITY_MINECRAFT_CUSHION: &str = "entity.minecraft.cushion";
     #[doc = "Dark Oak Boat"]
     pub const ENTITY_MINECRAFT_DARK_OAK_BOAT: &str = "entity.minecraft.dark_oak_boat";
     #[doc = "Dark Oak Boat with Chest"]
@@ -8902,10 +8602,6 @@ pub mod java {
     pub const ENTITY_MINECRAFT_PLAYER: &str = "entity.minecraft.player";
     #[doc = "Polar Bear"]
     pub const ENTITY_MINECRAFT_POLAR_BEAR: &str = "entity.minecraft.polar_bear";
-    #[doc = "Poplar Boat"]
-    pub const ENTITY_MINECRAFT_POPLAR_BOAT: &str = "entity.minecraft.poplar_boat";
-    #[doc = "Poplar Boat with Chest"]
-    pub const ENTITY_MINECRAFT_POPLAR_CHEST_BOAT: &str = "entity.minecraft.poplar_chest_boat";
     #[doc = "Potion"]
     pub const ENTITY_MINECRAFT_POTION: &str = "entity.minecraft.potion";
     #[doc = "Pufferfish"]
@@ -9159,41 +8855,14 @@ pub mod java {
     pub const EVENT_MINECRAFT_RAID_VICTORY: &str = "event.minecraft.raid.victory";
     #[doc = "Raid - Victory"]
     pub const EVENT_MINECRAFT_RAID_VICTORY_FULL: &str = "event.minecraft.raid.victory.full";
-    #[doc = "Bamboo Camp Map"]
-    pub const FILLED_MAP_BAMBOO_CAMP_MAP: &str = "filled_map.bamboo_camp_map";
-    #[doc = "Bamboo Jungle Abandoned Camp Map"]
-    pub const FILLED_MAP_BAMBOO_JUNGLE_ABANDONED_CAMP: &str =
-        "filled_map.bamboo_jungle_abandoned_camp";
-    #[doc = "Birch Forest Abandoned Camp Map"]
-    pub const FILLED_MAP_BIRCH_FOREST_ABANDONED_CAMP: &str =
-        "filled_map.birch_forest_abandoned_camp";
-    #[doc = "Birch Forest Camp Map"]
-    pub const FILLED_MAP_BIRCH_FOREST_CAMP_MAP: &str = "filled_map.birch_forest_camp_map";
     #[doc = "Buried Treasure Map"]
     pub const FILLED_MAP_BURIED_TREASURE: &str = "filled_map.buried_treasure";
-    #[doc = "Cherry Grove Abandoned Camp Map"]
-    pub const FILLED_MAP_CHERRY_GROVE_ABANDONED_CAMP: &str =
-        "filled_map.cherry_grove_abandoned_camp";
-    #[doc = "Cherry Grove Camp Map"]
-    pub const FILLED_MAP_CHERRY_GROVE_CAMP_MAP: &str = "filled_map.cherry_grove_camp_map";
-    #[doc = "Dappled Forest Abandoned Camp Map"]
-    pub const FILLED_MAP_DAPPLED_FOREST_ABANDONED_CAMP: &str =
-        "filled_map.dappled_forest_abandoned_camp";
-    #[doc = "Dappled Forest Camp Map"]
-    pub const FILLED_MAP_DAPPLED_FOREST_CAMP_MAP: &str = "filled_map.dappled_forest_camp_map";
     #[doc = "Jungle Explorer Map"]
     pub const FILLED_MAP_EXPLORER_JUNGLE: &str = "filled_map.explorer_jungle";
     #[doc = "Swamp Explorer Map"]
     pub const FILLED_MAP_EXPLORER_SWAMP: &str = "filled_map.explorer_swamp";
-    #[doc = "Flower Forest Abandoned Camp Map"]
-    pub const FILLED_MAP_FLOWER_FOREST_ABANDONED_CAMP: &str =
-        "filled_map.flower_forest_abandoned_camp";
-    #[doc = "Flower Forest Camp Map"]
-    pub const FILLED_MAP_FLOWER_FOREST_CAMP_MAP: &str = "filled_map.flower_forest_camp_map";
     #[doc = "ID #%s"]
     pub const FILLED_MAP_ID: &str = "filled_map.id";
-    #[doc = "Jungle Temple Map"]
-    pub const FILLED_MAP_JUNGLE_TEMPLE: &str = "filled_map.jungle_temple";
     #[doc = "(Level %s/%s)"]
     pub const FILLED_MAP_LEVEL: &str = "filled_map.level";
     #[doc = "Locked"]
@@ -9202,16 +8871,8 @@ pub mod java {
     pub const FILLED_MAP_MANSION: &str = "filled_map.mansion";
     #[doc = "Ocean Explorer Map"]
     pub const FILLED_MAP_MONUMENT: &str = "filled_map.monument";
-    #[doc = "Pale Garden Abandoned Camp Map"]
-    pub const FILLED_MAP_PALE_GARDEN_ABANDONED_CAMP: &str = "filled_map.pale_garden_abandoned_camp";
-    #[doc = "Pale Garden Camp Map"]
-    pub const FILLED_MAP_PALE_GARDEN_CAMP_MAP: &str = "filled_map.pale_garden_camp_map";
     #[doc = "Scaling at 1:%s"]
     pub const FILLED_MAP_SCALE: &str = "filled_map.scale";
-    #[doc = "Swamp Abandoned Camp Map"]
-    pub const FILLED_MAP_SWAMP_ABANDONED_CAMP: &str = "filled_map.swamp_abandoned_camp";
-    #[doc = "Swamp Camp Map"]
-    pub const FILLED_MAP_SWAMP_CAMP_MAP: &str = "filled_map.swamp_camp_map";
     #[doc = "Trial Explorer Map"]
     pub const FILLED_MAP_TRIAL_CHAMBERS: &str = "filled_map.trial_chambers";
     #[doc = "Unknown Map"]
@@ -9226,11 +8887,6 @@ pub mod java {
     pub const FILLED_MAP_VILLAGE_SNOWY: &str = "filled_map.village_snowy";
     #[doc = "Taiga Village Map"]
     pub const FILLED_MAP_VILLAGE_TAIGA: &str = "filled_map.village_taiga";
-    #[doc = "Windswept Forest Abandoned Camp Map"]
-    pub const FILLED_MAP_WINDSWEPT_FOREST_ABANDONED_CAMP: &str =
-        "filled_map.windswept_forest_abandoned_camp";
-    #[doc = "Windswept Forest Camp Map"]
-    pub const FILLED_MAP_WINDSWEPT_FOREST_CAMP_MAP: &str = "filled_map.windswept_forest_camp_map";
     #[doc = "Bottomless Pit"]
     pub const FLAT_WORLD_PRESET_MINECRAFT_BOTTOMLESS_PIT: &str =
         "flat_world_preset.minecraft.bottomless_pit";
@@ -9321,7 +8977,7 @@ pub mod java {
     pub const GAMERULE_DODAYLIGHTCYCLE: &str = "gamerule.doDaylightCycle";
     #[doc = "Drop entity equipment"]
     pub const GAMERULE_DOENTITYDROPS: &str = "gamerule.doEntityDrops";
-    #[doc = "Controls drops from Minecarts (including inventories), Item Frames, Boats, etc."]
+    #[doc = "Controls drops from minecarts (including inventories), item frames, boats, etc."]
     pub const GAMERULE_DOENTITYDROPS_DESCRIPTION: &str = "gamerule.doEntityDrops.description";
     #[doc = "Update fire"]
     pub const GAMERULE_DOFIRETICK: &str = "gamerule.doFireTick";
@@ -9424,7 +9080,7 @@ pub mod java {
     #[doc = "Fire spread radius"]
     pub const GAMERULE_MINECRAFT_FIRE_SPREAD_RADIUS_AROUND_PLAYER: &str =
         "gamerule.minecraft.fire_spread_radius_around_player";
-    #[doc = "The radius in blocks around a player in which fire can spread."]
+    #[doc = "The radius in blocks around a player in which fire can spread"]
     pub const GAMERULE_MINECRAFT_FIRE_SPREAD_RADIUS_AROUND_PLAYER_DESCRIPTION: &str =
         "gamerule.minecraft.fire_spread_radius_around_player.description";
     #[doc = "Do player movement check"]
@@ -9487,7 +9143,7 @@ pub mod java {
         "gamerule.snowAccumulationHeight.description";
     #[doc = "Spawn chunk radius"]
     pub const GAMERULE_SPAWNCHUNKRADIUS: &str = "gamerule.spawnChunkRadius";
-    #[doc = "The amount of chunks that stay loaded around the Overworld spawn position."]
+    #[doc = "The amount of chunks that stay loaded around the overworld spawn position."]
     pub const GAMERULE_SPAWNCHUNKRADIUS_DESCRIPTION: &str = "gamerule.spawnChunkRadius.description";
     #[doc = "Spawn Monsters"]
     pub const GAMERULE_SPAWNMONSTERS: &str = "gamerule.spawnMonsters";
@@ -9902,7 +9558,7 @@ pub mod java {
     #[doc = "Friends List is not working right now.\n\nTry again later."]
     pub const GUI_FRIENDS_ERROR_TEMPORARY_UNAVAILABLE: &str =
         "gui.friends.error.temporary_unavailable";
-    #[doc = "Invalid token supplied. Restart your game and launcher, then try again."]
+    #[doc = "Invalid token supplied. Restart your game and launcher, then try again"]
     pub const GUI_FRIENDS_ERROR_UNAUTHORIZED: &str = "gui.friends.error.unauthorized";
     #[doc = "The Friends List service is currently unavailable. Please check your connection and try again later."]
     pub const GUI_FRIENDS_ERROR_UNAVAILABLE_MESSAGE: &str = "gui.friends.error.unavailable.message";
@@ -10101,7 +9757,7 @@ pub mod java {
     pub const GUI_RECIPEBOOK_TOGGLERECIPES_SMOKABLE: &str = "gui.recipebook.toggleRecipes.smokable";
     #[doc = "Remove"]
     pub const GUI_REMOVE: &str = "gui.remove";
-    #[doc = "Report to Server"]
+    #[doc = "Report To Server"]
     pub const GUI_REPORT_TO_SERVER: &str = "gui.report_to_server";
     #[doc = "Search..."]
     pub const GUI_SELECTWORLD_SEARCH: &str = "gui.selectWorld.search";
@@ -10241,10 +9897,6 @@ pub mod java {
     pub const ITEM_DYED: &str = "item.dyed";
     #[doc = "Intangible"]
     pub const ITEM_INTANGIBLE: &str = "item.intangible";
-    #[doc = "Abandoned Camp Map"]
-    pub const ITEM_MINECRAFT_ABANDONED_CAMP_MAP: &str = "item.minecraft.abandoned_camp_map";
-    #[doc = "Abandoned Campsite Map"]
-    pub const ITEM_MINECRAFT_ABANDONED_CAMPSITE_MAP: &str = "item.minecraft.abandoned_campsite_map";
     #[doc = "Acacia Boat"]
     pub const ITEM_MINECRAFT_ACACIA_BOAT: &str = "item.minecraft.acacia_boat";
     #[doc = "Acacia Boat with Chest"]
@@ -10253,8 +9905,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_ALLAY_SPAWN_EGG: &str = "item.minecraft.allay_spawn_egg";
     #[doc = "Amethyst Shard"]
     pub const ITEM_MINECRAFT_AMETHYST_SHARD: &str = "item.minecraft.amethyst_shard";
-    #[doc = "Ancient City Map"]
-    pub const ITEM_MINECRAFT_ANCIENT_CITY_MAP: &str = "item.minecraft.ancient_city_map";
     #[doc = "Angler Pottery Shard"]
     pub const ITEM_MINECRAFT_ANGLER_POTTERY_SHARD: &str = "item.minecraft.angler_pottery_shard";
     #[doc = "Angler Pottery Sherd"]
@@ -10305,8 +9955,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_BIRCH_CHEST_BOAT: &str = "item.minecraft.birch_chest_boat";
     #[doc = "Black Bundle"]
     pub const ITEM_MINECRAFT_BLACK_BUNDLE: &str = "item.minecraft.black_bundle";
-    #[doc = "Black Cushion"]
-    pub const ITEM_MINECRAFT_BLACK_CUSHION: &str = "item.minecraft.black_cushion";
     #[doc = "Black Dye"]
     pub const ITEM_MINECRAFT_BLACK_DYE: &str = "item.minecraft.black_dye";
     #[doc = "Black Harness"]
@@ -10323,8 +9971,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_BLAZE_SPAWN_EGG: &str = "item.minecraft.blaze_spawn_egg";
     #[doc = "Blue Bundle"]
     pub const ITEM_MINECRAFT_BLUE_BUNDLE: &str = "item.minecraft.blue_bundle";
-    #[doc = "Blue Cushion"]
-    pub const ITEM_MINECRAFT_BLUE_CUSHION: &str = "item.minecraft.blue_cushion";
     #[doc = "Blue Dye"]
     pub const ITEM_MINECRAFT_BLUE_DYE: &str = "item.minecraft.blue_dye";
     #[doc = "Blue Egg"]
@@ -10368,8 +10014,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_BRICK: &str = "item.minecraft.brick";
     #[doc = "Brown Bundle"]
     pub const ITEM_MINECRAFT_BROWN_BUNDLE: &str = "item.minecraft.brown_bundle";
-    #[doc = "Brown Cushion"]
-    pub const ITEM_MINECRAFT_BROWN_CUSHION: &str = "item.minecraft.brown_cushion";
     #[doc = "Brown Dye"]
     pub const ITEM_MINECRAFT_BROWN_DYE: &str = "item.minecraft.brown_dye";
     #[doc = "Brown Egg"]
@@ -10391,16 +10035,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_BUNDLE_FULL: &str = "item.minecraft.bundle.full";
     #[doc = "%s/%s"]
     pub const ITEM_MINECRAFT_BUNDLE_FULLNESS: &str = "item.minecraft.bundle.fullness";
-    #[doc = "Buried Ancient City Map"]
-    pub const ITEM_MINECRAFT_BURIED_ANCIENT_CITY_MAP: &str =
-        "item.minecraft.buried_ancient_city_map";
-    #[doc = "Buried Mineshaft Map"]
-    pub const ITEM_MINECRAFT_BURIED_MINESHAFT_MAP: &str = "item.minecraft.buried_mineshaft_map";
-    #[doc = "Buried Treasure Map"]
-    pub const ITEM_MINECRAFT_BURIED_TREASURE_MAP: &str = "item.minecraft.buried_treasure_map";
-    #[doc = "Buried Trial Chambers Map"]
-    pub const ITEM_MINECRAFT_BURIED_TRIAL_CHAMBERS_MAP: &str =
-        "item.minecraft.buried_trial_chambers_map";
     #[doc = "Burn Pottery Shard"]
     pub const ITEM_MINECRAFT_BURN_POTTERY_SHARD: &str = "item.minecraft.burn_pottery_shard";
     #[doc = "Burn Pottery Sherd"]
@@ -10537,8 +10171,6 @@ pub mod java {
         "item.minecraft.crossbow.projectile.single";
     #[doc = "Cyan Bundle"]
     pub const ITEM_MINECRAFT_CYAN_BUNDLE: &str = "item.minecraft.cyan_bundle";
-    #[doc = "Cyan Cushion"]
-    pub const ITEM_MINECRAFT_CYAN_CUSHION: &str = "item.minecraft.cyan_cushion";
     #[doc = "Cyan Dye"]
     pub const ITEM_MINECRAFT_CYAN_DYE: &str = "item.minecraft.cyan_dye";
     #[doc = "Cyan Harness"]
@@ -10559,10 +10191,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_DEBUG_STICK_SELECT: &str = "item.minecraft.debug_stick.select";
     #[doc = "\"%s\" to %s"]
     pub const ITEM_MINECRAFT_DEBUG_STICK_UPDATE: &str = "item.minecraft.debug_stick.update";
-    #[doc = "Desert Pyramid Map"]
-    pub const ITEM_MINECRAFT_DESERT_PYRAMID_MAP: &str = "item.minecraft.desert_pyramid_map";
-    #[doc = "Desert Village Map"]
-    pub const ITEM_MINECRAFT_DESERT_VILLAGE_MAP: &str = "item.minecraft.desert_village_map";
     #[doc = "Diamond"]
     pub const ITEM_MINECRAFT_DIAMOND: &str = "item.minecraft.diamond";
     #[doc = "Diamond Axe"]
@@ -10665,9 +10293,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_FIREWORK_ROCKET: &str = "item.minecraft.firework_rocket";
     #[doc = "Flight Duration:"]
     pub const ITEM_MINECRAFT_FIREWORK_ROCKET_FLIGHT: &str = "item.minecraft.firework_rocket.flight";
-    #[doc = "Flight Duration: %s"]
-    pub const ITEM_MINECRAFT_FIREWORK_ROCKET_FLIGHT_DURATION: &str =
-        "item.minecraft.firework_rocket.flight_duration";
     #[doc = "%s x %s"]
     pub const ITEM_MINECRAFT_FIREWORK_ROCKET_MULTIPLE_STARS: &str =
         "item.minecraft.firework_rocket.multiple_stars";
@@ -10842,16 +10467,12 @@ pub mod java {
     pub const ITEM_MINECRAFT_GOLDEN_SWORD: &str = "item.minecraft.golden_sword";
     #[doc = "Gray Bundle"]
     pub const ITEM_MINECRAFT_GRAY_BUNDLE: &str = "item.minecraft.gray_bundle";
-    #[doc = "Gray Cushion"]
-    pub const ITEM_MINECRAFT_GRAY_CUSHION: &str = "item.minecraft.gray_cushion";
     #[doc = "Gray Dye"]
     pub const ITEM_MINECRAFT_GRAY_DYE: &str = "item.minecraft.gray_dye";
     #[doc = "Gray Harness"]
     pub const ITEM_MINECRAFT_GRAY_HARNESS: &str = "item.minecraft.gray_harness";
     #[doc = "Green Bundle"]
     pub const ITEM_MINECRAFT_GREEN_BUNDLE: &str = "item.minecraft.green_bundle";
-    #[doc = "Green Cushion"]
-    pub const ITEM_MINECRAFT_GREEN_CUSHION: &str = "item.minecraft.green_cushion";
     #[doc = "Green Dye"]
     pub const ITEM_MINECRAFT_GREEN_DYE: &str = "item.minecraft.green_dye";
     #[doc = "Green Harness"]
@@ -10946,10 +10567,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_JUNGLE_BOAT: &str = "item.minecraft.jungle_boat";
     #[doc = "Jungle Boat with Chest"]
     pub const ITEM_MINECRAFT_JUNGLE_CHEST_BOAT: &str = "item.minecraft.jungle_chest_boat";
-    #[doc = "Jungle Explorer Map"]
-    pub const ITEM_MINECRAFT_JUNGLE_EXPLORER_MAP: &str = "item.minecraft.jungle_explorer_map";
-    #[doc = "Jungle Pyramid Map"]
-    pub const ITEM_MINECRAFT_JUNGLE_PYRAMID_MAP: &str = "item.minecraft.jungle_pyramid_map";
     #[doc = "Knowledge Book"]
     pub const ITEM_MINECRAFT_KNOWLEDGE_BOOK: &str = "item.minecraft.knowledge_book";
     #[doc = "Lapis Lazuli"]
@@ -10972,24 +10589,18 @@ pub mod java {
     pub const ITEM_MINECRAFT_LEATHER_LEGGINGS: &str = "item.minecraft.leather_leggings";
     #[doc = "Light Blue Bundle"]
     pub const ITEM_MINECRAFT_LIGHT_BLUE_BUNDLE: &str = "item.minecraft.light_blue_bundle";
-    #[doc = "Light Blue Cushion"]
-    pub const ITEM_MINECRAFT_LIGHT_BLUE_CUSHION: &str = "item.minecraft.light_blue_cushion";
     #[doc = "Light Blue Dye"]
     pub const ITEM_MINECRAFT_LIGHT_BLUE_DYE: &str = "item.minecraft.light_blue_dye";
     #[doc = "Light Blue Harness"]
     pub const ITEM_MINECRAFT_LIGHT_BLUE_HARNESS: &str = "item.minecraft.light_blue_harness";
     #[doc = "Light Gray Bundle"]
     pub const ITEM_MINECRAFT_LIGHT_GRAY_BUNDLE: &str = "item.minecraft.light_gray_bundle";
-    #[doc = "Light Gray Cushion"]
-    pub const ITEM_MINECRAFT_LIGHT_GRAY_CUSHION: &str = "item.minecraft.light_gray_cushion";
     #[doc = "Light Gray Dye"]
     pub const ITEM_MINECRAFT_LIGHT_GRAY_DYE: &str = "item.minecraft.light_gray_dye";
     #[doc = "Light Gray Harness"]
     pub const ITEM_MINECRAFT_LIGHT_GRAY_HARNESS: &str = "item.minecraft.light_gray_harness";
     #[doc = "Lime Bundle"]
     pub const ITEM_MINECRAFT_LIME_BUNDLE: &str = "item.minecraft.lime_bundle";
-    #[doc = "Lime Cushion"]
-    pub const ITEM_MINECRAFT_LIME_CUSHION: &str = "item.minecraft.lime_cushion";
     #[doc = "Lime Dye"]
     pub const ITEM_MINECRAFT_LIME_DYE: &str = "item.minecraft.lime_dye";
     #[doc = "Lime Harness"]
@@ -11082,8 +10693,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_MACE: &str = "item.minecraft.mace";
     #[doc = "Magenta Bundle"]
     pub const ITEM_MINECRAFT_MAGENTA_BUNDLE: &str = "item.minecraft.magenta_bundle";
-    #[doc = "Magenta Cushion"]
-    pub const ITEM_MINECRAFT_MAGENTA_CUSHION: &str = "item.minecraft.magenta_cushion";
     #[doc = "Magenta Dye"]
     pub const ITEM_MINECRAFT_MAGENTA_DYE: &str = "item.minecraft.magenta_dye";
     #[doc = "Magenta Harness"]
@@ -11110,8 +10719,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_MINER_POTTERY_SHARD: &str = "item.minecraft.miner_pottery_shard";
     #[doc = "Miner Pottery Sherd"]
     pub const ITEM_MINECRAFT_MINER_POTTERY_SHERD: &str = "item.minecraft.miner_pottery_sherd";
-    #[doc = "Mineshaft Map"]
-    pub const ITEM_MINECRAFT_MINESHAFT_MAP: &str = "item.minecraft.mineshaft_map";
     #[doc = "Banner Pattern"]
     pub const ITEM_MINECRAFT_MOJANG_BANNER_PATTERN: &str = "item.minecraft.mojang_banner_pattern";
     #[doc = "Thing"]
@@ -11280,10 +10887,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_OAK_BOAT: &str = "item.minecraft.oak_boat";
     #[doc = "Oak Boat with Chest"]
     pub const ITEM_MINECRAFT_OAK_CHEST_BOAT: &str = "item.minecraft.oak_chest_boat";
-    #[doc = "Ocean Explorer Map"]
-    pub const ITEM_MINECRAFT_OCEAN_EXPLORER_MAP: &str = "item.minecraft.ocean_explorer_map";
-    #[doc = "Ocean Monument Map"]
-    pub const ITEM_MINECRAFT_OCEAN_MONUMENT_MAP: &str = "item.minecraft.ocean_monument_map";
     #[doc = "Ocelot Spawn Egg"]
     pub const ITEM_MINECRAFT_OCELOT_SPAWN_EGG: &str = "item.minecraft.ocelot_spawn_egg";
     #[doc = "Ominous Bottle"]
@@ -11292,8 +10895,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_OMINOUS_TRIAL_KEY: &str = "item.minecraft.ominous_trial_key";
     #[doc = "Orange Bundle"]
     pub const ITEM_MINECRAFT_ORANGE_BUNDLE: &str = "item.minecraft.orange_bundle";
-    #[doc = "Orange Cushion"]
-    pub const ITEM_MINECRAFT_ORANGE_CUSHION: &str = "item.minecraft.orange_cushion";
     #[doc = "Orange Dye"]
     pub const ITEM_MINECRAFT_ORANGE_DYE: &str = "item.minecraft.orange_dye";
     #[doc = "Orange Harness"]
@@ -11334,8 +10935,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_PILLAGER_SPAWN_EGG: &str = "item.minecraft.pillager_spawn_egg";
     #[doc = "Pink Bundle"]
     pub const ITEM_MINECRAFT_PINK_BUNDLE: &str = "item.minecraft.pink_bundle";
-    #[doc = "Pink Cushion"]
-    pub const ITEM_MINECRAFT_PINK_CUSHION: &str = "item.minecraft.pink_cushion";
     #[doc = "Pink Dye"]
     pub const ITEM_MINECRAFT_PINK_DYE: &str = "item.minecraft.pink_dye";
     #[doc = "Pink Harness"]
@@ -11344,8 +10943,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_PITCHER_PLANT: &str = "item.minecraft.pitcher_plant";
     #[doc = "Pitcher Pod"]
     pub const ITEM_MINECRAFT_PITCHER_POD: &str = "item.minecraft.pitcher_pod";
-    #[doc = "Plains Village Map"]
-    pub const ITEM_MINECRAFT_PLAINS_VILLAGE_MAP: &str = "item.minecraft.plains_village_map";
     #[doc = "Plenty Pottery Shard"]
     pub const ITEM_MINECRAFT_PLENTY_POTTERY_SHARD: &str = "item.minecraft.plenty_pottery_shard";
     #[doc = "Plenty Pottery Sherd"]
@@ -11354,10 +10951,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_POISONOUS_POTATO: &str = "item.minecraft.poisonous_potato";
     #[doc = "Polar Bear Spawn Egg"]
     pub const ITEM_MINECRAFT_POLAR_BEAR_SPAWN_EGG: &str = "item.minecraft.polar_bear_spawn_egg";
-    #[doc = "Poplar Boat"]
-    pub const ITEM_MINECRAFT_POPLAR_BOAT: &str = "item.minecraft.poplar_boat";
-    #[doc = "Poplar Boat with Chest"]
-    pub const ITEM_MINECRAFT_POPLAR_CHEST_BOAT: &str = "item.minecraft.poplar_chest_boat";
     #[doc = "Popped Chorus Fruit"]
     pub const ITEM_MINECRAFT_POPPED_CHORUS_FRUIT: &str = "item.minecraft.popped_chorus_fruit";
     #[doc = "Raw Porkchop"]
@@ -11458,8 +11051,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_PUMPKIN_SEEDS: &str = "item.minecraft.pumpkin_seeds";
     #[doc = "Purple Bundle"]
     pub const ITEM_MINECRAFT_PURPLE_BUNDLE: &str = "item.minecraft.purple_bundle";
-    #[doc = "Purple Cushion"]
-    pub const ITEM_MINECRAFT_PURPLE_CUSHION: &str = "item.minecraft.purple_cushion";
     #[doc = "Purple Dye"]
     pub const ITEM_MINECRAFT_PURPLE_DYE: &str = "item.minecraft.purple_dye";
     #[doc = "Purple Harness"]
@@ -11494,8 +11085,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_RECOVERY_COMPASS: &str = "item.minecraft.recovery_compass";
     #[doc = "Red Bundle"]
     pub const ITEM_MINECRAFT_RED_BUNDLE: &str = "item.minecraft.red_bundle";
-    #[doc = "Red Cushion"]
-    pub const ITEM_MINECRAFT_RED_CUSHION: &str = "item.minecraft.red_cushion";
     #[doc = "Red Dye"]
     pub const ITEM_MINECRAFT_RED_DYE: &str = "item.minecraft.red_dye";
     #[doc = "Red Harness"]
@@ -11522,8 +11111,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_SALMON_BUCKET: &str = "item.minecraft.salmon_bucket";
     #[doc = "Salmon Spawn Egg"]
     pub const ITEM_MINECRAFT_SALMON_SPAWN_EGG: &str = "item.minecraft.salmon_spawn_egg";
-    #[doc = "Savanna Village Map"]
-    pub const ITEM_MINECRAFT_SAVANNA_VILLAGE_MAP: &str = "item.minecraft.savanna_village_map";
     #[doc = "Scrape Pottery Sherd"]
     pub const ITEM_MINECRAFT_SCRAPE_POTTERY_SHERD: &str = "item.minecraft.scrape_pottery_sherd";
     #[doc = "Scute"]
@@ -11672,8 +11259,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_SNOW_GOLEM_SPAWN_EGG: &str = "item.minecraft.snow_golem_spawn_egg";
     #[doc = "Snowball"]
     pub const ITEM_MINECRAFT_SNOWBALL: &str = "item.minecraft.snowball";
-    #[doc = "Snowy Village Map"]
-    pub const ITEM_MINECRAFT_SNOWY_VILLAGE_MAP: &str = "item.minecraft.snowy_village_map";
     #[doc = "Spectral Arrow"]
     pub const ITEM_MINECRAFT_SPECTRAL_ARROW: &str = "item.minecraft.spectral_arrow";
     #[doc = "Spider Eye"]
@@ -11788,8 +11373,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_STONE_SPEAR: &str = "item.minecraft.stone_spear";
     #[doc = "Stone Sword"]
     pub const ITEM_MINECRAFT_STONE_SWORD: &str = "item.minecraft.stone_sword";
-    #[doc = "Straw Bed"]
-    pub const ITEM_MINECRAFT_STRAW_BED: &str = "item.minecraft.straw_bed";
     #[doc = "Stray Spawn Egg"]
     pub const ITEM_MINECRAFT_STRAY_SPAWN_EGG: &str = "item.minecraft.stray_spawn_egg";
     #[doc = "Strider Spawn Egg"]
@@ -11804,18 +11387,12 @@ pub mod java {
     pub const ITEM_MINECRAFT_SULFUR_CUBE_SPAWN_EGG: &str = "item.minecraft.sulfur_cube_spawn_egg";
     #[doc = "Suspicious Stew"]
     pub const ITEM_MINECRAFT_SUSPICIOUS_STEW: &str = "item.minecraft.suspicious_stew";
-    #[doc = "Swamp Explorer Map"]
-    pub const ITEM_MINECRAFT_SWAMP_EXPLORER_MAP: &str = "item.minecraft.swamp_explorer_map";
-    #[doc = "Swamp Hut Map"]
-    pub const ITEM_MINECRAFT_SWAMP_HUT_MAP: &str = "item.minecraft.swamp_hut_map";
     #[doc = "Sweet Berries"]
     pub const ITEM_MINECRAFT_SWEET_BERRIES: &str = "item.minecraft.sweet_berries";
     #[doc = "Bucket of Tadpole"]
     pub const ITEM_MINECRAFT_TADPOLE_BUCKET: &str = "item.minecraft.tadpole_bucket";
     #[doc = "Tadpole Spawn Egg"]
     pub const ITEM_MINECRAFT_TADPOLE_SPAWN_EGG: &str = "item.minecraft.tadpole_spawn_egg";
-    #[doc = "Taiga Village Map"]
-    pub const ITEM_MINECRAFT_TAIGA_VILLAGE_MAP: &str = "item.minecraft.taiga_village_map";
     #[doc = "Smithing Template"]
     pub const ITEM_MINECRAFT_TIDE_ARMOR_TRIM_SMITHING_TEMPLATE: &str =
         "item.minecraft.tide_armor_trim_smithing_template";
@@ -11910,8 +11487,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_TOTEM_OF_UNDYING: &str = "item.minecraft.totem_of_undying";
     #[doc = "Trader Llama Spawn Egg"]
     pub const ITEM_MINECRAFT_TRADER_LLAMA_SPAWN_EGG: &str = "item.minecraft.trader_llama_spawn_egg";
-    #[doc = "Trial Explorer Map"]
-    pub const ITEM_MINECRAFT_TRIAL_EXPLORER_MAP: &str = "item.minecraft.trial_explorer_map";
     #[doc = "Trial Key"]
     pub const ITEM_MINECRAFT_TRIAL_KEY: &str = "item.minecraft.trial_key";
     #[doc = "Trident"]
@@ -11952,8 +11527,6 @@ pub mod java {
         "item.minecraft.ward_armor_trim_smithing_template.new";
     #[doc = "Warden Spawn Egg"]
     pub const ITEM_MINECRAFT_WARDEN_SPAWN_EGG: &str = "item.minecraft.warden_spawn_egg";
-    #[doc = "Warm Ocean Ruins Map"]
-    pub const ITEM_MINECRAFT_WARM_OCEAN_RUINS_MAP: &str = "item.minecraft.warm_ocean_ruins_map";
     #[doc = "Warped Fungus on a Stick"]
     pub const ITEM_MINECRAFT_WARPED_FUNGUS_ON_A_STICK: &str =
         "item.minecraft.warped_fungus_on_a_stick";
@@ -11971,8 +11544,6 @@ pub mod java {
     pub const ITEM_MINECRAFT_WHEAT_SEEDS: &str = "item.minecraft.wheat_seeds";
     #[doc = "White Bundle"]
     pub const ITEM_MINECRAFT_WHITE_BUNDLE: &str = "item.minecraft.white_bundle";
-    #[doc = "White Cushion"]
-    pub const ITEM_MINECRAFT_WHITE_CUSHION: &str = "item.minecraft.white_cushion";
     #[doc = "White Dye"]
     pub const ITEM_MINECRAFT_WHITE_DYE: &str = "item.minecraft.white_dye";
     #[doc = "White Harness"]
@@ -12008,18 +11579,12 @@ pub mod java {
     pub const ITEM_MINECRAFT_WOODEN_SPEAR: &str = "item.minecraft.wooden_spear";
     #[doc = "Wooden Sword"]
     pub const ITEM_MINECRAFT_WOODEN_SWORD: &str = "item.minecraft.wooden_sword";
-    #[doc = "Woodland Explorer Map"]
-    pub const ITEM_MINECRAFT_WOODLAND_EXPLORER_MAP: &str = "item.minecraft.woodland_explorer_map";
-    #[doc = "Woodland Mansion Map"]
-    pub const ITEM_MINECRAFT_WOODLAND_MANSION_MAP: &str = "item.minecraft.woodland_mansion_map";
     #[doc = "Book and Quill"]
     pub const ITEM_MINECRAFT_WRITABLE_BOOK: &str = "item.minecraft.writable_book";
     #[doc = "Written Book"]
     pub const ITEM_MINECRAFT_WRITTEN_BOOK: &str = "item.minecraft.written_book";
     #[doc = "Yellow Bundle"]
     pub const ITEM_MINECRAFT_YELLOW_BUNDLE: &str = "item.minecraft.yellow_bundle";
-    #[doc = "Yellow Cushion"]
-    pub const ITEM_MINECRAFT_YELLOW_CUSHION: &str = "item.minecraft.yellow_cushion";
     #[doc = "Yellow Dye"]
     pub const ITEM_MINECRAFT_YELLOW_DYE: &str = "item.minecraft.yellow_dye";
     #[doc = "Yellow Harness"]
@@ -12240,10 +11805,8 @@ pub mod java {
     pub const KEY_DEBUG_DUMPVERSION: &str = "key.debug.dumpVersion";
     #[doc = "Toggle Lost Focus Pause"]
     pub const KEY_DEBUG_FOCUSPAUSE: &str = "key.debug.focusPause";
-    #[doc = "Fps Charts"]
+    #[doc = "FPS Charts"]
     pub const KEY_DEBUG_FPSCHARTS: &str = "key.debug.fpsCharts";
-    #[doc = "Toggle Improved Transparency"]
-    pub const KEY_DEBUG_IMPROVEDTRANSPARENCY: &str = "key.debug.improvedTransparency";
     #[doc = "Lightmap Texture"]
     pub const KEY_DEBUG_LIGHTMAPTEXTURE: &str = "key.debug.lightmapTexture";
     #[doc = "Debug Modifier Key"]
@@ -12300,94 +11863,28 @@ pub mod java {
     pub const KEY_INVENTORY: &str = "key.inventory";
     #[doc = "Jump"]
     pub const KEY_JUMP: &str = "key.jump";
-    #[doc = "AC Back"]
-    pub const KEY_KEYBOARD_AC_BACK: &str = "key.keyboard.ac.back";
-    #[doc = "AC Favorites"]
-    pub const KEY_KEYBOARD_AC_BOOKMARKS: &str = "key.keyboard.ac.bookmarks";
-    #[doc = "AC Close"]
-    pub const KEY_KEYBOARD_AC_CLOSE: &str = "key.keyboard.ac.close";
-    #[doc = "AC Exit"]
-    pub const KEY_KEYBOARD_AC_EXIT: &str = "key.keyboard.ac.exit";
-    #[doc = "AC Forward"]
-    pub const KEY_KEYBOARD_AC_FORWARD: &str = "key.keyboard.ac.forward";
-    #[doc = "AC Home"]
-    pub const KEY_KEYBOARD_AC_HOME: &str = "key.keyboard.ac.home";
-    #[doc = "AC New"]
-    pub const KEY_KEYBOARD_AC_NEW: &str = "key.keyboard.ac.new";
-    #[doc = "AC Open"]
-    pub const KEY_KEYBOARD_AC_OPEN: &str = "key.keyboard.ac.open";
-    #[doc = "AC Print"]
-    pub const KEY_KEYBOARD_AC_PRINT: &str = "key.keyboard.ac.print";
-    #[doc = "AC Properties"]
-    pub const KEY_KEYBOARD_AC_PROPERTIES: &str = "key.keyboard.ac.properties";
-    #[doc = "AC Refresh"]
-    pub const KEY_KEYBOARD_AC_REFRESH: &str = "key.keyboard.ac.refresh";
-    #[doc = "AC Save"]
-    pub const KEY_KEYBOARD_AC_SAVE: &str = "key.keyboard.ac.save";
-    #[doc = "AC Search"]
-    pub const KEY_KEYBOARD_AC_SEARCH: &str = "key.keyboard.ac.search";
-    #[doc = "AC Stop"]
-    pub const KEY_KEYBOARD_AC_STOP: &str = "key.keyboard.ac.stop";
-    #[doc = "Again"]
-    pub const KEY_KEYBOARD_AGAIN: &str = "key.keyboard.again";
-    #[doc = "Alternate Erase"]
-    pub const KEY_KEYBOARD_ALTERNATE_ERASE: &str = "key.keyboard.alternate.erase";
     #[doc = "'"]
     pub const KEY_KEYBOARD_APOSTROPHE: &str = "key.keyboard.apostrophe";
-    #[doc = "Application"]
-    pub const KEY_KEYBOARD_APPLICATION: &str = "key.keyboard.application";
     #[doc = "\\"]
     pub const KEY_KEYBOARD_BACKSLASH: &str = "key.keyboard.backslash";
     #[doc = "Backspace"]
     pub const KEY_KEYBOARD_BACKSPACE: &str = "key.keyboard.backspace";
-    #[doc = "Call"]
-    pub const KEY_KEYBOARD_CALL: &str = "key.keyboard.call";
-    #[doc = "Cancel"]
-    pub const KEY_KEYBOARD_CANCEL: &str = "key.keyboard.cancel";
     #[doc = "Caps Lock"]
     pub const KEY_KEYBOARD_CAPS_LOCK: &str = "key.keyboard.caps.lock";
-    #[doc = "Channel Down"]
-    pub const KEY_KEYBOARD_CHANNEL_DOWN: &str = "key.keyboard.channel.down";
-    #[doc = "Channel Up"]
-    pub const KEY_KEYBOARD_CHANNEL_UP: &str = "key.keyboard.channel.up";
-    #[doc = "Clear"]
-    pub const KEY_KEYBOARD_CLEAR: &str = "key.keyboard.clear";
-    #[doc = "Clear Again"]
-    pub const KEY_KEYBOARD_CLEAR_AGAIN: &str = "key.keyboard.clear.again";
     #[doc = ","]
     pub const KEY_KEYBOARD_COMMA: &str = "key.keyboard.comma";
-    #[doc = "Copy"]
-    pub const KEY_KEYBOARD_COPY: &str = "key.keyboard.copy";
-    #[doc = "CrSel"]
-    pub const KEY_KEYBOARD_CRSEL: &str = "key.keyboard.crsel";
-    #[doc = "Currency Subunit"]
-    pub const KEY_KEYBOARD_CURRENCY_SUBUNIT: &str = "key.keyboard.currency.subunit";
-    #[doc = "Currency Unit"]
-    pub const KEY_KEYBOARD_CURRENCY_UNIT: &str = "key.keyboard.currency.unit";
-    #[doc = "Cut"]
-    pub const KEY_KEYBOARD_CUT: &str = "key.keyboard.cut";
-    #[doc = "Decimal Separator"]
-    pub const KEY_KEYBOARD_DECIMAL_SEPARATOR: &str = "key.keyboard.decimal.separator";
     #[doc = "Delete"]
     pub const KEY_KEYBOARD_DELETE: &str = "key.keyboard.delete";
     #[doc = "Down Arrow"]
     pub const KEY_KEYBOARD_DOWN: &str = "key.keyboard.down";
     #[doc = "End"]
     pub const KEY_KEYBOARD_END: &str = "key.keyboard.end";
-    #[doc = "End Call"]
-    pub const KEY_KEYBOARD_END_CALL: &str = "key.keyboard.end.call";
     #[doc = "Enter"]
     pub const KEY_KEYBOARD_ENTER: &str = "key.keyboard.enter";
-    #[doc = "Enter 2"]
-    pub const KEY_KEYBOARD_ENTER2: &str = "key.keyboard.enter2";
     #[doc = "="]
     pub const KEY_KEYBOARD_EQUAL: &str = "key.keyboard.equal";
     #[doc = "Escape"]
     pub const KEY_KEYBOARD_ESCAPE: &str = "key.keyboard.escape";
-    #[doc = "Execute"]
-    pub const KEY_KEYBOARD_EXECUTE: &str = "key.keyboard.execute";
-    #[doc = "ExSel"]
-    pub const KEY_KEYBOARD_EXSEL: &str = "key.keyboard.exsel";
     #[doc = "F1"]
     pub const KEY_KEYBOARD_F1: &str = "key.keyboard.f1";
     #[doc = "F10"]
@@ -12438,40 +11935,14 @@ pub mod java {
     pub const KEY_KEYBOARD_F8: &str = "key.keyboard.f8";
     #[doc = "F9"]
     pub const KEY_KEYBOARD_F9: &str = "key.keyboard.f9";
-    #[doc = "Find"]
-    pub const KEY_KEYBOARD_FIND: &str = "key.keyboard.find";
     #[doc = "`"]
     pub const KEY_KEYBOARD_GRAVE_ACCENT: &str = "key.keyboard.grave.accent";
-    #[doc = "Help"]
-    pub const KEY_KEYBOARD_HELP: &str = "key.keyboard.help";
     #[doc = "Home"]
     pub const KEY_KEYBOARD_HOME: &str = "key.keyboard.home";
     #[doc = "Insert"]
     pub const KEY_KEYBOARD_INSERT: &str = "key.keyboard.insert";
-    #[doc = "International 1"]
-    pub const KEY_KEYBOARD_INTERNATIONAL1: &str = "key.keyboard.international1";
-    #[doc = "International 2"]
-    pub const KEY_KEYBOARD_INTERNATIONAL2: &str = "key.keyboard.international2";
-    #[doc = "International 3"]
-    pub const KEY_KEYBOARD_INTERNATIONAL3: &str = "key.keyboard.international3";
-    #[doc = "International 4"]
-    pub const KEY_KEYBOARD_INTERNATIONAL4: &str = "key.keyboard.international4";
-    #[doc = "International 5"]
-    pub const KEY_KEYBOARD_INTERNATIONAL5: &str = "key.keyboard.international5";
-    #[doc = "International 6"]
-    pub const KEY_KEYBOARD_INTERNATIONAL6: &str = "key.keyboard.international6";
-    #[doc = "International 7"]
-    pub const KEY_KEYBOARD_INTERNATIONAL7: &str = "key.keyboard.international7";
-    #[doc = "International 8"]
-    pub const KEY_KEYBOARD_INTERNATIONAL8: &str = "key.keyboard.international8";
-    #[doc = "International 9"]
-    pub const KEY_KEYBOARD_INTERNATIONAL9: &str = "key.keyboard.international9";
     #[doc = "Keypad 0"]
     pub const KEY_KEYBOARD_KEYPAD_0: &str = "key.keyboard.keypad.0";
-    #[doc = "Keypad 00"]
-    pub const KEY_KEYBOARD_KEYPAD_00: &str = "key.keyboard.keypad.00";
-    #[doc = "Keypad 000"]
-    pub const KEY_KEYBOARD_KEYPAD_000: &str = "key.keyboard.keypad.000";
     #[doc = "Keypad 1"]
     pub const KEY_KEYBOARD_KEYPAD_1: &str = "key.keyboard.keypad.1";
     #[doc = "Keypad 2"]
@@ -12490,257 +11961,74 @@ pub mod java {
     pub const KEY_KEYBOARD_KEYPAD_8: &str = "key.keyboard.keypad.8";
     #[doc = "Keypad 9"]
     pub const KEY_KEYBOARD_KEYPAD_9: &str = "key.keyboard.keypad.9";
-    #[doc = "Keypad A"]
-    pub const KEY_KEYBOARD_KEYPAD_A: &str = "key.keyboard.keypad.a";
     #[doc = "Keypad +"]
     pub const KEY_KEYBOARD_KEYPAD_ADD: &str = "key.keyboard.keypad.add";
-    #[doc = "Keypad &"]
-    pub const KEY_KEYBOARD_KEYPAD_AMPERSAND: &str = "key.keyboard.keypad.ampersand";
-    #[doc = "Keypad @"]
-    pub const KEY_KEYBOARD_KEYPAD_AT: &str = "key.keyboard.keypad.at";
-    #[doc = "Keypad B"]
-    pub const KEY_KEYBOARD_KEYPAD_B: &str = "key.keyboard.keypad.b";
-    #[doc = "Keypad Backspace"]
-    pub const KEY_KEYBOARD_KEYPAD_BACKSPACE: &str = "key.keyboard.keypad.backspace";
-    #[doc = "Keypad Binary"]
-    pub const KEY_KEYBOARD_KEYPAD_BINARY: &str = "key.keyboard.keypad.binary";
-    #[doc = "Keypad C"]
-    pub const KEY_KEYBOARD_KEYPAD_C: &str = "key.keyboard.keypad.c";
-    #[doc = "Keypad Clear"]
-    pub const KEY_KEYBOARD_KEYPAD_CLEAR: &str = "key.keyboard.keypad.clear";
-    #[doc = "Keypad Clear Entry"]
-    pub const KEY_KEYBOARD_KEYPAD_CLEAR_ENTRY: &str = "key.keyboard.keypad.clear.entry";
-    #[doc = "Keypad :"]
-    pub const KEY_KEYBOARD_KEYPAD_COLON: &str = "key.keyboard.keypad.colon";
-    #[doc = "Keypad ,"]
-    pub const KEY_KEYBOARD_KEYPAD_COMMA: &str = "key.keyboard.keypad.comma";
-    #[doc = "Keypad D"]
-    pub const KEY_KEYBOARD_KEYPAD_D: &str = "key.keyboard.keypad.d";
     #[doc = "Keypad Decimal"]
     pub const KEY_KEYBOARD_KEYPAD_DECIMAL: &str = "key.keyboard.keypad.decimal";
     #[doc = "Keypad /"]
     pub const KEY_KEYBOARD_KEYPAD_DIVIDE: &str = "key.keyboard.keypad.divide";
-    #[doc = "Keypad &&"]
-    pub const KEY_KEYBOARD_KEYPAD_DOUBLE_AMPERSAND: &str = "key.keyboard.keypad.double.ampersand";
-    #[doc = "Keypad ||"]
-    pub const KEY_KEYBOARD_KEYPAD_DOUBLE_VERTICAL_BAR: &str =
-        "key.keyboard.keypad.double.vertical.bar";
-    #[doc = "Keypad E"]
-    pub const KEY_KEYBOARD_KEYPAD_E: &str = "key.keyboard.keypad.e";
     #[doc = "Keypad Enter"]
     pub const KEY_KEYBOARD_KEYPAD_ENTER: &str = "key.keyboard.keypad.enter";
     #[doc = "Keypad ="]
     pub const KEY_KEYBOARD_KEYPAD_EQUAL: &str = "key.keyboard.keypad.equal";
-    #[doc = "Keypad = (AS400)"]
-    pub const KEY_KEYBOARD_KEYPAD_EQUALS_AS400: &str = "key.keyboard.keypad.equals.as400";
-    #[doc = "Keypad !"]
-    pub const KEY_KEYBOARD_KEYPAD_EXCLAMATION: &str = "key.keyboard.keypad.exclamation";
-    #[doc = "Keypad F"]
-    pub const KEY_KEYBOARD_KEYPAD_F: &str = "key.keyboard.keypad.f";
-    #[doc = "Keypad >"]
-    pub const KEY_KEYBOARD_KEYPAD_GREATER: &str = "key.keyboard.keypad.greater";
-    #[doc = "Keypad #"]
-    pub const KEY_KEYBOARD_KEYPAD_HASH: &str = "key.keyboard.keypad.hash";
-    #[doc = "Keypad Hexadecimal"]
-    pub const KEY_KEYBOARD_KEYPAD_HEXADECIMAL: &str = "key.keyboard.keypad.hexadecimal";
-    #[doc = "Keypad {"]
-    pub const KEY_KEYBOARD_KEYPAD_LEFT_BRACE: &str = "key.keyboard.keypad.left.brace";
-    #[doc = "Keypad ("]
-    pub const KEY_KEYBOARD_KEYPAD_LEFT_PARENTHESIS: &str = "key.keyboard.keypad.left.parenthesis";
-    #[doc = "Keypad <"]
-    pub const KEY_KEYBOARD_KEYPAD_LESS: &str = "key.keyboard.keypad.less";
-    #[doc = "Keypad M+"]
-    pub const KEY_KEYBOARD_KEYPAD_MEMORY_ADD: &str = "key.keyboard.keypad.memory.add";
-    #[doc = "Keypad MC"]
-    pub const KEY_KEYBOARD_KEYPAD_MEMORY_CLEAR: &str = "key.keyboard.keypad.memory.clear";
-    #[doc = "Keypad M/"]
-    pub const KEY_KEYBOARD_KEYPAD_MEMORY_DIVIDE: &str = "key.keyboard.keypad.memory.divide";
-    #[doc = "Keypad M*"]
-    pub const KEY_KEYBOARD_KEYPAD_MEMORY_MULTIPLY: &str = "key.keyboard.keypad.memory.multiply";
-    #[doc = "Keypad MR"]
-    pub const KEY_KEYBOARD_KEYPAD_MEMORY_RECALL: &str = "key.keyboard.keypad.memory.recall";
-    #[doc = "Keypad MS"]
-    pub const KEY_KEYBOARD_KEYPAD_MEMORY_STORE: &str = "key.keyboard.keypad.memory.store";
-    #[doc = "Keypad M-"]
-    pub const KEY_KEYBOARD_KEYPAD_MEMORY_SUBTRACT: &str = "key.keyboard.keypad.memory.subtract";
     #[doc = "Keypad *"]
     pub const KEY_KEYBOARD_KEYPAD_MULTIPLY: &str = "key.keyboard.keypad.multiply";
-    #[doc = "Keypad Octal"]
-    pub const KEY_KEYBOARD_KEYPAD_OCTAL: &str = "key.keyboard.keypad.octal";
-    #[doc = "Keypad %"]
-    pub const KEY_KEYBOARD_KEYPAD_PERCENT: &str = "key.keyboard.keypad.percent";
-    #[doc = "Keypad ."]
-    pub const KEY_KEYBOARD_KEYPAD_PERIOD: &str = "key.keyboard.keypad.period";
-    #[doc = "Keypad ±"]
-    pub const KEY_KEYBOARD_KEYPAD_PLUS_MINUS: &str = "key.keyboard.keypad.plus.minus";
-    #[doc = "Keypad ^"]
-    pub const KEY_KEYBOARD_KEYPAD_POWER: &str = "key.keyboard.keypad.power";
-    #[doc = "Keypad }"]
-    pub const KEY_KEYBOARD_KEYPAD_RIGHT_BRACE: &str = "key.keyboard.keypad.right.brace";
-    #[doc = "Keypad )"]
-    pub const KEY_KEYBOARD_KEYPAD_RIGHT_PARENTHESIS: &str = "key.keyboard.keypad.right.parenthesis";
-    #[doc = "Keypad Space"]
-    pub const KEY_KEYBOARD_KEYPAD_SPACE: &str = "key.keyboard.keypad.space";
     #[doc = "Keypad -"]
     pub const KEY_KEYBOARD_KEYPAD_SUBTRACT: &str = "key.keyboard.keypad.subtract";
-    #[doc = "Keypad Tab"]
-    pub const KEY_KEYBOARD_KEYPAD_TAB: &str = "key.keyboard.keypad.tab";
-    #[doc = "Keypad |"]
-    pub const KEY_KEYBOARD_KEYPAD_VERTICAL_BAR: &str = "key.keyboard.keypad.vertical.bar";
-    #[doc = "Keypad XOR"]
-    pub const KEY_KEYBOARD_KEYPAD_XOR: &str = "key.keyboard.keypad.xor";
-    #[doc = "Language 1"]
-    pub const KEY_KEYBOARD_LANG1: &str = "key.keyboard.lang1";
-    #[doc = "Language 2"]
-    pub const KEY_KEYBOARD_LANG2: &str = "key.keyboard.lang2";
-    #[doc = "Language 3"]
-    pub const KEY_KEYBOARD_LANG3: &str = "key.keyboard.lang3";
-    #[doc = "Language 4"]
-    pub const KEY_KEYBOARD_LANG4: &str = "key.keyboard.lang4";
-    #[doc = "Language 5"]
-    pub const KEY_KEYBOARD_LANG5: &str = "key.keyboard.lang5";
-    #[doc = "Language 6"]
-    pub const KEY_KEYBOARD_LANG6: &str = "key.keyboard.lang6";
-    #[doc = "Language 7"]
-    pub const KEY_KEYBOARD_LANG7: &str = "key.keyboard.lang7";
-    #[doc = "Language 8"]
-    pub const KEY_KEYBOARD_LANG8: &str = "key.keyboard.lang8";
-    #[doc = "Language 9"]
-    pub const KEY_KEYBOARD_LANG9: &str = "key.keyboard.lang9";
     #[doc = "Left Arrow"]
     pub const KEY_KEYBOARD_LEFT: &str = "key.keyboard.left";
     #[doc = "Left Alt"]
     pub const KEY_KEYBOARD_LEFT_ALT: &str = "key.keyboard.left.alt";
     #[doc = "["]
     pub const KEY_KEYBOARD_LEFT_BRACKET: &str = "key.keyboard.left.bracket";
-    #[doc = "Left Command"]
-    pub const KEY_KEYBOARD_LEFT_COMMAND: &str = "key.keyboard.left.command";
     #[doc = "Left Control"]
     pub const KEY_KEYBOARD_LEFT_CONTROL: &str = "key.keyboard.left.control";
-    #[doc = "Left Meta"]
-    pub const KEY_KEYBOARD_LEFT_META: &str = "key.keyboard.left.meta";
-    #[doc = "Left Option"]
-    pub const KEY_KEYBOARD_LEFT_OPTION: &str = "key.keyboard.left.option";
     #[doc = "Left Shift"]
     pub const KEY_KEYBOARD_LEFT_SHIFT: &str = "key.keyboard.left.shift";
     #[doc = "Left Win"]
     pub const KEY_KEYBOARD_LEFT_WIN: &str = "key.keyboard.left.win";
-    #[doc = "Left Windows"]
-    pub const KEY_KEYBOARD_LEFT_WINDOWS: &str = "key.keyboard.left.windows";
-    #[doc = "Eject"]
-    pub const KEY_KEYBOARD_MEDIA_EJECT: &str = "key.keyboard.media.eject";
-    #[doc = "Fast Forward"]
-    pub const KEY_KEYBOARD_MEDIA_FAST_FORWARD: &str = "key.keyboard.media.fast.forward";
-    #[doc = "Next Track"]
-    pub const KEY_KEYBOARD_MEDIA_NEXT_TRACK: &str = "key.keyboard.media.next.track";
-    #[doc = "Media Pause"]
-    pub const KEY_KEYBOARD_MEDIA_PAUSE: &str = "key.keyboard.media.pause";
-    #[doc = "Media Play"]
-    pub const KEY_KEYBOARD_MEDIA_PLAY: &str = "key.keyboard.media.play";
-    #[doc = "Play/Pause"]
-    pub const KEY_KEYBOARD_MEDIA_PLAY_PAUSE: &str = "key.keyboard.media.play.pause";
-    #[doc = "Previous Track"]
-    pub const KEY_KEYBOARD_MEDIA_PREVIOUS_TRACK: &str = "key.keyboard.media.previous.track";
-    #[doc = "Record"]
-    pub const KEY_KEYBOARD_MEDIA_RECORD: &str = "key.keyboard.media.record";
-    #[doc = "Rewind"]
-    pub const KEY_KEYBOARD_MEDIA_REWIND: &str = "key.keyboard.media.rewind";
-    #[doc = "Media Select"]
-    pub const KEY_KEYBOARD_MEDIA_SELECT: &str = "key.keyboard.media.select";
-    #[doc = "Media Stop"]
-    pub const KEY_KEYBOARD_MEDIA_STOP: &str = "key.keyboard.media.stop";
     #[doc = "Menu"]
     pub const KEY_KEYBOARD_MENU: &str = "key.keyboard.menu";
     #[doc = "-"]
     pub const KEY_KEYBOARD_MINUS: &str = "key.keyboard.minus";
-    #[doc = "Mode"]
-    pub const KEY_KEYBOARD_MODE: &str = "key.keyboard.mode";
-    #[doc = "Mute"]
-    pub const KEY_KEYBOARD_MUTE: &str = "key.keyboard.mute";
-    #[doc = "New"]
-    pub const KEY_KEYBOARD_NEW: &str = "key.keyboard.new";
     #[doc = "Num Lock"]
     pub const KEY_KEYBOARD_NUM_LOCK: &str = "key.keyboard.num.lock";
-    #[doc = "Oper"]
-    pub const KEY_KEYBOARD_OPER: &str = "key.keyboard.oper";
-    #[doc = "Out"]
-    pub const KEY_KEYBOARD_OUT: &str = "key.keyboard.out";
     #[doc = "Page Down"]
     pub const KEY_KEYBOARD_PAGE_DOWN: &str = "key.keyboard.page.down";
     #[doc = "Page Up"]
     pub const KEY_KEYBOARD_PAGE_UP: &str = "key.keyboard.page.up";
-    #[doc = "Paste"]
-    pub const KEY_KEYBOARD_PASTE: &str = "key.keyboard.paste";
     #[doc = "Pause"]
     pub const KEY_KEYBOARD_PAUSE: &str = "key.keyboard.pause";
     #[doc = "."]
     pub const KEY_KEYBOARD_PERIOD: &str = "key.keyboard.period";
-    #[doc = "Power"]
-    pub const KEY_KEYBOARD_POWER: &str = "key.keyboard.power";
     #[doc = "Print Screen"]
     pub const KEY_KEYBOARD_PRINT_SCREEN: &str = "key.keyboard.print.screen";
-    #[doc = "Prior"]
-    pub const KEY_KEYBOARD_PRIOR: &str = "key.keyboard.prior";
     #[doc = "Right Arrow"]
     pub const KEY_KEYBOARD_RIGHT: &str = "key.keyboard.right";
     #[doc = "Right Alt"]
     pub const KEY_KEYBOARD_RIGHT_ALT: &str = "key.keyboard.right.alt";
     #[doc = "]"]
     pub const KEY_KEYBOARD_RIGHT_BRACKET: &str = "key.keyboard.right.bracket";
-    #[doc = "Right Command"]
-    pub const KEY_KEYBOARD_RIGHT_COMMAND: &str = "key.keyboard.right.command";
     #[doc = "Right Control"]
     pub const KEY_KEYBOARD_RIGHT_CONTROL: &str = "key.keyboard.right.control";
-    #[doc = "Right Meta"]
-    pub const KEY_KEYBOARD_RIGHT_META: &str = "key.keyboard.right.meta";
-    #[doc = "Right Option"]
-    pub const KEY_KEYBOARD_RIGHT_OPTION: &str = "key.keyboard.right.option";
     #[doc = "Right Shift"]
     pub const KEY_KEYBOARD_RIGHT_SHIFT: &str = "key.keyboard.right.shift";
     #[doc = "Right Win"]
     pub const KEY_KEYBOARD_RIGHT_WIN: &str = "key.keyboard.right.win";
-    #[doc = "Right Windows"]
-    pub const KEY_KEYBOARD_RIGHT_WINDOWS: &str = "key.keyboard.right.windows";
-    #[doc = "Save"]
-    pub const KEY_KEYBOARD_SAVE: &str = "key.keyboard.save";
     #[doc = "Scroll Lock"]
     pub const KEY_KEYBOARD_SCROLL_LOCK: &str = "key.keyboard.scroll.lock";
-    #[doc = "Select"]
-    pub const KEY_KEYBOARD_SELECT: &str = "key.keyboard.select";
     #[doc = ";"]
     pub const KEY_KEYBOARD_SEMICOLON: &str = "key.keyboard.semicolon";
-    #[doc = "Separator"]
-    pub const KEY_KEYBOARD_SEPARATOR: &str = "key.keyboard.separator";
     #[doc = "/"]
     pub const KEY_KEYBOARD_SLASH: &str = "key.keyboard.slash";
-    #[doc = "Sleep"]
-    pub const KEY_KEYBOARD_SLEEP: &str = "key.keyboard.sleep";
-    #[doc = "Soft Left"]
-    pub const KEY_KEYBOARD_SOFT_LEFT: &str = "key.keyboard.soft.left";
-    #[doc = "Soft Right"]
-    pub const KEY_KEYBOARD_SOFT_RIGHT: &str = "key.keyboard.soft.right";
     #[doc = "Space"]
     pub const KEY_KEYBOARD_SPACE: &str = "key.keyboard.space";
-    #[doc = "Stop"]
-    pub const KEY_KEYBOARD_STOP: &str = "key.keyboard.stop";
-    #[doc = "SysRq"]
-    pub const KEY_KEYBOARD_SYS_REQ: &str = "key.keyboard.sys.req";
     #[doc = "Tab"]
     pub const KEY_KEYBOARD_TAB: &str = "key.keyboard.tab";
-    #[doc = "Thousands Separator"]
-    pub const KEY_KEYBOARD_THOUSANDS_SEPARATOR: &str = "key.keyboard.thousands.separator";
-    #[doc = "Undo"]
-    pub const KEY_KEYBOARD_UNDO: &str = "key.keyboard.undo";
     #[doc = "Not Bound"]
     pub const KEY_KEYBOARD_UNKNOWN: &str = "key.keyboard.unknown";
     #[doc = "Up Arrow"]
     pub const KEY_KEYBOARD_UP: &str = "key.keyboard.up";
-    #[doc = "Volume Down"]
-    pub const KEY_KEYBOARD_VOLUME_DOWN: &str = "key.keyboard.volume.down";
-    #[doc = "Volume Up"]
-    pub const KEY_KEYBOARD_VOLUME_UP: &str = "key.keyboard.volume.up";
-    #[doc = "Wake"]
-    pub const KEY_KEYBOARD_WAKE: &str = "key.keyboard.wake";
     #[doc = "World 1"]
     pub const KEY_KEYBOARD_WORLD_1: &str = "key.keyboard.world.1";
     #[doc = "World 2"]
@@ -13010,9 +12298,6 @@ pub mod java {
     pub const MCO_CONFIGURE_WORLD_BUTTONS_EDIT: &str = "mco.configure.world.buttons.edit";
     #[doc = "Invite Player"]
     pub const MCO_CONFIGURE_WORLD_BUTTONS_INVITE: &str = "mco.configure.world.buttons.invite";
-    #[doc = "Invite Codes"]
-    pub const MCO_CONFIGURE_WORLD_BUTTONS_INVITE_CODES: &str =
-        "mco.configure.world.buttons.invite_codes";
     #[doc = "More options"]
     pub const MCO_CONFIGURE_WORLD_BUTTONS_MOREOPTIONS: &str =
         "mco.configure.world.buttons.moreoptions";
@@ -13040,7 +12325,7 @@ pub mod java {
     #[doc = "Switch Minigame"]
     pub const MCO_CONFIGURE_WORLD_BUTTONS_SWITCHMINIGAME: &str =
         "mco.configure.world.buttons.switchminigame";
-    #[doc = "You can temporarily close your Realm, preventing play while you make adjustments. Open it back up when you're ready.\n\nThis does not cancel your Realms subscription."]
+    #[doc = "You can temporarily close your Realm, preventing play while you make adjustments. Open it back up when you're ready. \n\nThis does not cancel your Realms Subscription."]
     pub const MCO_CONFIGURE_WORLD_CLOSE_QUESTION_LINE1: &str =
         "mco.configure.world.close.question.line1";
     #[doc = "Are you sure you want to continue?"]
@@ -13081,58 +12366,6 @@ pub mod java {
     #[doc = "Name"]
     pub const MCO_CONFIGURE_WORLD_INVITE_PROFILE_NAME: &str =
         "mco.configure.world.invite.profile.name";
-    #[doc = "Copy"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_COPY: &str = "mco.configure.world.invite_codes.copy";
-    #[doc = "Create Invite Code"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_CREATE: &str =
-        "mco.configure.world.invite_codes.create";
-    #[doc = "Delete"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_DELETE: &str =
-        "mco.configure.world.invite_codes.delete";
-    #[doc = "Edit"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EDIT: &str = "mco.configure.world.invite_codes.edit";
-    #[doc = "Active"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EDIT_ACTIVE: &str =
-        "mco.configure.world.invite_codes.edit.active";
-    #[doc = "Expiration Date"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EDIT_EXPIRATION_DATE: &str =
-        "mco.configure.world.invite_codes.edit.expiration_date";
-    #[doc = "Expires: %s"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EDIT_EXPIRES: &str =
-        "mco.configure.world.invite_codes.edit.expires";
-    #[doc = "Edit Invite Code"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EDIT_TITLE: &str =
-        "mco.configure.world.invite_codes.edit.title";
-    #[doc = "12 hours"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EXPIRATION_12_HOURS: &str =
-        "mco.configure.world.invite_codes.expiration.12_hours";
-    #[doc = "1 day"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EXPIRATION_1_DAY: &str =
-        "mco.configure.world.invite_codes.expiration.1_day";
-    #[doc = "1 hour"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EXPIRATION_1_HOUR: &str =
-        "mco.configure.world.invite_codes.expiration.1_hour";
-    #[doc = "30 minutes"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EXPIRATION_30_MINUTES: &str =
-        "mco.configure.world.invite_codes.expiration.30_minutes";
-    #[doc = "6 hours"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EXPIRATION_6_HOURS: &str =
-        "mco.configure.world.invite_codes.expiration.6_hours";
-    #[doc = "7 days"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EXPIRATION_7_DAYS: &str =
-        "mco.configure.world.invite_codes.expiration.7_days";
-    #[doc = "Never"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_EXPIRATION_NEVER: &str =
-        "mco.configure.world.invite_codes.expiration.never";
-    #[doc = "Loading invite codes"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_LOADING: &str =
-        "mco.configure.world.invite_codes.loading";
-    #[doc = "You can add up to %s invite codes and share them so people can join your Realm"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_SUBTITLE: &str =
-        "mco.configure.world.invite_codes.subtitle";
-    #[doc = "Invite Codes (%s/%s)"]
-    pub const MCO_CONFIGURE_WORLD_INVITE_CODES_TITLE: &str =
-        "mco.configure.world.invite_codes.title";
     #[doc = "Invited"]
     pub const MCO_CONFIGURE_WORLD_INVITED: &str = "mco.configure.world.invited";
     #[doc = "Invited (%s)"]
@@ -13181,11 +12414,6 @@ pub mod java {
     #[doc = "Region Preference Selection"]
     pub const MCO_CONFIGURE_WORLD_REGION_PREFERENCE_TITLE: &str =
         "mco.configure.world.region_preference.title";
-    #[doc = "Render Distance Limit"]
-    pub const MCO_CONFIGURE_WORLD_RENDERDISTANCE: &str = "mco.configure.world.renderDistance";
-    #[doc = "The maximum distance visible to Realm members. Higher values may impact performance."]
-    pub const MCO_CONFIGURE_WORLD_RENDERDISTANCE_TOOLTIP: &str =
-        "mco.configure.world.renderDistance.tooltip";
     #[doc = "Your world will be regenerated and your current world will be lost"]
     pub const MCO_CONFIGURE_WORLD_RESET_QUESTION_LINE1: &str =
         "mco.configure.world.reset.question.line1";
@@ -13217,12 +12445,6 @@ pub mod java {
     pub const MCO_CONFIGURE_WORLD_SETTINGS_EXPIRED: &str = "mco.configure.world.settings.expired";
     #[doc = "Settings"]
     pub const MCO_CONFIGURE_WORLD_SETTINGS_TITLE: &str = "mco.configure.world.settings.title";
-    #[doc = "Simulation Distance"]
-    pub const MCO_CONFIGURE_WORLD_SIMULATIONDISTANCE: &str =
-        "mco.configure.world.simulationDistance";
-    #[doc = "The range around players where the game loads and applies changes."]
-    pub const MCO_CONFIGURE_WORLD_SIMULATIONDISTANCE_TOOLTIP: &str =
-        "mco.configure.world.simulationDistance.tooltip";
     #[doc = "World %s"]
     pub const MCO_CONFIGURE_WORLD_SLOT: &str = "mco.configure.world.slot";
     #[doc = "Empty"]
@@ -13361,7 +12583,7 @@ pub mod java {
     pub const MCO_DOWNLOAD_EXTRACTING: &str = "mco.download.extracting";
     #[doc = "Download failed"]
     pub const MCO_DOWNLOAD_FAILED: &str = "mco.download.failed";
-    #[doc = "%s%%"]
+    #[doc = "%s %%"]
     pub const MCO_DOWNLOAD_PERCENT: &str = "mco.download.percent";
     #[doc = "Preparing download"]
     pub const MCO_DOWNLOAD_PREPARING: &str = "mco.download.preparing";
@@ -13379,7 +12601,7 @@ pub mod java {
     pub const MCO_ERROR_INVALID_SESSION_TITLE: &str = "mco.error.invalid.session.title";
     #[doc = "Client outdated"]
     pub const MCO_ERRORMESSAGE_6001: &str = "mco.errorMessage.6001";
-    #[doc = "Terms of Service not accepted"]
+    #[doc = "Terms of service not accepted"]
     pub const MCO_ERRORMESSAGE_6002: &str = "mco.errorMessage.6002";
     #[doc = "Download limit reached"]
     pub const MCO_ERRORMESSAGE_6003: &str = "mco.errorMessage.6003";
@@ -13490,30 +12712,6 @@ pub mod java {
         "mco.notification.visitUrl.message.default";
     #[doc = "Online Players"]
     pub const MCO_ONLINEPLAYERS: &str = "mco.onlinePlayers";
-    #[doc = "Your invited friends can play in your Realm for free, anytime - even when you're not online. Play with up to 10 at once!"]
-    pub const MCO_PDP_FRIENDS_DESCRIPTION: &str = "mco.pdp.friends.description";
-    #[doc = "A better way to play together"]
-    pub const MCO_PDP_FRIENDS_TITLE: &str = "mco.pdp.friends.title";
-    #[doc = "Explore the rotating library of minigames, adventure maps and more."]
-    pub const MCO_PDP_MINIGAMES_DESCRIPTION: &str = "mco.pdp.minigames.description";
-    #[doc = "Minigames - Free creator content"]
-    pub const MCO_PDP_MINIGAMES_TITLE: &str = "mco.pdp.minigames.title";
-    #[doc = "• Automatic backups"]
-    pub const MCO_PDP_PRIVATE_BACKUPS: &str = "mco.pdp.private.backups";
-    #[doc = "• Easy to set up, easy to manage"]
-    pub const MCO_PDP_PRIVATE_EASYTOMANAGE: &str = "mco.pdp.private.easyToManage";
-    #[doc = "• Private and secure"]
-    pub const MCO_PDP_PRIVATE_SECURE: &str = "mco.pdp.private.secure";
-    #[doc = "Personal server"]
-    pub const MCO_PDP_PRIVATE_TITLE: &str = "mco.pdp.private.title";
-    #[doc = "• Three world slots"]
-    pub const MCO_PDP_PRIVATE_WORLDSLOTS: &str = "mco.pdp.private.worldSlots";
-    #[doc = "Free 30-day trial!"]
-    pub const MCO_PDP_TRIAL_DESCRIPTION: &str = "mco.pdp.trial.description";
-    #[doc = "Your own server, always online"]
-    pub const MCO_PDP_TRIAL_TITLE: &str = "mco.pdp.trial.title";
-    #[doc = "Try for free"]
-    pub const MCO_PDP_TRYFORFREE: &str = "mco.pdp.tryForFree";
     #[doc = "Realm is closed"]
     pub const MCO_PLAY_BUTTON_REALM_CLOSED: &str = "mco.play.button.realm.closed";
     #[doc = "Question"]
@@ -13571,22 +12769,6 @@ pub mod java {
     pub const MCO_SELECTSERVER_EXPIRES_DAYS: &str = "mco.selectServer.expires.days";
     #[doc = "Expires soon"]
     pub const MCO_SELECTSERVER_EXPIRES_SOON: &str = "mco.selectServer.expires.soon";
-    #[doc = "Free trial"]
-    pub const MCO_SELECTSERVER_FREETRIAL: &str = "mco.selectServer.freeTrial";
-    #[doc = "Join Code"]
-    pub const MCO_SELECTSERVER_JOINCODE: &str = "mco.selectServer.joinCode";
-    #[doc = "Enter join code"]
-    pub const MCO_SELECTSERVER_JOINCODE_HINT: &str = "mco.selectServer.joinCode.hint";
-    #[doc = "The code you entered is invalid."]
-    pub const MCO_SELECTSERVER_JOINCODE_INVALID: &str = "mco.selectServer.joinCode.invalid";
-    #[doc = "Join Realm"]
-    pub const MCO_SELECTSERVER_JOINCODE_SELECT: &str = "mco.selectServer.joinCode.select";
-    #[doc = "Enter Join Code"]
-    pub const MCO_SELECTSERVER_JOINCODE_TITLE: &str = "mco.selectServer.joinCode.title";
-    #[doc = "Validating code"]
-    pub const MCO_SELECTSERVER_JOINCODE_VALIDATING: &str = "mco.selectServer.joinCode.validating";
-    #[doc = "Join Realm"]
-    pub const MCO_SELECTSERVER_JOINREALM: &str = "mco.selectServer.joinRealm";
     #[doc = "Leave Realm"]
     pub const MCO_SELECTSERVER_LEAVE: &str = "mco.selectServer.leave";
     #[doc = "Loading Realms List"]
@@ -13638,7 +12820,7 @@ pub mod java {
     pub const MCO_SNAPSHOT_PARENT_TOOLTIP: &str = "mco.snapshot.parent.tooltip";
     #[doc = "Start free Snapshot Realm"]
     pub const MCO_SNAPSHOT_START: &str = "mco.snapshot.start";
-    #[doc = "This is a Snapshot Realm that is paired with the subscription of your Realm '%s'. It will stay active for as long as its paired Realm is."]
+    #[doc = "This is a Snapshot Realm that is paired to the subscription of your Realm '%s'. It will stay active for as long as its paired Realm is."]
     pub const MCO_SNAPSHOT_SUBSCRIPTION_INFO: &str = "mco.snapshot.subscription.info";
     #[doc = "Use Snapshot Realms to get a sneak peek at upcoming versions of Minecraft, which might include new features and other changes.\n\nYou can find your normal Realms in the release version of the game."]
     pub const MCO_SNAPSHOT_TOOLTIP: &str = "mco.snapshot.tooltip";
@@ -13722,7 +12904,7 @@ pub mod java {
     pub const MCO_UPLOAD_FAILED_TOO_BIG_TITLE: &str = "mco.upload.failed.too_big.title";
     #[doc = "Hardcore worlds can't be uploaded!"]
     pub const MCO_UPLOAD_HARDCORE: &str = "mco.upload.hardcore";
-    #[doc = "%s%%"]
+    #[doc = "%s %%"]
     pub const MCO_UPLOAD_PERCENT: &str = "mco.upload.percent";
     #[doc = "Preparing your world"]
     pub const MCO_UPLOAD_PREPARING: &str = "mco.upload.preparing";
@@ -13882,10 +13064,8 @@ pub mod java {
     pub const MIRROR_LEFT_RIGHT: &str = "mirror.left_right";
     #[doc = "|"]
     pub const MIRROR_NONE: &str = "mirror.none";
-    #[doc = "Press %1$s to dismount"]
+    #[doc = "Press %1$s to Dismount"]
     pub const MOUNT_ONBOARD: &str = "mount.onboard";
-    #[doc = "Press %1$s to get up"]
-    pub const MOUNT_SIT: &str = "mount.sit";
     #[doc = "Applying resource pack"]
     pub const MULTIPLAYER_APPLYINGPACK: &str = "multiplayer.applyingPack";
     #[doc = "Do not notify again for this Code of Conduct"]
@@ -13901,7 +13081,7 @@ pub mod java {
     #[doc = "Run Command"]
     pub const MULTIPLAYER_CONFIRM_COMMAND_RUN_COMMAND: &str =
         "multiplayer.confirm_command.run_command";
-    #[doc = "You are trying to execute a command that will send chat messages using your name.\nIt can only be run from the chat screen.\nCommand: %s"]
+    #[doc = "You are trying to execute a command that will send chat messages using your name.\nIt can only be run from the chat screen\nCommand: %s"]
     pub const MULTIPLAYER_CONFIRM_COMMAND_SIGNATURE_REQUIRED: &str =
         "multiplayer.confirm_command.signature_required";
     #[doc = "Copy to Chat Screen"]
@@ -14579,11 +13759,6 @@ pub mod java {
     pub const OPTIONS_CONTROLS: &str = "options.controls";
     #[doc = "Credits & Attribution..."]
     pub const OPTIONS_CREDITS_AND_ATTRIBUTION: &str = "options.credits_and_attribution";
-    #[doc = "Right Click Emulation"]
-    pub const OPTIONS_CTRLCLICKEMULATESRIGHTCLICK: &str = "options.ctrlClickEmulatesRightClick";
-    #[doc = "When enabled, Control + left-click is treated as a right-click. Only applies on macOS."]
-    pub const OPTIONS_CTRLCLICKEMULATESRIGHTCLICK_TOOLTIP: &str =
-        "options.ctrlClickEmulatesRightClick.tooltip";
     #[doc = "See-Through Leaves"]
     pub const OPTIONS_CUTOUTLEAVES: &str = "options.cutoutLeaves";
     #[doc = "Allows you to see through gaps in leaves. Disabling improves performance."]
@@ -14602,10 +13777,6 @@ pub mod java {
     pub const OPTIONS_DARKNESSEFFECTSCALE: &str = "options.darknessEffectScale";
     #[doc = "Controls how much the Darkness effect pulses when a Warden or Sculk Shrieker gives it to you."]
     pub const OPTIONS_DARKNESSEFFECTSCALE_TOOLTIP: &str = "options.darknessEffectScale.tooltip";
-    #[doc = "Overrides the debug overlay with a different GUI scale than the rest of the game"]
-    pub const OPTIONS_DEBUGGUISCALE_TOOLTIP: &str = "options.debugGuiScale.tooltip";
-    #[doc = "Unchanged"]
-    pub const OPTIONS_DEBUGGUISCALE_UNCHANGED: &str = "options.debugGuiScale.unchanged";
     #[doc = "Difficulty"]
     pub const OPTIONS_DIFFICULTY: &str = "options.difficulty";
     #[doc = "Easy"]
@@ -14692,11 +13863,6 @@ pub mod java {
     pub const OPTIONS_FULLSCREEN_CURRENT: &str = "options.fullscreen.current";
     #[doc = "%sx%s@%s (%sbit)"]
     pub const OPTIONS_FULLSCREEN_ENTRY: &str = "options.fullscreen.entry";
-    #[doc = "Exclusive Fullscreen Mode"]
-    pub const OPTIONS_FULLSCREEN_EXCLUSIVE_MODE: &str = "options.fullscreen.exclusive.mode";
-    #[doc = "This setting only takes effect when Exclusive Fullscreen is enabled."]
-    pub const OPTIONS_FULLSCREEN_EXCLUSIVE_MODE_TOOLTIP: &str =
-        "options.fullscreen.exclusive.mode.tooltip";
     #[doc = "Fullscreen Resolution"]
     pub const OPTIONS_FULLSCREEN_RESOLUTION: &str = "options.fullscreen.resolution";
     #[doc = "Setting unavailable"]
@@ -14787,16 +13953,13 @@ pub mod java {
     pub const OPTIONS_HIDESPLASHTEXTS_TOOLTIP: &str = "options.hideSplashTexts.tooltip";
     #[doc = "Improved Transparency"]
     pub const OPTIONS_IMPROVEDTRANSPARENCY: &str = "options.improvedTransparency";
-    #[doc = "An experimental approach that uses an order-independent transparency algorithm to avoid graphical issues normally present when looking through multiple layers of translucent objects.\nThis will impact performance."]
-    pub const OPTIONS_IMPROVEDTRANSPARENCY_OIT_TOOLTIP: &str =
-        "options.improvedTransparency.oit.tooltip";
     #[doc = "An experimental approach that uses screen shaders for drawing weather, clouds, and particles behind translucent blocks and water.\nThis will impact GPU performance."]
     pub const OPTIONS_IMPROVEDTRANSPARENCY_TOOLTIP: &str = "options.improvedTransparency.tooltip";
     #[doc = "In-Game Notification"]
     pub const OPTIONS_INGAMENOTIFICATION: &str = "options.inGameNotification";
     #[doc = "Show Friend notifications in-game"]
     pub const OPTIONS_INGAMENOTIFICATION_TOOLTIP: &str = "options.inGameNotification.tooltip";
-    #[doc = "Reduce fps when"]
+    #[doc = "Reduce FPS when"]
     pub const OPTIONS_INACTIVITYFPSLIMIT: &str = "options.inactivityFpsLimit";
     #[doc = "AFK"]
     pub const OPTIONS_INACTIVITYFPSLIMIT_AFK: &str = "options.inactivityFpsLimit.afk";
@@ -14824,12 +13987,6 @@ pub mod java {
     pub const OPTIONS_KEY_TOGGLE: &str = "options.key.toggle";
     #[doc = "Language..."]
     pub const OPTIONS_LANGUAGE: &str = "options.language";
-    #[doc = "Translation file for %s was empty or missing. Restart your game and launcher, then try again."]
-    pub const OPTIONS_LANGUAGE_EMPTY_OR_MISSING_TRANSLATION: &str =
-        "options.language.empty_or_missing_translation";
-    #[doc = "Loading translations failed"]
-    pub const OPTIONS_LANGUAGE_LOAD_TRANSLATIONS_FAILED: &str =
-        "options.language.load_translations_failed";
     #[doc = "Change Language"]
     pub const OPTIONS_LANGUAGE_NARRATION: &str = "options.language.narration";
     #[doc = "Language"]
@@ -14838,13 +13995,8 @@ pub mod java {
     pub const OPTIONS_LANGUAGE_TOOLTIP: &str = "options.language.tooltip";
     #[doc = "(Language translations may not be 100%% accurate)"]
     pub const OPTIONS_LANGUAGEACCURACYWARNING: &str = "options.languageAccuracyWarning";
-    #[doc = "Language translations may not be 100%% accurate."]
+    #[doc = "Language translations may not be 100%% accurate"]
     pub const OPTIONS_LANGUAGEWARNING: &str = "options.languageWarning";
-    #[doc = "Menu/Dock Visibility"]
-    pub const OPTIONS_MACFULLSCREENMENUVISIBILITY: &str = "options.macFullscreenMenuVisibility";
-    #[doc = "Whether the macOS Menu bar and Dock can be revealed by moving the mouse to the edge of the screen while in non-exclusive fullscreen."]
-    pub const OPTIONS_MACFULLSCREENMENUVISIBILITY_TOOLTIP: &str =
-        "options.macFullscreenMenuVisibility.tooltip";
     #[doc = "Main Hand"]
     pub const OPTIONS_MAINHAND: &str = "options.mainHand";
     #[doc = "Left"]
@@ -14970,7 +14122,7 @@ pub mod java {
     #[doc = "Semi Blocking"]
     pub const OPTIONS_PRIORITIZECHUNKUPDATES_BYPLAYER: &str =
         "options.prioritizeChunkUpdates.byPlayer";
-    #[doc = "Some actions within a chunk will recompile the chunk immediately. This includes block placing and destroying."]
+    #[doc = "Some actions within a chunk will recompile the chunk immediately. This includes block placing & destroying."]
     pub const OPTIONS_PRIORITIZECHUNKUPDATES_BYPLAYER_TOOLTIP: &str =
         "options.prioritizeChunkUpdates.byPlayer.tooltip";
     #[doc = "Fully Blocking"]
@@ -14983,10 +14135,6 @@ pub mod java {
     #[doc = "Nearby chunks are compiled in parallel threads. This may result in brief visual holes when blocks are destroyed."]
     pub const OPTIONS_PRIORITIZECHUNKUPDATES_NONE_TOOLTIP: &str =
         "options.prioritizeChunkUpdates.none.tooltip";
-    #[doc = "Quit Shortcuts"]
-    pub const OPTIONS_QUITSHORTCUTS: &str = "options.quitShortcuts";
-    #[doc = "Whether keyboard shortcuts can close the game. When off, Alt + F4 on Windows and Linux, and Cmd + Q on macOS, will no longer quit the game."]
-    pub const OPTIONS_QUITSHORTCUTS_TOOLTIP: &str = "options.quitShortcuts.tooltip";
     #[doc = "Raw Input"]
     pub const OPTIONS_RAWMOUSEINPUT: &str = "options.rawMouseInput";
     #[doc = "Realms News & Invites"]
@@ -15118,78 +14266,17 @@ pub mod java {
     pub const OPTIONS_WEATHERRADIUS: &str = "options.weatherRadius";
     #[doc = "Radius of the area where rain and snow effects are visible. Very low performance impact."]
     pub const OPTIONS_WEATHERRADIUS_TOOLTIP: &str = "options.weatherRadius.tooltip";
-    #[doc = "Cannot allow commands in a demo world."]
-    pub const OPTIONS_WORLDOPTIONS_ALLOW_COMMANDS_DISABLED_DEMO_TOOLTIP: &str =
-        "options.worldOptions.allow_commands.disabled.demo.tooltip";
     #[doc = "Cannot allow commands in a hardcore world."]
     pub const OPTIONS_WORLDOPTIONS_ALLOW_COMMANDS_DISABLED_TOOLTIP: &str =
         "options.worldOptions.allow_commands.disabled.tooltip";
-    #[doc = "Allows the use of commands in this world."]
-    pub const OPTIONS_WORLDOPTIONS_ALLOW_COMMANDS_TOOLTIP: &str =
-        "options.worldOptions.allow_commands.tooltip";
     #[doc = "World Options..."]
     pub const OPTIONS_WORLDOPTIONS_BUTTON: &str = "options.worldOptions.button";
-    #[doc = "Cannot change the difficulty in a hardcore world."]
-    pub const OPTIONS_WORLDOPTIONS_DIFFICULTY_DISABLED_HARDCORE_TOOLTIP: &str =
-        "options.worldOptions.difficulty.disabled.hardcore.tooltip";
-    #[doc = "Difficulty is locked."]
-    pub const OPTIONS_WORLDOPTIONS_DIFFICULTY_DISABLED_LOCKED_TOOLTIP: &str =
-        "options.worldOptions.difficulty.disabled.locked.tooltip";
-    #[doc = "Changing the difficulty requires operator permissions."]
-    pub const OPTIONS_WORLDOPTIONS_DIFFICULTY_DISABLED_OPERATOR_TOOLTIP: &str =
-        "options.worldOptions.difficulty.disabled.operator.tooltip";
-    #[doc = "Default Game Mode"]
-    pub const OPTIONS_WORLDOPTIONS_GAME_MODE: &str = "options.worldOptions.game_mode";
     #[doc = "Changing the game mode requires operator permissions."]
     pub const OPTIONS_WORLDOPTIONS_GAME_MODE_DISABLED_OPERATOR_TOOLTIP: &str =
         "options.worldOptions.game_mode.disabled.operator.tooltip";
     #[doc = "Cannot change the game mode in a hardcore world."]
     pub const OPTIONS_WORLDOPTIONS_GAME_MODE_DISABLED_TOOLTIP: &str =
         "options.worldOptions.game_mode.disabled.tooltip";
-    #[doc = "Changes the default game mode of the world."]
-    pub const OPTIONS_WORLDOPTIONS_GAME_MODE_TOOLTIP: &str =
-        "options.worldOptions.game_mode.tooltip";
-    #[doc = "General"]
-    pub const OPTIONS_WORLDOPTIONS_GENERAL_TITLE: &str = "options.worldOptions.general.title";
-    #[doc = "Command Access"]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_COMMAND_ACCESS: &str =
-        "options.worldOptions.guest.command_access";
-    #[doc = "Cannot change the command access of players joining your world when commands are not allowed."]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_COMMAND_ACCESS_DISABLED_COMMANDS_TOOLTIP: &str =
-        "options.worldOptions.guest.command_access.disabled.commands.tooltip";
-    #[doc = "Cannot change the command access of players joining your world when the world's multiplayer scope is set to \"Off\"."]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_COMMAND_ACCESS_DISABLED_SCOPE_TOOLTIP: &str =
-        "options.worldOptions.guest.command_access.disabled.scope.tooltip";
-    #[doc = "Controls whether players that join your world can use commands or not."]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_COMMAND_ACCESS_TOOLTIP: &str =
-        "options.worldOptions.guest.command_access.tooltip";
-    #[doc = "Force Game Mode"]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_FORCE_GAME_MODE: &str =
-        "options.worldOptions.guest.force_game_mode";
-    #[doc = "Other players can set their own game mode through commands."]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_FORCE_GAME_MODE_OFF_COMMANDS_TOOLTIP: &str =
-        "options.worldOptions.guest.force_game_mode.off.commands.tooltip";
-    #[doc = "Cannot change this setting in a hardcore world."]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_FORCE_GAME_MODE_OFF_HARDCORE_TOOLTIP: &str =
-        "options.worldOptions.guest.force_game_mode.off.hardcore.tooltip";
-    #[doc = "Cannot change this setting when the world's multiplayer scope is set to \"Off\"."]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_FORCE_GAME_MODE_OFF_SCOPE_TOOLTIP: &str =
-        "options.worldOptions.guest.force_game_mode.off.scope.tooltip";
-    #[doc = "Other players will retain their current game mode regardless of the world's default game mode."]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_FORCE_GAME_MODE_OFF_TOOLTIP: &str =
-        "options.worldOptions.guest.force_game_mode.off.tooltip";
-    #[doc = "Other players will be forced to play the world's default game mode."]
-    pub const OPTIONS_WORLDOPTIONS_GUEST_FORCE_GAME_MODE_ON_TOOLTIP: &str =
-        "options.worldOptions.guest.force_game_mode.on.tooltip";
-    #[doc = "Multiplayer"]
-    pub const OPTIONS_WORLDOPTIONS_MULTIPLAYER_TITLE: &str =
-        "options.worldOptions.multiplayer.title";
-    #[doc = "Personal Game Mode"]
-    pub const OPTIONS_WORLDOPTIONS_PERSONAL_GAME_MODE: &str =
-        "options.worldOptions.personal_game_mode";
-    #[doc = "Changes your game mode in this world."]
-    pub const OPTIONS_WORLDOPTIONS_PERSONAL_GAME_MODE_TOOLTIP: &str =
-        "options.worldOptions.personal_game_mode.tooltip";
     #[doc = "World Options"]
     pub const OPTIONS_WORLDOPTIONS_TITLE: &str = "options.worldOptions.title";
     #[doc = "Minecraft has run out of memory.\n\nThis could be caused by a bug in the game or by the Java Virtual Machine not being allocated enough memory.\n\nTo prevent world corruption, the current game has quit. We've tried to free up enough memory to let you go back to the main menu and back to playing, but this may not have worked.\n\nPlease restart the game if you see this message again."]
@@ -15204,7 +14291,7 @@ pub mod java {
     pub const PACK_DROPCONFIRM: &str = "pack.dropConfirm";
     #[doc = "Drag and drop files into this window to add packs"]
     pub const PACK_DROPINFO: &str = "pack.dropInfo";
-    #[doc = "The following entries were not valid packs and were not copied:\n%s"]
+    #[doc = "The following entries were not valid packs and were not copied:\n %s"]
     pub const PACK_DROPREJECTED_MESSAGE: &str = "pack.dropRejected.message";
     #[doc = "Non-pack entries"]
     pub const PACK_DROPREJECTED_TITLE: &str = "pack.dropRejected.title";
@@ -15510,9 +14597,9 @@ pub mod java {
     pub const POTION_WITHDURATION: &str = "potion.withDuration";
     #[doc = "Unknown predicate: %s"]
     pub const PREDICATE_UNKNOWN: &str = "predicate.unknown";
-    #[doc = "Could not find a world with the provided identifier"]
+    #[doc = "Could not find world with the provided identifier"]
     pub const QUICKPLAY_ERROR_INVALID_IDENTIFIER: &str = "quickplay.error.invalid_identifier";
-    #[doc = "Could not connect to this Realm"]
+    #[doc = "Could not connect to Realm"]
     pub const QUICKPLAY_ERROR_REALM_CONNECT: &str = "quickplay.error.realm_connect";
     #[doc = "Lacking permission to connect to this Realm"]
     pub const QUICKPLAY_ERROR_REALM_PERMISSION: &str = "quickplay.error.realm_permission";
@@ -15527,9 +14614,6 @@ pub mod java {
     #[doc = "Brazil"]
     pub const REALMS_CONFIGURATION_REGION_BRAZIL_SOUTH: &str =
         "realms.configuration.region.brazil_south";
-    #[doc = "Canada"]
-    pub const REALMS_CONFIGURATION_REGION_CANADA_CENTRAL: &str =
-        "realms.configuration.region.canada_central";
     #[doc = "India"]
     pub const REALMS_CONFIGURATION_REGION_CENTRAL_INDIA: &str =
         "realms.configuration.region.central_india";
@@ -15554,18 +14638,12 @@ pub mod java {
     #[doc = "South Korea"]
     pub const REALMS_CONFIGURATION_REGION_KOREA_CENTRAL: &str =
         "realms.configuration.region.korea_central";
-    #[doc = "Mexico"]
-    pub const REALMS_CONFIGURATION_REGION_MEXICO_CENTRAL: &str =
-        "realms.configuration.region.mexico_central";
     #[doc = "Illinois, USA"]
     pub const REALMS_CONFIGURATION_REGION_NORTH_CENTRAL_US: &str =
         "realms.configuration.region.north_central_us";
     #[doc = "Ireland"]
     pub const REALMS_CONFIGURATION_REGION_NORTH_EUROPE: &str =
         "realms.configuration.region.north_europe";
-    #[doc = "South Africa"]
-    pub const REALMS_CONFIGURATION_REGION_SOUTH_AFRICA_NORTH: &str =
-        "realms.configuration.region.south_africa_north";
     #[doc = "Texas, USA"]
     pub const REALMS_CONFIGURATION_REGION_SOUTH_CENTRAL_US: &str =
         "realms.configuration.region.south_central_us";
@@ -15589,8 +14667,6 @@ pub mod java {
     pub const REALMS_CONFIGURATION_REGION_WEST_US: &str = "realms.configuration.region.west_us";
     #[doc = "Washington, USA"]
     pub const REALMS_CONFIGURATION_REGION_WEST_US_2: &str = "realms.configuration.region.west_us_2";
-    #[doc = "Arizona, USA"]
-    pub const REALMS_CONFIGURATION_REGION_WEST_US_3: &str = "realms.configuration.region.west_us_3";
     #[doc = "Automatic (Realm owner ping)"]
     pub const REALMS_CONFIGURATION_REGION_PREFERENCE_AUTOMATIC_OWNER: &str =
         "realms.configuration.region_preference.automatic_owner";
@@ -15761,7 +14837,7 @@ pub mod java {
     pub const SELECTWORLD_COMMANDS: &str = "selectWorld.commands";
     #[doc = "Must be converted!"]
     pub const SELECTWORLD_CONVERSION: &str = "selectWorld.conversion";
-    #[doc = "This world must be opened in an older version (like 1.6.4) to be safely converted."]
+    #[doc = "This world must be opened in an older version (like 1.6.4) to be safely converted"]
     pub const SELECTWORLD_CONVERSION_TOOLTIP: &str = "selectWorld.conversion.tooltip";
     #[doc = "Create New World"]
     pub const SELECTWORLD_CREATE: &str = "selectWorld.create";
@@ -15791,7 +14867,7 @@ pub mod java {
     pub const SELECTWORLD_EDIT_BACKUPFAILED: &str = "selectWorld.edit.backupFailed";
     #[doc = "Open Backups Folder"]
     pub const SELECTWORLD_EDIT_BACKUPFOLDER: &str = "selectWorld.edit.backupFolder";
-    #[doc = "Size: %s MB"]
+    #[doc = "size: %s MB"]
     pub const SELECTWORLD_EDIT_BACKUPSIZE: &str = "selectWorld.edit.backupSize";
     #[doc = "Export World Generation Settings"]
     pub const SELECTWORLD_EDIT_EXPORT_WORLDGEN_SETTINGS: &str =
@@ -15899,7 +14975,7 @@ pub mod java {
     pub const SELECTWORLD_INCOMPATIBLE_TOOLTIP: &str = "selectWorld.incompatible.tooltip";
     #[doc = "Created by an incompatible version"]
     pub const SELECTWORLD_INCOMPATIBLE_SERIES: &str = "selectWorld.incompatible_series";
-    #[doc = "Unable to read or access the folder where game worlds are saved!"]
+    #[doc = "Unable to read or access folder where game worlds are saved!"]
     pub const SELECTWORLD_LOAD_FOLDER_ACCESS: &str = "selectWorld.load_folder_access";
     #[doc = "Loading World List"]
     pub const SELECTWORLD_LOADING_LIST: &str = "selectWorld.loading_list";
@@ -15999,14 +15075,8 @@ pub mod java {
     pub const SELECTWORLD_WORLD_GEN_SETTINGS_ACCESS: &str = "selectWorld.world_gen_settings_access";
     #[doc = "Loading the world requires taking a backup first"]
     pub const SELECTEWORLD_BACKUPREQUIREDTOOLTIP: &str = "selecteWorld.backupRequiredTooltip";
-    #[doc = "Back Text:"]
-    pub const SIGN_BACK_TEXT: &str = "sign.back_text";
-    #[doc = "Click actions are disabled for this sign"]
-    pub const SIGN_CLICK_ACTIONS_DISABLED: &str = "sign.click_actions_disabled";
     #[doc = "Edit Sign Message"]
     pub const SIGN_EDIT: &str = "sign.edit";
-    #[doc = "Front Text:"]
-    pub const SIGN_FRONT_TEXT: &str = "sign.front_text";
     #[doc = "No amount of rest can pass this night"]
     pub const SLEEP_NOT_POSSIBLE: &str = "sleep.not_possible";
     #[doc = "%s/%s players sleeping"]
@@ -16084,8 +15154,6 @@ pub mod java {
     pub const SOUNDCATEGORY_VOICE: &str = "soundCategory.voice";
     #[doc = "Weather"]
     pub const SOUNDCATEGORY_WEATHER: &str = "soundCategory.weather";
-    #[doc = "Unable to teleport. The other side is not generated yet."]
-    pub const SPECTATOR_CANNOT_TELEPORT: &str = "spectator.cannot_teleport";
     #[doc = "Close Menu"]
     pub const SPECTATORMENU_CLOSE: &str = "spectatorMenu.close";
     #[doc = "Next Page"]
@@ -16236,8 +15304,6 @@ pub mod java {
     pub const STAT_MINECRAFT_RAID_WIN: &str = "stat.minecraft.raid_win";
     #[doc = "Times Slept in a Bed"]
     pub const STAT_MINECRAFT_SLEEP_IN_BED: &str = "stat.minecraft.sleep_in_bed";
-    #[doc = "Times Slept in a Straw Bed"]
-    pub const STAT_MINECRAFT_SLEEP_IN_STRAW_BED: &str = "stat.minecraft.sleep_in_straw_bed";
     #[doc = "Sneak Time"]
     pub const STAT_MINECRAFT_SNEAK_TIME: &str = "stat.minecraft.sneak_time";
     #[doc = "Distance Sprinted"]
@@ -16348,7 +15414,7 @@ pub mod java {
     pub const STRUCTURE_BLOCK_MODE_INFO_SAVE: &str = "structure_block.mode_info.save";
     #[doc = "Relative Position"]
     pub const STRUCTURE_BLOCK_POSITION: &str = "structure_block.position";
-    #[doc = "relative position x"]
+    #[doc = "relative Position x"]
     pub const STRUCTURE_BLOCK_POSITION_X: &str = "structure_block.position.x";
     #[doc = "relative position y"]
     pub const STRUCTURE_BLOCK_POSITION_Y: &str = "structure_block.position.y";
@@ -16435,7 +15501,7 @@ pub mod java {
     #[doc = "Bubbles flow"]
     pub const SUBTITLES_BLOCK_BUBBLE_COLUMN_UPWARDS_AMBIENT: &str =
         "subtitles.block.bubble_column.upwards_ambient";
-    #[doc = "Bubbles whoosh"]
+    #[doc = "Bubbles woosh"]
     pub const SUBTITLES_BLOCK_BUBBLE_COLUMN_UPWARDS_INSIDE: &str =
         "subtitles.block.bubble_column.upwards_inside";
     #[doc = "Bubbles whirl"]
@@ -16605,8 +15671,6 @@ pub mod java {
     #[doc = "Stalactite crashes down"]
     pub const SUBTITLES_BLOCK_POINTED_DRIPSTONE_LAND: &str =
         "subtitles.block.pointed_dripstone.land";
-    #[doc = "Leaves rustling"]
-    pub const SUBTITLES_BLOCK_POPLAR_LEAVES_AMBIENT: &str = "subtitles.block.poplar_leaves.ambient";
     #[doc = "Portal whooshes"]
     pub const SUBTITLES_BLOCK_PORTAL_AMBIENT: &str = "subtitles.block.portal.ambient";
     #[doc = "Portal noise fades"]
@@ -16666,8 +15730,6 @@ pub mod java {
     pub const SUBTITLES_BLOCK_SHELF_SINGLE_SWAP: &str = "subtitles.block.shelf.single_swap";
     #[doc = "Item taken"]
     pub const SUBTITLES_BLOCK_SHELF_TAKE_ITEM: &str = "subtitles.block.shelf.take_item";
-    #[doc = "Something bounces on a Shelf Mushroom"]
-    pub const SUBTITLES_BLOCK_SHELF_MUSHROOM_BOUNCE: &str = "subtitles.block.shelf_mushroom.bounce";
     #[doc = "Shulker box closes"]
     pub const SUBTITLES_BLOCK_SHULKER_BOX_CLOSE: &str = "subtitles.block.shulker_box.close";
     #[doc = "Shulker box opens"]
@@ -16687,8 +15749,6 @@ pub mod java {
     pub const SUBTITLES_BLOCK_SNIFFER_EGG_PLOP: &str = "subtitles.block.sniffer_egg.plop";
     #[doc = "Sponge sucks"]
     pub const SUBTITLES_BLOCK_SPONGE_ABSORB: &str = "subtitles.block.sponge.absorb";
-    #[doc = "Straw Bed breaks"]
-    pub const SUBTITLES_BLOCK_STRAW_BED_BREAK_LEAVE: &str = "subtitles.block.straw_bed.break_leave";
     #[doc = "Berries pop"]
     pub const SUBTITLES_BLOCK_SWEET_BERRY_BUSH_PICK_BERRIES: &str =
         "subtitles.block.sweet_berry_bush.pick_berries";
@@ -17065,10 +16125,10 @@ pub mod java {
     #[doc = "Copper Golem can't place item"]
     pub const SUBTITLES_ENTITY_COPPER_GOLEM_ITEM_NO_DROP: &str =
         "subtitles.entity.copper_golem.item_no_drop";
-    #[doc = "Copper Golem is picking up an item"]
+    #[doc = "Copper Golem is picking up item"]
     pub const SUBTITLES_ENTITY_COPPER_GOLEM_NO_ITEM_GET: &str =
         "subtitles.entity.copper_golem.no_item_get";
-    #[doc = "Copper Golem can't pick up an item"]
+    #[doc = "Copper Golem can't pick up item"]
     pub const SUBTITLES_ENTITY_COPPER_GOLEM_NO_ITEM_NO_GET: &str =
         "subtitles.entity.copper_golem.no_item_no_get";
     #[doc = "Copper Golem appears"]
@@ -17130,14 +16190,6 @@ pub mod java {
     pub const SUBTITLES_ENTITY_CREEPER_HURT: &str = "subtitles.entity.creeper.hurt";
     #[doc = "Creeper hisses"]
     pub const SUBTITLES_ENTITY_CREEPER_PRIMED: &str = "subtitles.entity.creeper.primed";
-    #[doc = "Cushion breaks"]
-    pub const SUBTITLES_ENTITY_CUSHION_BREAK: &str = "subtitles.entity.cushion.break";
-    #[doc = "Gets up from Cushion"]
-    pub const SUBTITLES_ENTITY_CUSHION_GET_UP: &str = "subtitles.entity.cushion.get_up";
-    #[doc = "Cushion placed"]
-    pub const SUBTITLES_ENTITY_CUSHION_PLACE: &str = "subtitles.entity.cushion.place";
-    #[doc = "Sits on Cushion"]
-    pub const SUBTITLES_ENTITY_CUSHION_SIT: &str = "subtitles.entity.cushion.sit";
     #[doc = "Dolphin chirps"]
     pub const SUBTITLES_ENTITY_DOLPHIN_AMBIENT: &str = "subtitles.entity.dolphin.ambient";
     #[doc = "Dolphin whistles"]
@@ -17431,8 +16483,6 @@ pub mod java {
         "subtitles.entity.happy_ghast.harness_goggles_up";
     #[doc = "Happy Ghast hurts"]
     pub const SUBTITLES_ENTITY_HAPPY_GHAST_HURT: &str = "subtitles.entity.happy_ghast.hurt";
-    #[doc = "Wind rushes past"]
-    pub const SUBTITLES_ENTITY_HAPPY_GHAST_RIDING: &str = "subtitles.entity.happy_ghast.riding";
     #[doc = "Harness unequips"]
     pub const SUBTITLES_ENTITY_HAPPY_GHAST_UNEQUIP: &str = "subtitles.entity.happy_ghast.unequip";
     #[doc = "Hoglin growls"]
@@ -17613,8 +16663,6 @@ pub mod java {
     pub const SUBTITLES_ENTITY_NAUTILUS_HURT: &str = "subtitles.entity.nautilus.hurt";
     #[doc = "Nautilus hurts"]
     pub const SUBTITLES_ENTITY_NAUTILUS_HURT_LAND: &str = "subtitles.entity.nautilus.hurt_land";
-    #[doc = "Nautilus bubbles"]
-    pub const SUBTITLES_ENTITY_NAUTILUS_RIDING: &str = "subtitles.entity.nautilus.riding";
     #[doc = "Nautilus swims"]
     pub const SUBTITLES_ENTITY_NAUTILUS_SWIM: &str = "subtitles.entity.nautilus.swim";
     #[doc = "Painting broken"]
@@ -18679,7 +17727,7 @@ pub mod java {
         "telemetry.event.p2p_connection.description";
     #[doc = "Peer-to-peer Connection"]
     pub const TELEMETRY_EVENT_P2P_CONNECTION_TITLE: &str = "telemetry.event.p2p_connection.title";
-    #[doc = "Knowing the overall performance profile of Minecraft helps us tune and optimize the game for a wide range of machine specifications and operating systems.\nGame version is included to help us compare the performance profile for new versions of Minecraft."]
+    #[doc = "Knowing the overall performance profile of Minecraft helps us tune and optimize the game for a wide range of machine specifications and operating systems. \nGame version is included to help us compare the performance profile for new versions of Minecraft."]
     pub const TELEMETRY_EVENT_PERFORMANCE_METRICS_DESCRIPTION: &str =
         "telemetry.event.performance_metrics.description";
     #[doc = "Performance Metrics"]
@@ -18731,7 +17779,7 @@ pub mod java {
     #[doc = "Event Timestamp (UTC)"]
     pub const TELEMETRY_PROPERTY_EVENT_TIMESTAMP_UTC_TITLE: &str =
         "telemetry.property.event_timestamp_utc.title";
-    #[doc = "Frame Rate Samples (fps)"]
+    #[doc = "Frame Rate Samples (FPS)"]
     pub const TELEMETRY_PROPERTY_FRAME_RATE_SAMPLES_TITLE: &str =
         "telemetry.property.frame_rate_samples.title";
     #[doc = "Game Mode"]
@@ -18946,10 +17994,6 @@ pub mod java {
     pub const TEST_ERROR_VALUE_NOT_IN_BETWEEN: &str = "test.error.value_not_in_between";
     #[doc = "Wrong block entity type: %s"]
     pub const TEST_ERROR_WRONG_BLOCK_ENTITY: &str = "test.error.wrong_block_entity";
-    #[doc = "Player coordinates: [%s, %s, %s] in %s"]
-    pub const TEST_PLAYER_COORDINATES: &str = "test.player.coordinates";
-    #[doc = "Test coordinates: [%s, %s, %s] in %s"]
-    pub const TEST_RUN_COORDINATES: &str = "test.run.coordinates";
     #[doc = "Test structure missing %s block"]
     pub const TEST_BLOCK_ERROR_MISSING: &str = "test_block.error.missing";
     #[doc = "Too many %s blocks"]
@@ -18982,8 +18026,6 @@ pub mod java {
     pub const TEST_INSTANCE_ACTION_SAVE: &str = "test_instance.action.save";
     #[doc = "Environment: %s"]
     pub const TEST_INSTANCE_DESCRIPTION_BATCH: &str = "test_instance.description.batch";
-    #[doc = "Dimension: %s"]
-    pub const TEST_INSTANCE_DESCRIPTION_DIMENSION: &str = "test_instance.description.dimension";
     #[doc = "Failed: %s"]
     pub const TEST_INSTANCE_DESCRIPTION_FAILED: &str = "test_instance.description.failed";
     #[doc = "Function: %s"]
@@ -19160,9 +18202,6 @@ pub mod java {
     pub const TUTORIAL_SOCIALINTERACTIONS_TITLE: &str = "tutorial.socialInteractions.title";
     #[doc = "Netherite Upgrade"]
     pub const UPGRADE_MINECRAFT_NETHERITE_UPGRADE: &str = "upgrade.minecraft.netherite_upgrade";
-    #[doc = "The world folder seems to already contain some upgraded files. The game is unable to correctly upgrade your world."]
-    pub const UPGRADEWORLD_ABORTED_FILE_ALREADY_EXISTS: &str =
-        "upgradeWorld.aborted.file_already_exists";
     #[doc = "This may happen if another program accessed the world during the upgrade.\nIt may help to restart your computer and try again. If the issue persists, please consider reporting a bug."]
     pub const UPGRADEWORLD_ABORTED_MESSAGE: &str = "upgradeWorld.aborted.message";
     #[doc = "Report a Bug"]

@@ -128,74 +128,11 @@ pub static AXE: BlockTransformer = BlockTransformer {
             rules: &[
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OAK_WOOD],
+                        blocks: &[BlockId::ACACIA_LOG],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_OAK_WOOD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OAK_LOG],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_OAK_LOG,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::DARK_OAK_WOOD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_DARK_OAK_WOOD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::DARK_OAK_LOG],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_DARK_OAK_LOG,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::PALE_OAK_WOOD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_PALE_OAK_WOOD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::PALE_OAK_LOG],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_PALE_OAK_LOG,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::POPLAR_WOOD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_POPLAR_WOOD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::POPLAR_LOG],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_POPLAR_LOG,
+                        BlockId::STRIPPED_ACACIA_LOG,
                     ),
                 },
                 BlockTransformerRule {
@@ -209,38 +146,11 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::ACACIA_LOG],
+                        blocks: &[BlockId::BAMBOO_BLOCK],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_ACACIA_LOG,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::CHERRY_WOOD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_CHERRY_WOOD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::CHERRY_LOG],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_CHERRY_LOG,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::BIRCH_WOOD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_BIRCH_WOOD,
+                        BlockId::STRIPPED_BAMBOO_BLOCK,
                     ),
                 },
                 BlockTransformerRule {
@@ -254,65 +164,29 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::JUNGLE_WOOD],
+                        blocks: &[BlockId::BIRCH_WOOD],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_JUNGLE_WOOD,
+                        BlockId::STRIPPED_BIRCH_WOOD,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::JUNGLE_LOG],
+                        blocks: &[BlockId::CHERRY_LOG],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_JUNGLE_LOG,
+                        BlockId::STRIPPED_CHERRY_LOG,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::SPRUCE_WOOD],
+                        blocks: &[BlockId::CHERRY_WOOD],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_SPRUCE_WOOD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::SPRUCE_LOG],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_SPRUCE_LOG,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WARPED_STEM],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_WARPED_STEM,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WARPED_HYPHAE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_WARPED_HYPHAE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::CRIMSON_STEM],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_CRIMSON_STEM,
+                        BlockId::STRIPPED_CHERRY_WOOD,
                     ),
                 },
                 BlockTransformerRule {
@@ -326,11 +200,47 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::MANGROVE_WOOD],
+                        blocks: &[BlockId::CRIMSON_STEM],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_MANGROVE_WOOD,
+                        BlockId::STRIPPED_CRIMSON_STEM,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::DARK_OAK_LOG],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_DARK_OAK_LOG,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::DARK_OAK_WOOD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_DARK_OAK_WOOD,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::JUNGLE_LOG],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_JUNGLE_LOG,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::JUNGLE_WOOD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_JUNGLE_WOOD,
                     ),
                 },
                 BlockTransformerRule {
@@ -344,11 +254,83 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::BAMBOO_BLOCK],
+                        blocks: &[BlockId::MANGROVE_WOOD],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::STRIPPED_BAMBOO_BLOCK,
+                        BlockId::STRIPPED_MANGROVE_WOOD,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::OAK_LOG],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_OAK_LOG,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::OAK_WOOD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_OAK_WOOD,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::PALE_OAK_LOG],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_PALE_OAK_LOG,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::PALE_OAK_WOOD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_PALE_OAK_WOOD,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::SPRUCE_LOG],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_SPRUCE_LOG,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::SPRUCE_WOOD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_SPRUCE_WOOD,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WARPED_HYPHAE],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_WARPED_HYPHAE,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WARPED_STEM],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::STRIPPED_WARPED_STEM,
                     ),
                 },
             ],
@@ -365,56 +347,6 @@ pub static AXE: BlockTransformer = BlockTransformer {
             rules: &[
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BLOCK),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_CUT_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::CUT_COPPER),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_CUT_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_CUT_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_CUT_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_CUT_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
                         blocks: &[BlockId::EXPOSED_CHISELED_COPPER],
                         offset: (0i8, 0i8, 0i8),
                     },
@@ -424,74 +356,69 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_CHISELED_COPPER],
+                        blocks: &[BlockId::EXPOSED_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BLOCK),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::EXPOSED_COPPER_BARS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BARS),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::EXPOSED_COPPER_BULB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BULB),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::EXPOSED_COPPER_CHAIN],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_CHAIN),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::EXPOSED_COPPER_CHEST],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_CHEST),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::EXPOSED_COPPER_DOOR],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_DOOR),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::EXPOSED_COPPER_GOLEM_STATUE],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_CHISELED_COPPER,
+                        BlockId::COPPER_GOLEM_STATUE,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_CHISELED_COPPER],
+                        blocks: &[BlockId::EXPOSED_COPPER_GRATE],
                         offset: (0i8, 0i8, 0i8),
                     },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_CHISELED_COPPER,
-                    ),
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_GRATE),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_CUT_COPPER_SLAB],
+                        blocks: &[BlockId::EXPOSED_COPPER_LANTERN],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::CUT_COPPER_SLAB,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_CUT_COPPER_SLAB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_CUT_COPPER_SLAB,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_CUT_COPPER_SLAB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_CUT_COPPER_SLAB,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_CUT_COPPER_STAIRS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::CUT_COPPER_STAIRS,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_CUT_COPPER_STAIRS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_CUT_COPPER_STAIRS,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_CUT_COPPER_STAIRS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_CUT_COPPER_STAIRS,
+                        BlockId::COPPER_LANTERN,
                     ),
                 },
                 BlockTransformerRule {
@@ -505,36 +432,52 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER_TRAPDOOR],
+                        blocks: &[BlockId::EXPOSED_CUT_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::CUT_COPPER),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::EXPOSED_CUT_COPPER_SLAB],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_TRAPDOOR,
+                        BlockId::CUT_COPPER_SLAB,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_COPPER_TRAPDOOR],
+                        blocks: &[BlockId::EXPOSED_CUT_COPPER_STAIRS],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_TRAPDOOR,
+                        BlockId::CUT_COPPER_STAIRS,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER_BARS],
+                        blocks: &[BlockId::EXPOSED_LIGHTNING_ROD],
                         offset: (0i8, 0i8, 0i8),
                     },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BARS),
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::LIGHTNING_ROD),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER_BARS],
+                        blocks: &[BlockId::OXIDIZED_CHISELED_COPPER],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_BARS,
+                        BlockId::WEATHERED_CHISELED_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::OXIDIZED_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER,
                     ),
                 },
                 BlockTransformerRule {
@@ -548,47 +491,6 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER_GRATE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_GRATE),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER_GRATE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_GRATE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_COPPER_GRATE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_GRATE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER_BULB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BULB),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER_BULB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_BULB,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
                         blocks: &[BlockId::OXIDIZED_COPPER_BULB],
                         offset: (0i8, 0i8, 0i8),
                     },
@@ -598,47 +500,29 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER_LANTERN],
+                        blocks: &[BlockId::OXIDIZED_COPPER_CHAIN],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::COPPER_LANTERN,
+                        BlockId::WEATHERED_COPPER_CHAIN,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER_LANTERN],
+                        blocks: &[BlockId::OXIDIZED_COPPER_CHEST],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_LANTERN,
+                        BlockId::WEATHERED_COPPER_CHEST,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_COPPER_LANTERN],
+                        blocks: &[BlockId::OXIDIZED_COPPER_DOOR],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_LANTERN,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER_GOLEM_STATUE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::COPPER_GOLEM_STATUE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER_GOLEM_STATUE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_GOLEM_STATUE,
+                        BlockId::WEATHERED_COPPER_DOOR,
                     ),
                 },
                 BlockTransformerRule {
@@ -652,18 +536,56 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_LIGHTNING_ROD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::LIGHTNING_ROD),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_LIGHTNING_ROD],
+                        blocks: &[BlockId::OXIDIZED_COPPER_GRATE],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_LIGHTNING_ROD,
+                        BlockId::WEATHERED_COPPER_GRATE,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::OXIDIZED_COPPER_LANTERN],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER_LANTERN,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::OXIDIZED_COPPER_TRAPDOOR],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER_TRAPDOOR,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::OXIDIZED_CUT_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_CUT_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::OXIDIZED_CUT_COPPER_SLAB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_CUT_COPPER_SLAB,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::OXIDIZED_CUT_COPPER_STAIRS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_CUT_COPPER_STAIRS,
                     ),
                 },
                 BlockTransformerRule {
@@ -677,10 +599,39 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER_CHAIN],
+                        blocks: &[BlockId::WEATHERED_CHISELED_COPPER],
                         offset: (0i8, 0i8, 0i8),
                     },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_CHAIN),
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_CHISELED_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_COPPER_BARS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER_BARS,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_COPPER_BULB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER_BULB,
+                    ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
@@ -693,11 +644,92 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_COPPER_CHAIN],
+                        blocks: &[BlockId::WEATHERED_COPPER_CHEST],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_CHAIN,
+                        BlockId::EXPOSED_COPPER_CHEST,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_COPPER_DOOR],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER_DOOR,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_COPPER_GOLEM_STATUE],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER_GOLEM_STATUE,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_COPPER_GRATE],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER_GRATE,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_COPPER_LANTERN],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER_LANTERN,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_COPPER_TRAPDOOR],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER_TRAPDOOR,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_CUT_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_CUT_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_CUT_COPPER_SLAB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_CUT_COPPER_SLAB,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_CUT_COPPER_STAIRS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_CUT_COPPER_STAIRS,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WEATHERED_LIGHTNING_ROD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_LIGHTNING_ROD,
                     ),
                 },
             ],
@@ -714,220 +746,6 @@ pub static AXE: BlockTransformer = BlockTransformer {
             rules: &[
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER_CHEST],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_CHEST),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER_CHEST],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_CHEST,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_COPPER_CHEST],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_CHEST,
-                    ),
-                },
-            ],
-            disallowed_faces: &[],
-            item_damage_per_use: 1u16,
-            sound: Some(crate::sound::Sound::ItemAxeScrape),
-            particle: Some(crate::world::WorldEvent::ParticlesScrape),
-            loot: None,
-            drop_strategy: None,
-            transform_type: Some(TransformType::CopperChest),
-            update_from_neighbors: false,
-        },
-        BlockTransformerEntry {
-            rules: &[
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::EXPOSED_COPPER_DOOR],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_DOOR),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WEATHERED_COPPER_DOOR],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_DOOR,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::OXIDIZED_COPPER_DOOR],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_DOOR,
-                    ),
-                },
-            ],
-            disallowed_faces: &[],
-            item_damage_per_use: 1u16,
-            sound: Some(crate::sound::Sound::ItemAxeScrape),
-            particle: Some(crate::world::WorldEvent::ParticlesScrape),
-            loot: None,
-            drop_strategy: None,
-            transform_type: None,
-            update_from_neighbors: false,
-        },
-        BlockTransformerEntry {
-            rules: &[
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_BLOCK],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BLOCK),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_CUT_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::CUT_COPPER),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_CUT_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_CUT_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_CUT_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_CUT_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_CUT_COPPER],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_CUT_COPPER,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_CUT_COPPER_SLAB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::CUT_COPPER_SLAB,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_CUT_COPPER_SLAB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_CUT_COPPER_SLAB,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_CUT_COPPER_SLAB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_CUT_COPPER_SLAB,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_CUT_COPPER_SLAB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_CUT_COPPER_SLAB,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_CUT_COPPER_STAIRS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::CUT_COPPER_STAIRS,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_CUT_COPPER_STAIRS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_CUT_COPPER_STAIRS,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_CUT_COPPER_STAIRS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_CUT_COPPER_STAIRS,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_CUT_COPPER_STAIRS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_CUT_COPPER_STAIRS,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
                         blocks: &[BlockId::WAXED_CHISELED_COPPER],
                         offset: (0i8, 0i8, 0i8),
                     },
@@ -937,29 +755,69 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_CHISELED_COPPER],
+                        blocks: &[BlockId::WAXED_COPPER_BARS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BARS),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_COPPER_BLOCK],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BLOCK),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_COPPER_BULB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BULB),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_COPPER_CHAIN],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_CHAIN),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_COPPER_CHEST],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_CHEST),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_COPPER_DOOR],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_DOOR),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_COPPER_GOLEM_STATUE],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_CHISELED_COPPER,
+                        BlockId::COPPER_GOLEM_STATUE,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_CHISELED_COPPER],
+                        blocks: &[BlockId::WAXED_COPPER_GRATE],
                         offset: (0i8, 0i8, 0i8),
                     },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_CHISELED_COPPER,
-                    ),
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_GRATE),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_CHISELED_COPPER],
+                        blocks: &[BlockId::WAXED_COPPER_LANTERN],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_CHISELED_COPPER,
+                        BlockId::COPPER_LANTERN,
                     ),
                 },
                 BlockTransformerRule {
@@ -973,37 +831,46 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_TRAPDOOR],
+                        blocks: &[BlockId::WAXED_CUT_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::CUT_COPPER),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_CUT_COPPER_SLAB],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_TRAPDOOR,
+                        BlockId::CUT_COPPER_SLAB,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_TRAPDOOR],
+                        blocks: &[BlockId::WAXED_CUT_COPPER_STAIRS],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_TRAPDOOR,
+                        BlockId::CUT_COPPER_STAIRS,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_TRAPDOOR],
+                        blocks: &[BlockId::WAXED_EXPOSED_CHISELED_COPPER],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER_TRAPDOOR,
+                        BlockId::EXPOSED_CHISELED_COPPER,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_BARS],
+                        blocks: &[BlockId::WAXED_EXPOSED_COPPER],
                         offset: (0i8, 0i8, 0i8),
                     },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BARS),
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_COPPER,
+                    ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
@@ -1016,65 +883,6 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_BARS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_BARS,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_BARS],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER_BARS,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_GRATE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_GRATE),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_GRATE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_GRATE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_GRATE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_GRATE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_GRATE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER_GRATE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_BULB],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_BULB),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
                         blocks: &[BlockId::WAXED_EXPOSED_COPPER_BULB],
                         offset: (0i8, 0i8, 0i8),
                     },
@@ -1084,29 +892,29 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_BULB],
+                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_CHAIN],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_BULB,
+                        BlockId::EXPOSED_COPPER_CHAIN,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_BULB],
+                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_CHEST],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER_BULB,
+                        BlockId::EXPOSED_COPPER_CHEST,
                     ),
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_GOLEM_STATUE],
+                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_DOOR],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::COPPER_GOLEM_STATUE,
+                        BlockId::EXPOSED_COPPER_DOOR,
                     ),
                 },
                 BlockTransformerRule {
@@ -1120,63 +928,11 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_GOLEM_STATUE],
+                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_GRATE],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_GOLEM_STATUE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_GOLEM_STATUE],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER_GOLEM_STATUE,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_LIGHTNING_ROD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::LIGHTNING_ROD),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_LIGHTNING_ROD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_LIGHTNING_ROD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_LIGHTNING_ROD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_LIGHTNING_ROD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_LIGHTNING_ROD],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_LIGHTNING_ROD,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_LANTERN],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::COPPER_LANTERN,
+                        BlockId::EXPOSED_COPPER_GRATE,
                     ),
                 },
                 BlockTransformerRule {
@@ -1190,11 +946,135 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_LANTERN],
+                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_TRAPDOOR],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::WEATHERED_COPPER_LANTERN,
+                        BlockId::EXPOSED_COPPER_TRAPDOOR,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_EXPOSED_CUT_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_CUT_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_EXPOSED_CUT_COPPER_SLAB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_CUT_COPPER_SLAB,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_EXPOSED_CUT_COPPER_STAIRS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_CUT_COPPER_STAIRS,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_EXPOSED_LIGHTNING_ROD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::EXPOSED_LIGHTNING_ROD,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_LIGHTNING_ROD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::LIGHTNING_ROD),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_CHISELED_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_CHISELED_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_BARS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_COPPER_BARS,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_BULB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_COPPER_BULB,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_CHAIN],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_COPPER_CHAIN,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_CHEST],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_COPPER_CHEST,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_DOOR],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_COPPER_DOOR,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_GOLEM_STATUE],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_COPPER_GOLEM_STATUE,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_GRATE],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_COPPER_GRATE,
                     ),
                 },
                 BlockTransformerRule {
@@ -1208,18 +1088,83 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_CHAIN],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_CHAIN),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_CHAIN],
+                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_TRAPDOOR],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_CHAIN,
+                        BlockId::OXIDIZED_COPPER_TRAPDOOR,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_CUT_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_CUT_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_CUT_COPPER_SLAB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_CUT_COPPER_SLAB,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_CUT_COPPER_STAIRS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_CUT_COPPER_STAIRS,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_OXIDIZED_LIGHTNING_ROD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::OXIDIZED_LIGHTNING_ROD,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_CHISELED_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_CHISELED_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_BARS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER_BARS,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_BULB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER_BULB,
                     ),
                 },
                 BlockTransformerRule {
@@ -1233,85 +1178,11 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_CHAIN],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER_CHAIN,
-                    ),
-                },
-            ],
-            disallowed_faces: &[],
-            item_damage_per_use: 1u16,
-            sound: Some(crate::sound::Sound::ItemAxeWaxOff),
-            particle: Some(crate::world::WorldEvent::ParticlesWaxOff),
-            loot: None,
-            drop_strategy: None,
-            transform_type: None,
-            update_from_neighbors: true,
-        },
-        BlockTransformerEntry {
-            rules: &[
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_CHEST],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_CHEST),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_CHEST],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_CHEST,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
                         blocks: &[BlockId::WAXED_WEATHERED_COPPER_CHEST],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
                         BlockId::WEATHERED_COPPER_CHEST,
-                    ),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_CHEST],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER_CHEST,
-                    ),
-                },
-            ],
-            disallowed_faces: &[],
-            item_damage_per_use: 1u16,
-            sound: Some(crate::sound::Sound::ItemAxeWaxOff),
-            particle: Some(crate::world::WorldEvent::ParticlesWaxOff),
-            loot: None,
-            drop_strategy: None,
-            transform_type: Some(TransformType::CopperChest),
-            update_from_neighbors: false,
-        },
-        BlockTransformerEntry {
-            rules: &[
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_COPPER_DOOR],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(BlockId::COPPER_DOOR),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_EXPOSED_COPPER_DOOR],
-                        offset: (0i8, 0i8, 0i8),
-                    },
-                    provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::EXPOSED_COPPER_DOOR,
                     ),
                 },
                 BlockTransformerRule {
@@ -1325,11 +1196,74 @@ pub static AXE: BlockTransformer = BlockTransformer {
                 },
                 BlockTransformerRule {
                     predicate: BlockPredicate::MatchingBlocks {
-                        blocks: &[BlockId::WAXED_OXIDIZED_COPPER_DOOR],
+                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_GOLEM_STATUE],
                         offset: (0i8, 0i8, 0i8),
                     },
                     provider: BlockTransformerStateProvider::CopyProperties(
-                        BlockId::OXIDIZED_COPPER_DOOR,
+                        BlockId::WEATHERED_COPPER_GOLEM_STATUE,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_GRATE],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER_GRATE,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_LANTERN],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER_LANTERN,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_COPPER_TRAPDOOR],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_COPPER_TRAPDOOR,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_CUT_COPPER],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_CUT_COPPER,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_CUT_COPPER_SLAB],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_CUT_COPPER_SLAB,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_CUT_COPPER_STAIRS],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_CUT_COPPER_STAIRS,
+                    ),
+                },
+                BlockTransformerRule {
+                    predicate: BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::WAXED_WEATHERED_LIGHTNING_ROD],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    provider: BlockTransformerStateProvider::CopyProperties(
+                        BlockId::WEATHERED_LIGHTNING_ROD,
                     ),
                 },
             ],
@@ -1340,84 +1274,139 @@ pub static AXE: BlockTransformer = BlockTransformer {
             loot: None,
             drop_strategy: None,
             transform_type: None,
-            update_from_neighbors: false,
+            update_from_neighbors: true,
         },
     ],
 };
 pub static HOE: BlockTransformer = BlockTransformer {
-    entries: &[
-        BlockTransformerEntry {
-            rules: &[
-                BlockTransformerRule {
-                    predicate: BlockPredicate::AllOf(&[
-                        BlockPredicate::MatchingBlockTag {
-                            tag: tag::Block::MINECRAFT_TURNS_INTO_FARMLAND,
-                            offset: (0i8, 0i8, 0i8),
-                        },
-                        BlockPredicate::MatchingBlockTag {
-                            tag: tag::Block::MINECRAFT_AIR,
-                            offset: (0i8, 1i8, 0i8),
-                        },
-                    ]),
-                    provider: BlockTransformerStateProvider::SimpleState(BlockId::FARMLAND),
-                },
-                BlockTransformerRule {
-                    predicate: BlockPredicate::AllOf(&[
-                        BlockPredicate::MatchingBlocks {
-                            blocks: &[BlockId::COARSE_DIRT],
-                            offset: (0i8, 0i8, 0i8),
-                        },
-                        BlockPredicate::MatchingBlockTag {
-                            tag: tag::Block::MINECRAFT_AIR,
-                            offset: (0i8, 1i8, 0i8),
-                        },
-                    ]),
-                    provider: BlockTransformerStateProvider::SimpleState(BlockId::DIRT),
-                },
-            ],
-            disallowed_faces: &[BlockDirection::Down],
-            item_damage_per_use: 1u16,
-            sound: Some(crate::sound::Sound::ItemHoeTill),
-            particle: None,
-            loot: None,
-            drop_strategy: None,
-            transform_type: None,
-            update_from_neighbors: true,
-        },
-        BlockTransformerEntry {
-            rules: &[BlockTransformerRule {
+    entries: &[BlockTransformerEntry {
+        rules: &[
+            BlockTransformerRule {
+                predicate: BlockPredicate::AllOf(&[
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::GRASS_BLOCK, BlockId::DIRT_PATH, BlockId::DIRT],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::AIR],
+                        offset: (0i8, 1i8, 0i8),
+                    },
+                ]),
+                provider: BlockTransformerStateProvider::SimpleState(BlockId::FARMLAND),
+            },
+            BlockTransformerRule {
+                predicate: BlockPredicate::AllOf(&[
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::COARSE_DIRT],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::AIR],
+                        offset: (0i8, 1i8, 0i8),
+                    },
+                ]),
+                provider: BlockTransformerStateProvider::SimpleState(BlockId::DIRT),
+            },
+            BlockTransformerRule {
                 predicate: BlockPredicate::MatchingBlocks {
                     blocks: &[BlockId::ROOTED_DIRT],
                     offset: (0i8, 0i8, 0i8),
                 },
                 provider: BlockTransformerStateProvider::SimpleState(BlockId::DIRT),
-            }],
-            disallowed_faces: &[],
-            item_damage_per_use: 1u16,
-            sound: Some(crate::sound::Sound::ItemHoeTill),
-            particle: None,
-            loot: Some("minecraft:till/rooted_dirt"),
-            drop_strategy: Some(DropStrategy::ClickedFace),
-            transform_type: None,
-            update_from_neighbors: true,
-        },
-    ],
+            },
+        ],
+        disallowed_faces: &[BlockDirection::Down],
+        item_damage_per_use: 1u16,
+        sound: Some(crate::sound::Sound::ItemHoeTill),
+        particle: None,
+        loot: None,
+        drop_strategy: None,
+        transform_type: None,
+        update_from_neighbors: true,
+    }],
 };
 pub static SHOVEL: BlockTransformer = BlockTransformer {
     entries: &[BlockTransformerEntry {
-        rules: &[BlockTransformerRule {
-            predicate: BlockPredicate::AllOf(&[
-                BlockPredicate::MatchingBlockTag {
-                    tag: tag::Block::MINECRAFT_TURNS_INTO_DIRT_PATH,
-                    offset: (0i8, 0i8, 0i8),
-                },
-                BlockPredicate::MatchingBlockTag {
-                    tag: tag::Block::MINECRAFT_AIR,
-                    offset: (0i8, 1i8, 0i8),
-                },
-            ]),
-            provider: BlockTransformerStateProvider::SimpleState(BlockId::DIRT_PATH),
-        }],
+        rules: &[
+            BlockTransformerRule {
+                predicate: BlockPredicate::AllOf(&[
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::COARSE_DIRT],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::AIR],
+                        offset: (0i8, 1i8, 0i8),
+                    },
+                ]),
+                provider: BlockTransformerStateProvider::CopyProperties(BlockId::DIRT_PATH),
+            },
+            BlockTransformerRule {
+                predicate: BlockPredicate::AllOf(&[
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::DIRT],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::AIR],
+                        offset: (0i8, 1i8, 0i8),
+                    },
+                ]),
+                provider: BlockTransformerStateProvider::CopyProperties(BlockId::DIRT_PATH),
+            },
+            BlockTransformerRule {
+                predicate: BlockPredicate::AllOf(&[
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::GRASS_BLOCK],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::AIR],
+                        offset: (0i8, 1i8, 0i8),
+                    },
+                ]),
+                provider: BlockTransformerStateProvider::CopyProperties(BlockId::DIRT_PATH),
+            },
+            BlockTransformerRule {
+                predicate: BlockPredicate::AllOf(&[
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::MYCELIUM],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::AIR],
+                        offset: (0i8, 1i8, 0i8),
+                    },
+                ]),
+                provider: BlockTransformerStateProvider::CopyProperties(BlockId::DIRT_PATH),
+            },
+            BlockTransformerRule {
+                predicate: BlockPredicate::AllOf(&[
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::PODZOL],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::AIR],
+                        offset: (0i8, 1i8, 0i8),
+                    },
+                ]),
+                provider: BlockTransformerStateProvider::CopyProperties(BlockId::DIRT_PATH),
+            },
+            BlockTransformerRule {
+                predicate: BlockPredicate::AllOf(&[
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::ROOTED_DIRT],
+                        offset: (0i8, 0i8, 0i8),
+                    },
+                    BlockPredicate::MatchingBlocks {
+                        blocks: &[BlockId::AIR],
+                        offset: (0i8, 1i8, 0i8),
+                    },
+                ]),
+                provider: BlockTransformerStateProvider::CopyProperties(BlockId::DIRT_PATH),
+            },
+        ],
         disallowed_faces: &[BlockDirection::Down],
         item_damage_per_use: 1u16,
         sound: Some(crate::sound::Sound::ItemShovelFlatten),
