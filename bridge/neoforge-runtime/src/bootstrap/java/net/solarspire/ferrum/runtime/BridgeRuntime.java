@@ -100,6 +100,8 @@ public final class BridgeRuntime extends Entrypoint {
     public static native boolean isLoaded(int world, int chunkX, int chunkZ);
     public static native int getHeight(int world, int heightmap, int x, int z);
     public static native int biome(int world, int x, int y, int z);
+    public static native int light(int world, int layer, int x, int y, int z);
+    public static native int skyDarken(int world);
     public static native int random();
 
     public static ClassLoader gameClassLoader() { return content.getClassLoader(); }

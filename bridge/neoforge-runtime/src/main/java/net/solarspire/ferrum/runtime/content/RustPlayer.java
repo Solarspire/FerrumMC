@@ -269,6 +269,18 @@ final class RustPlayer extends ServerPlayer {
         setXRot(state.get("pitch").getAsFloat());
         setYHeadRot(state.get("yaw").getAsFloat());
         rustGameType = GameType.byId(state.get("gamemode").getAsInt());
+        if (state.has("abilities")) {
+            // Rust owns abilities; Java's copy mirrors them so mods read the real mode and flight state.
+            var rust = state.getAsJsonObject("abilities");
+            var abilities = getAbilities();
+            abilities.invulnerable = rust.get("invulnerable").getAsBoolean();
+            abilities.flying = rust.get("flying").getAsBoolean();
+            abilities.mayfly = rust.get("mayfly").getAsBoolean();
+            abilities.instabuild = rust.get("instabuild").getAsBoolean();
+            abilities.mayBuild = rust.get("mayBuild").getAsBoolean();
+            abilities.setFlyingSpeed(rust.get("flySpeed").getAsFloat());
+            abilities.setWalkingSpeed(rust.get("walkSpeed").getAsFloat());
+        }
         if (state.has("health")) setHealth(state.get("health").getAsFloat());
         if (state.has("fallDistance")) fallDistance = state.get("fallDistance").getAsFloat();
         if (state.has("ground")) setOnGround(state.get("ground").getAsBoolean());

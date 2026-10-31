@@ -43,6 +43,13 @@ final class Outbox {
         }
     }
 
+    /** Rust owns game mode (and the abilities Java may not change); Java's game mode events never reach a client. */
+    private static boolean ownedByRust(Packet<?> packet) {
+        return packet instanceof net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket
+            || packet instanceof net.minecraft.network.protocol.game.ClientboundGameEventPacket event
+                && event.getEvent() == net.minecraft.network.protocol.game.ClientboundGameEventPacket.CHANGE_GAME_MODE;
+    }
+
     private static JsonObject entry(String to, Packet<?> packet) {
         var entry = new JsonObject();
         entry.addProperty("kind", "vanilla");
@@ -56,6 +63,18 @@ final class Outbox {
     }
 
     static void toPlayer(UUID player, Packet<?> packet) {
+        if (packet instanceof net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket abilities) {
+            // Only flight changes are taken; Rust applies them and sends its own abilities packet.
+            var entry = new JsonObject();
+            entry.addProperty("kind", "abilities");
+            entry.addProperty("uuid", player.toString());
+            entry.addProperty("mayfly", abilities.canFly());
+            entry.addProperty("flying", abilities.isFlying());
+            entry.addProperty("flySpeed", abilities.getFlyingSpeed());
+            add(entry);
+            return;
+        }
+        if (ownedByRust(packet)) return;
         var entry = entry("player", packet);
         entry.addProperty("uuid", player.toString());
         add(entry);
@@ -63,6 +82,7 @@ final class Outbox {
 
     /** Players of the world within the radius of the point, except the entity that caused the packet. */
     static void toArea(String world, Packet<?> packet, double x, double y, double z, double radius, int exceptEntity) {
+        if (ownedByRust(packet)) return;
         var entry = entry("area", packet);
         entry.addProperty("world", world);
         entry.addProperty("x", x);
@@ -75,6 +95,7 @@ final class Outbox {
 
     /** Players that currently see the entity, and the entity itself when it is a player. */
     static void toTracking(int entity, boolean includeSelf, Packet<?> packet) {
+        if (ownedByRust(packet)) return;
         var entry = entry("tracking", packet);
         entry.addProperty("entity", entity);
         entry.addProperty("self", includeSelf);

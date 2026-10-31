@@ -39,6 +39,7 @@ public final class RustLevel extends ServerLevel {
     private int levelHeight;
     private RandomSource rustRandom;
     private RustChunkSource chunks;
+    private RustLightEngine light;
     private String worldId;
     /** Rust's handle for this world on typed calls, and values Rust pushes with each request instead of per call. */
     private int handle;
@@ -70,6 +71,8 @@ public final class RustLevel extends ServerLevel {
         level.loadedViews = new LinkedHashMap<>();
         level.chunks = (RustChunkSource) UNSAFE.allocateInstance(RustChunkSource.class);
         level.chunks.owner = level;
+        level.light = (RustLightEngine) UNSAFE.allocateInstance(RustLightEngine.class);
+        level.light.owner = level;
         level.entityGetter = new EntityBridge.Getter(level);
         UNSAFE.putObject(level.chunks,UNSAFE.objectFieldOffset(ServerChunkCache.class.getDeclaredField("chunkMap")),UNSAFE.allocateInstance(RustChunkMap.class));
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("waypointManager")),new net.minecraft.server.waypoints.ServerWaypointManager());
@@ -806,6 +809,9 @@ public final class RustLevel extends ServerLevel {
     @Override public boolean hasChunk(int x,int z) { return BridgeRuntime.isLoaded(handle,x,z); }
     @Override public LevelChunk getChunk(int x,int z) { return loadedViews.computeIfAbsent(new ChunkPos(x,z),pos -> RustChunk.create(this,x,z)); }
     @Override public ServerChunkCache getChunkSource() { return chunks; }
+    /** Light is stored in Rust's chunk sections; this view reads it through the hot natives. */
+    @Override public net.minecraft.world.level.lighting.LevelLightEngine getLightEngine() { return light; }
+    @Override public int getSkyDarken() { return BridgeRuntime.skyDarken(handle); }
     /** Biomes live in Rust's chunk sections; coordinates are quart positions like vanilla's NoiseBiomeSource. */
     @SuppressWarnings("unchecked")
     @Override public net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> getUncachedNoiseBiome(int x,int y,int z) {
@@ -933,6 +939,49 @@ public final class RustLevel extends ServerLevel {
         @Override public void sendToTrackingPlayers(net.minecraft.world.entity.Entity entity,net.minecraft.network.protocol.Packet<? super net.minecraft.network.protocol.game.ClientGamePacketListener> packet) { Outbox.toTracking(entity.getId(),false,packet); }
         @Override public void sendToTrackingPlayersAndSelf(net.minecraft.world.entity.Entity entity,net.minecraft.network.protocol.Packet<? super net.minecraft.network.protocol.game.ClientGamePacketListener> packet) { Outbox.toTracking(entity.getId(),true,packet); }
     }
+    /** Read-only light view; Rust runs all light propagation, so every update hook is a no-op. */
+    private static final class RustLightEngine extends net.minecraft.server.level.ThreadedLevelLightEngine {
+        private RustLevel owner;
+        private final net.minecraft.world.level.lighting.LayerLightEventListener[] layers = {
+            new RustLightLayer(this, net.minecraft.world.level.LightLayer.SKY),
+            new RustLightLayer(this, net.minecraft.world.level.LightLayer.BLOCK)
+        };
+        private RustLightEngine() { super(null,null,false,null,null); }
+        @Override public net.minecraft.world.level.lighting.LayerLightEventListener getLayerListener(net.minecraft.world.level.LightLayer layer) { return layers[layer.ordinal()]; /* enum order: SKY, BLOCK */ }
+        /** Vanilla: max(block, sky - amount). */
+        @Override public int getRawBrightness(BlockPos pos,int amount) {
+            int sky = BridgeRuntime.light(owner.handle,1,pos.getX(),pos.getY(),pos.getZ()) - amount;
+            int block = BridgeRuntime.light(owner.handle,0,pos.getX(),pos.getY(),pos.getZ());
+            return Math.max(block,sky);
+        }
+        @Override public void close() { }
+        @Override public int runLightUpdates() { return 0; }
+        @Override public boolean hasLightWork() { return false; }
+        @Override public void checkBlock(BlockPos pos) { }
+        @Override public void updateSectionStatus(net.minecraft.core.SectionPos pos,boolean empty) { }
+        @Override public void propagateLightSources(ChunkPos pos) { }
+        @Override public void setLightEnabled(ChunkPos pos,boolean enabled) { }
+        @Override public void queueSectionData(net.minecraft.world.level.LightLayer layer,net.minecraft.core.SectionPos pos,net.minecraft.world.level.chunk.DataLayer data) { }
+        @Override public void retainData(ChunkPos pos,boolean retain) { }
+        @Override public void tryScheduleUpdate() { }
+        @Override public boolean lightOnInColumn(long column) { return true; }
+        @Override public int getLightSectionCount() { return owner.getSectionsCount() + 2; }
+        @Override public int getMinLightSection() { return owner.getMinSectionY() - 1; }
+        @Override public int getMaxLightSection() { return owner.getMaxSectionY() + 1; }
+    }
+    private static final class RustLightLayer implements net.minecraft.world.level.lighting.LayerLightEventListener {
+        private final RustLightEngine engine;
+        private final int layer;
+        private RustLightLayer(RustLightEngine engine,net.minecraft.world.level.LightLayer layer) { this.engine = engine; this.layer = layer == net.minecraft.world.level.LightLayer.SKY ? 1 : 0; }
+        @Override public net.minecraft.world.level.chunk.DataLayer getDataLayerData(net.minecraft.core.SectionPos pos) { return null; }
+        @Override public int getLightValue(BlockPos pos) { return BridgeRuntime.light(engine.owner.handle,layer,pos.getX(),pos.getY(),pos.getZ()); }
+        @Override public void checkBlock(BlockPos pos) { }
+        @Override public boolean hasLightWork() { return false; }
+        @Override public int runLightUpdates() { return 0; }
+        @Override public void updateSectionStatus(net.minecraft.core.SectionPos pos,boolean empty) { }
+        @Override public void setLightEnabled(ChunkPos pos,boolean enabled) { }
+        @Override public void propagateLightSources(ChunkPos pos) { }
+    }
     private static final class RustChunkSource extends ServerChunkCache {
         private RustLevel owner;
         private RustChunkSource(RustLevel level) { super(level,null,null,null,Runnable::run,null,0,0,false,null,()->null); }
@@ -940,6 +989,7 @@ public final class RustLevel extends ServerLevel {
         @Override public ChunkAccess getChunk(int x,int z,ChunkStatus status,boolean create) { return owner.getChunk(x,z,status,create); }
         @Override public boolean hasChunk(int x,int z) { return owner.hasChunk(x,z); }
         @Override public Level getLevel() { return owner; }
+        @Override public net.minecraft.server.level.ThreadedLevelLightEngine getLightEngine() { return owner.light; }
         @Override public void blockChanged(BlockPos pos) { owner.request("dirty",pos); }
         @Override public void sendToTrackingPlayers(net.minecraft.world.entity.Entity entity,net.minecraft.network.protocol.Packet<? super net.minecraft.network.protocol.game.ClientGamePacketListener> packet) { Outbox.toTracking(entity.getId(),false,packet); }
         @Override public void sendToTrackingPlayersAndSelf(net.minecraft.world.entity.Entity entity,net.minecraft.network.protocol.Packet<? super net.minecraft.network.protocol.game.ClientGamePacketListener> packet) { Outbox.toTracking(entity.getId(),true,packet); }

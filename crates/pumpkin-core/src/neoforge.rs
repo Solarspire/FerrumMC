@@ -362,6 +362,26 @@ impl WorldAccess for RustWorld {
         Ok(i32::from(world.get_biome(&BlockPos::new(x, y, z)).id))
     }
 
+    fn light(&self, world: i32, layer: i32, x: i32, y: i32, z: i32) -> Result<i32, String> {
+        let world = self.resolve(world)?;
+        let pos = BlockPos::new(x, y, z);
+        let sky = layer == 1;
+        if !world.is_in_height_limit(y) {
+            // Above the world is fully sky lit, below it is dark.
+            return Ok(i32::from(sky && y >= world.dimension.min_y) * 15);
+        }
+        let light = if sky {
+            world.get_sky_light_level(&pos)
+        } else {
+            world.get_block_light_level(&pos).unwrap_or(0)
+        };
+        Ok(i32::from(light))
+    }
+
+    fn sky_darken(&self, world: i32) -> Result<i32, String> {
+        Ok(self.resolve(world)?.get_sky_darken())
+    }
+
     fn random(&self) -> i32 {
         rand::random::<i32>()
     }
@@ -1326,6 +1346,7 @@ fn exchange_locked(player: &Player, events: &[Value]) -> Result<Vec<Value>, Stri
         "ground": player.get_entity().on_ground.load(Ordering::Relaxed),
         "attackTicks": player.last_attacked_ticks.load(Ordering::Relaxed),
         "vx": player.get_entity().velocity.load().x, "vy":player.get_entity().velocity.load().y, "vz":player.get_entity().velocity.load().z,
+        "abilities": abilities_json(player),
         "inventory": snapshot, "full": full, "events": events,
     });
     let mut request = request;
@@ -2291,9 +2312,51 @@ fn tick_entities_inner(world: &Arc<World>) -> Result<(), String> {
     Ok(())
 }
 
+/// Rust's canonical abilities, mirrored into the Java player each sync.
+fn abilities_json(player: &Player) -> Value {
+    let abilities = *player
+        .abilities
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    json!({
+        "invulnerable": abilities.invulnerable, "flying": abilities.flying, "mayfly": abilities.allow_flying,
+        "instabuild": abilities.creative, "mayBuild": abilities.allow_modify_world,
+        "flySpeed": abilities.fly_speed, "walkSpeed": abilities.walk_speed,
+    })
+}
+
+/// Java changed flight (armor, potions); Rust takes mayfly, flying and speed and sends its own packet.
+fn apply_java_abilities(world: &Arc<World>, packet: &Value) {
+    let Some(player) = packet["uuid"]
+        .as_str()
+        .and_then(|id| uuid::Uuid::parse_str(id).ok())
+        .and_then(|id| player_by_uuid(world, id))
+    else {
+        return;
+    };
+    {
+        let mut abilities = player
+            .abilities
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        // Creative and spectator always keep mayfly.
+        let keeps_mayfly = abilities.creative || player.gamemode.load() == pumpkin_util::GameMode::Spectator;
+        abilities.allow_flying = keeps_mayfly || packet["mayfly"] == true;
+        abilities.flying = abilities.allow_flying && packet["flying"] == true;
+        if let Some(speed) = packet["flySpeed"].as_f64() {
+            abilities.fly_speed = speed as f32;
+        }
+    }
+    player.send_abilities_update();
+}
+
 /// Sends what Java queued: mod payloads by channel, vanilla packets as the 26.2 bytes Java encoded.
 fn deliver(world: &Arc<World>, packets: &[Value]) {
     for packet in packets {
+        if packet["kind"] == "abilities" {
+            apply_java_abilities(world, packet);
+            continue;
+        }
         let Some(data) = packet["data"]
             .as_str()
             .and_then(|data| BASE64_STANDARD.decode(data).ok())

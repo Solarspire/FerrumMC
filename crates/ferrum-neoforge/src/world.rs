@@ -37,6 +37,10 @@ pub trait WorldAccess: Send + Sync {
     fn height(&self, world: i32, heightmap: i32, x: i32, z: i32) -> Result<i32, String>;
     /// Rust's numeric biome id at a block position.
     fn biome(&self, world: i32, x: i32, y: i32, z: i32) -> Result<i32, String>;
+    /// Stored light at a block position: layer 0 is block light, 1 is sky light.
+    fn light(&self, world: i32, layer: i32, x: i32, y: i32, z: i32) -> Result<i32, String>;
+    /// Vanilla `Level.getSkyDarken` for the current time and weather.
+    fn sky_darken(&self, world: i32) -> Result<i32, String>;
     fn random(&self) -> i32;
 }
 
@@ -177,6 +181,16 @@ fn register_natives(vm: &JavaVM) -> Result<(), Error> {
                     jni::jni_str!("biome"),
                     jni::jni_str!("(IIII)I"),
                     get_biome as *mut _,
+                ),
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("light"),
+                    jni::jni_str!("(IIIII)I"),
+                    get_light as *mut _,
+                ),
+                NativeMethod::from_raw_parts(
+                    jni::jni_str!("skyDarken"),
+                    jni::jni_str!("(I)I"),
+                    get_sky_darken as *mut _,
                 ),
                 NativeMethod::from_raw_parts(
                     jni::jni_str!("random"),
@@ -502,6 +516,26 @@ extern "system" fn get_biome<'local>(
     z: jni::sys::jint,
 ) -> jni::sys::jint {
     typed(unowned, |access| access.biome(world, x, y, z))
+}
+
+extern "system" fn get_light<'local>(
+    unowned: EnvUnowned<'local>,
+    _class: JClass<'local>,
+    world: jni::sys::jint,
+    layer: jni::sys::jint,
+    x: jni::sys::jint,
+    y: jni::sys::jint,
+    z: jni::sys::jint,
+) -> jni::sys::jint {
+    typed(unowned, |access| access.light(world, layer, x, y, z))
+}
+
+extern "system" fn get_sky_darken<'local>(
+    unowned: EnvUnowned<'local>,
+    _class: JClass<'local>,
+    world: jni::sys::jint,
+) -> jni::sys::jint {
+    typed(unowned, |access| access.sky_darken(world))
 }
 
 /// Rust is the only randomness source for Java level views.
