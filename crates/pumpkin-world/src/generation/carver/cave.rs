@@ -25,7 +25,9 @@ impl Carver for CaveCarver {
         };
 
         let max_distance = (4 * 2 - 1) << 4;
-        let cave_count = cave_config.count.get(random);
+        let inner = random.next_bounded_i32(Self::get_cave_bound(cave_config.is_nether)) + 1;
+        let middle = random.next_bounded_i32(inner) + 1;
+        let cave_count = random.next_bounded_i32(middle);
 
         for _ in 0..cave_count {
             let x = (carver_chunk_pos.x << 4) + random.next_bounded_i32(16);
@@ -36,8 +38,7 @@ impl Carver for CaveCarver {
                 cave_config.horizontal_radius_multiplier.get(random) as f64;
             let vertical_radius_multiplier =
                 cave_config.vertical_radius_multiplier.get(random) as f64;
-            let start_vertical_radius_multiplier =
-                cave_config.start_vertical_radius_multiplier.get(random) as f64;
+            let start_vertical_radius_multiplier = Self::get_y_scale(cave_config.is_nether);
             let floor_level = cave_config.floor_level.get(random) as f64;
 
             let tunnels = if random.next_bounded_i32(4) == 0 {
@@ -62,10 +63,7 @@ impl Carver for CaveCarver {
             for _ in 0..tunnels {
                 let horizontal_rotation = random.next_f32() * PI * 2.0;
                 let vertical_rotation = (random.next_f32() - 0.5) / 4.0;
-                let mut thickness = cave_config.thickness.get(random);
-                if cave_config.weird_thickness_bias && random.next_bounded_i32(10) == 0 {
-                    thickness *= random.next_f32() * random.next_f32() * 3.0 + 1.0;
-                }
+                let thickness = Self::get_thickness(random, cave_config.is_nether);
                 let distance = max_distance - random.next_bounded_i32(max_distance / 4);
                 let tunnel_seed = random.next_i64();
 
@@ -93,6 +91,25 @@ impl Carver for CaveCarver {
 }
 
 impl CaveCarver {
+    const fn get_cave_bound(nether: bool) -> i32 {
+        if nether { 10 } else { 15 }
+    }
+
+    fn get_thickness(random: &mut RandomGenerator, nether: bool) -> f32 {
+        let mut thickness = random.next_f32() * 2.0 + random.next_f32();
+        if nether {
+            return thickness * 2.0;
+        }
+        if random.next_bounded_i32(10) == 0 {
+            thickness *= random.next_f32() * random.next_f32() * 3.0 + 1.0;
+        }
+        thickness
+    }
+
+    const fn get_y_scale(nether: bool) -> f64 {
+        if nether { 5.0 } else { 1.0 }
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn create_room(
         chunk_pos: Vector2<i32>,

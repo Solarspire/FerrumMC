@@ -309,20 +309,19 @@ impl PaletteEntry {
     #[must_use]
     pub fn to_nbt_compound(&self) -> NbtCompound {
         let mut compound = NbtCompound::new();
-        compound.put_string("id", self.name.clone());
+        compound.put_string("Name", self.name.clone());
         if !self.properties.is_empty() {
             let mut props = NbtCompound::new();
             for p in &self.properties {
                 props.put_string(p.key_str(), p.value_str().to_string());
             }
-            compound.put_compound("properties", props);
+            compound.put_compound("Properties", props);
         }
         compound
     }
 
     /// Deserializes a palette entry from an NBT compound tag.
     pub fn from_nbt_compound(entry_compound: &NbtCompound) -> Result<Self, TemplateError> {
-        // 26.3 renamed the palette keys from Name and Properties to id and properties
         let name = entry_compound
             .get_string("id")
             .or_else(|| entry_compound.get_string("Name"))
@@ -1438,10 +1437,9 @@ mod tests {
         assert_eq!(entry_with_props.properties.len(), 2);
     }
 
-    /// Loads a real template from the shipped 26.3 datapack, which names the palette keys id and
-    /// properties instead of Name and Properties.
+    /// Loads a real native template with block names and properties.
     #[test]
-    fn load_26_3_template() {
+    fn load_26_2_template() {
         let bytes = include_bytes!(
             "../../../../../../assets/datapack/data/minecraft/structure/igloo/top.nbt"
         );

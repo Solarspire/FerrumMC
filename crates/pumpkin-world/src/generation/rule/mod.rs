@@ -19,7 +19,6 @@ pub enum RuleTest {
     TagMatch(TagMatchRuleTest),
     RandomBlockMatch(RandomBlockMatchRuleTest),
     RandomBlockStateMatch(RandomBlockStateMatchRuleTest),
-    // Added in 26.3
     AnyOf(Vec<Self>),
     AllOf(Vec<Self>),
     Not(Box<Self>),

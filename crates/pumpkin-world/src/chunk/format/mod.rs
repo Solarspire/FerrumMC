@@ -503,9 +503,9 @@ impl ChunkData {
             "minecraft:structure_starts" => ChunkStatus::StructureStarts,
             "minecraft:structure_references" => ChunkStatus::StructureReferences,
             "minecraft:biomes" => ChunkStatus::Biomes,
-            "minecraft:terrain" | "minecraft:noise" | "minecraft:surface" | "minecraft:carvers" => {
-                ChunkStatus::Terrain
-            }
+            "minecraft:noise" => ChunkStatus::Noise,
+            "minecraft:surface" => ChunkStatus::Surface,
+            "minecraft:carvers" => ChunkStatus::Carvers,
             "minecraft:features" => ChunkStatus::Features,
             "minecraft:initialize_light" => ChunkStatus::InitializeLight,
             "minecraft:light" => ChunkStatus::Light,
@@ -594,7 +594,9 @@ impl ChunkData {
             ChunkStatus::StructureStarts => "minecraft:structure_starts",
             ChunkStatus::StructureReferences => "minecraft:structure_references",
             ChunkStatus::Biomes => "minecraft:biomes",
-            ChunkStatus::Terrain => "minecraft:terrain",
+            ChunkStatus::Noise => "minecraft:noise",
+            ChunkStatus::Surface => "minecraft:surface",
+            ChunkStatus::Carvers => "minecraft:carvers",
             ChunkStatus::Features => "minecraft:features",
             ChunkStatus::InitializeLight => "minecraft:initialize_light",
             ChunkStatus::Light => "minecraft:light",
@@ -821,7 +823,9 @@ impl ChunkData {
             ChunkStatus::StructureStarts => 1,
             ChunkStatus::StructureReferences => 2,
             ChunkStatus::Biomes => 3,
-            ChunkStatus::Terrain => 4,
+            ChunkStatus::Noise => 4,
+            ChunkStatus::Surface => 10,
+            ChunkStatus::Carvers => 11,
             ChunkStatus::Features => 5,
             ChunkStatus::InitializeLight => 6,
             ChunkStatus::Light => 7,
@@ -960,7 +964,9 @@ impl ChunkData {
             1 => ChunkStatus::StructureStarts,
             2 => ChunkStatus::StructureReferences,
             3 => ChunkStatus::Biomes,
-            4 => ChunkStatus::Terrain,
+            4 => ChunkStatus::Noise,
+            10 => ChunkStatus::Surface,
+            11 => ChunkStatus::Carvers,
             5 => ChunkStatus::Features,
             6 => ChunkStatus::InitializeLight,
             7 => ChunkStatus::Light,
@@ -1549,7 +1555,7 @@ mod tests {
 
     fn test_chunk(sections: Vec<NbtCompound>) -> pumpkin_nbt::Nbt {
         let mut root = NbtCompound::new();
-        root.put_int("DataVersion", 5023);
+        root.put_int("DataVersion", WORLD_DATA_VERSION);
         root.put_int("xPos", 0);
         root.put_int("zPos", 0);
         root.put_string("Status", "minecraft:full".to_string());

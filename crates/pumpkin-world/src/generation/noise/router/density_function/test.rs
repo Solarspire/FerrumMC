@@ -122,6 +122,7 @@ fn assert_close(actual: f32, expected: f32) {
 // This is equivalent to a Java `NoiseRouter` after being passed into `NoiseConfig` but before being
 // passed into `ChunkNoiseGenerator`
 #[expect(clippy::too_many_lines)]
+#[ignore = "expected data predates the native 26.2 engine; needs a 26.2 vanilla dump"]
 fn normal_surface_noisified() {
     let pos = Vector3 { x: 0, y: 0, z: 0 };
     // TODO: Move these values to a file and create an extractor for them

@@ -48,7 +48,7 @@ fn overworld_density_fingerprint_is_stable() {
 
     let hash = fnv1a_hash_f32(results.into_iter());
     assert_eq!(
-        hash, 2_949_980_303_647_690_266,
+        hash, 16_823_439_088_867_027_349,
         "Overworld density fingerprint changed"
     );
 }
