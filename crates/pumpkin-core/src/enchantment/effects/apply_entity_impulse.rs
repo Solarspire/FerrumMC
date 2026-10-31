@@ -82,15 +82,21 @@ impl ApplyEntityImpulse {
             local_dir.z * scale.z * mag,
         );
 
-        entity.add_velocity(impulse);
         if let Some(player) = world.get_player_by_id(entity.entity_id) {
+            // Vanilla's server-side player motion is ~zero because the client simulates its
+            // own movement; Pumpkin's stored value is stale (old knockback, earlier impulses).
+            // Adding to it makes the client replace its motion with stale y and pulls it up.
+            entity.set_velocity(impulse);
             player
                 .living_entity
                 .apply_post_impulse_grace_time(POST_IMPULSE_CONTEXT_RESET_GRACE_TIME_TICKS);
-        } else if let Some(living_base) = world.get_entity_by_id(entity.entity_id)
-            && let Some(living) = living_base.get_living_entity()
-        {
-            living.apply_post_impulse_grace_time(POST_IMPULSE_CONTEXT_RESET_GRACE_TIME_TICKS);
+        } else {
+            entity.add_velocity(impulse);
+            if let Some(living_base) = world.get_entity_by_id(entity.entity_id)
+                && let Some(living) = living_base.get_living_entity()
+            {
+                living.apply_post_impulse_grace_time(POST_IMPULSE_CONTEXT_RESET_GRACE_TIME_TICKS);
+            }
         }
     }
 }

@@ -1560,6 +1560,8 @@ fn particle_data(id: i32, input: &mut &[u8], output: &mut Vec<u8>) -> Result<()>
     match particle {
         P::Block | P::BlockMarker | P::FallingDust | P::DustPillar | P::BlockCrumble => {
             output.write_var_int(&VarInt(block_state(input.get_var_int()?.0)?))?;
+            // NeoForge's `BlockParticleOption` appends an optional `BlockPos` (absent here).
+            output.write_bool(false)?;
         }
         P::Dust => copy(input, output, 8)?,
         P::DustColorTransition => copy(input, output, 12)?,
