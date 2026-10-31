@@ -2,8 +2,7 @@ use pumpkin_data::{
     Block,
     block_properties::{
         CampfireLikeProperties, EastWall, Half, HorizontalFacing, NorthWall,
-        ResinBrickWallLikeProperties, SouthWall, StairsShape, WestWall,
-        WhiteWoolStairsLikeProperties,
+        OakStairsLikeProperties, ResinBrickWallLikeProperties, SouthWall, StairsShape, WestWall,
     },
 };
 use pumpkin_gametest::{GameTestHelper, GameTestResult};
@@ -141,7 +140,7 @@ pub(super) async fn test_stairs_inner_left_and_right_corner_shapes(
     let main = BlockPos::new(2, 1, 2);
     let front = BlockPos::new(2, 1, 3);
 
-    let mut s_north = WhiteWoolStairsLikeProperties::default(&Block::OAK_STAIRS);
+    let mut s_north = OakStairsLikeProperties::default(&Block::OAK_STAIRS);
     s_north.facing = HorizontalFacing::North;
     s_north.half = Half::Bottom;
     s_north.shape = StairsShape::Straight;
@@ -156,7 +155,7 @@ pub(super) async fn test_stairs_inner_left_and_right_corner_shapes(
         .await?;
 
     let shape_left =
-        WhiteWoolStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
+        OakStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
     helper.assert_true(
         shape_left == StairsShape::InnerLeft,
         format!("Expected InnerLeft stair shape, got {shape_left:?}"),
@@ -169,7 +168,7 @@ pub(super) async fn test_stairs_inner_left_and_right_corner_shapes(
         .await?;
 
     let shape_right =
-        WhiteWoolStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
+        OakStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
     helper.assert_true(
         shape_right == StairsShape::InnerRight,
         format!("Expected InnerRight stair shape, got {shape_right:?}"),
@@ -185,7 +184,7 @@ pub(super) async fn test_stairs_outer_left_and_right_corner_shapes(
     let main = BlockPos::new(2, 1, 2);
     let back = BlockPos::new(2, 1, 1);
 
-    let mut s_north = WhiteWoolStairsLikeProperties::default(&Block::OAK_STAIRS);
+    let mut s_north = OakStairsLikeProperties::default(&Block::OAK_STAIRS);
     s_north.facing = HorizontalFacing::North;
     s_north.half = Half::Bottom;
     s_north.shape = StairsShape::Straight;
@@ -200,7 +199,7 @@ pub(super) async fn test_stairs_outer_left_and_right_corner_shapes(
         .await?;
 
     let shape_left =
-        WhiteWoolStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
+        OakStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
     helper.assert_true(
         shape_left == StairsShape::OuterLeft,
         format!("Expected OuterLeft stair shape, got {shape_left:?}"),
@@ -213,7 +212,7 @@ pub(super) async fn test_stairs_outer_left_and_right_corner_shapes(
         .await?;
 
     let shape_right =
-        WhiteWoolStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
+        OakStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
     helper.assert_true(
         shape_right == StairsShape::OuterRight,
         format!("Expected OuterRight stair shape, got {shape_right:?}"),
@@ -229,7 +228,7 @@ pub(super) async fn test_stairs_revert_to_straight_when_neighbor_removed(
     let main = BlockPos::new(2, 1, 2);
     let back = BlockPos::new(2, 1, 1);
 
-    let mut s_north = WhiteWoolStairsLikeProperties::default(&Block::OAK_STAIRS);
+    let mut s_north = OakStairsLikeProperties::default(&Block::OAK_STAIRS);
     s_north.facing = HorizontalFacing::North;
     s_north.half = Half::Bottom;
     let mut s_west = s_north;
@@ -243,8 +242,7 @@ pub(super) async fn test_stairs_revert_to_straight_when_neighbor_removed(
         .await?;
     helper.set_block_default(&back, &Block::AIR).await?;
 
-    let shape =
-        WhiteWoolStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
+    let shape = OakStairsLikeProperties::from_state_id(helper.block_state_id(&main).await).shape;
     helper.assert_true(
         shape == StairsShape::Straight,
         format!("Expected stair to revert to Straight after neighbor removal, got {shape:?}"),

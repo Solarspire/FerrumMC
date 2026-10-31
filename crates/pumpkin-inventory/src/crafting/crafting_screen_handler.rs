@@ -28,7 +28,7 @@ use crate::screen_handler::{
 use crate::slot::{NormalSlot, Slot};
 
 use crate::inventory::Inventory;
-use pumpkin_data::data_component_impl::{PotDecorationsImpl, ProvidesPotteryPatternImpl};
+use pumpkin_data::data_component_impl::PotDecorationsImpl;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::recipes::{CraftingRecipeTypes, RECIPES_CRAFTING};
 use pumpkin_data::screen::WindowType;
@@ -284,12 +284,9 @@ fn recipe_matches(
             for (idx, position) in (1..=7).step_by(2).enumerate() {
                 let slot = inventory.get_stack(position);
                 if slot.is_empty()
-                    || (!slot
+                    || !slot
                         .item
                         .has_tag(&tag::Item::MINECRAFT_DECORATED_POT_INGREDIENTS)
-                        && slot
-                            .get_data_component::<ProvidesPotteryPatternImpl>()
-                            .is_none())
                 {
                     return None;
                 }

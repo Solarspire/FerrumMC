@@ -287,7 +287,7 @@ mod tests {
     fn dynamic_registry_manager_initializes_with_vanilla() {
         let manager = DynamicRegistryManager::new(CURRENT_MC_VERSION);
         let synced = manager.get_synced_registries();
-        assert!(synced.len() >= 30);
+        assert_eq!(synced.len(), 29);
 
         // Verify painting_variant has alban at raw_id 0
         let alban_id = manager.get_raw_id("minecraft:painting_variant", "alban");

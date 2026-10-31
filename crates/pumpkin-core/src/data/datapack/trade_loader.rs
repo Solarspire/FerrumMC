@@ -166,7 +166,7 @@ pub struct TradeTagDefinition {
 #[must_use]
 pub fn parse_trade_modifier(modifiers: &[Value]) -> DynamicTradeModifier {
     for modifier in modifiers {
-        let Some(func) = modifier.get("type").and_then(Value::as_str) else {
+        let Some(func) = modifier.get("function").and_then(Value::as_str) else {
             continue;
         };
         match func {
@@ -763,14 +763,14 @@ mod tests {
         let json = r#"{
             "wants": { "id": "minecraft:emerald", "count": 1 },
             "gives": { "id": "minecraft:iron_sword", "count": 1 },
-            "given_item_modifier": [
+            "given_item_modifiers": [
                 {
-                    "type": "minecraft:enchant_with_levels",
+                    "function": "minecraft:enchant_with_levels",
                     "levels": { "min": 10, "max": 25 }
                 }
             ],
             "merchant_predicate": {
-                "type": "minecraft:entity_properties",
+                "condition": "minecraft:entity_properties",
                 "entity": "this",
                 "predicate": {
                     "minecraft:predicates": {

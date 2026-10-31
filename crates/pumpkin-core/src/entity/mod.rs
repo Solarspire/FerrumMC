@@ -4312,7 +4312,7 @@ impl Entity {
         nbt.put_int("PortalCooldown", self.portal_cooldown.load(Relaxed) as i32);
         if let Some(custom_name) = &**self.custom_name.load() {
             let mut tag = custom_name
-                .to_nbt_tag_for_version(&pumpkin_util::version::JavaMinecraftVersion::V_26_3);
+                .to_nbt_tag_for_version(&pumpkin_util::version::JavaMinecraftVersion::V_26_2);
             // A literal string starting with '{' would read back as legacy JSON, so keep it a compound.
             if let NbtTag::String(text) = &tag
                 && text.starts_with('{')

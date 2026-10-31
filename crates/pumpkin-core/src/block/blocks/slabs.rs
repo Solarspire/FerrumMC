@@ -9,7 +9,7 @@ use crate::block::{
     PathComputationType,
 };
 
-type SlabProperties = pumpkin_data::block_properties::WhiteWoolSlabLikeProperties;
+type SlabProperties = pumpkin_data::block_properties::ResinBrickSlabLikeProperties;
 
 #[pumpkin_block_from_tag("minecraft:slabs")]
 pub struct SlabBlock;

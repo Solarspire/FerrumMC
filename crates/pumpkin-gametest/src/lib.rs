@@ -223,8 +223,8 @@ mod tests {
         root.put("blocks", NbtTag::List(vec![NbtTag::Compound(block)]));
 
         #[expect(clippy::expect_used, reason = "unit test assertion")]
-        let template =
-            GameTestStructureTemplate::from_nbt(&root).expect("26.3 palette should parse");
+        let template = GameTestStructureTemplate::from_nbt(&root)
+            .expect("alternate palette keys should parse");
         assert_eq!(template.size(), [1, 1, 1]);
         assert_eq!(template.blocks().len(), 1);
         assert_eq!(template.blocks()[0].test_mode, Some(TestBlockMode::Accept));

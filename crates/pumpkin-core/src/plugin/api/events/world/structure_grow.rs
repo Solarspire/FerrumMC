@@ -12,7 +12,6 @@ pub enum TreeType {
     DarkOak,
     Mangrove,
     Cherry,
-    Poplar,
     Azalea,
     BrownMushroom,
     RedMushroom,

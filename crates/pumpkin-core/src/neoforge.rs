@@ -1476,7 +1476,7 @@ fn damage_event(
     source: Option<&dyn EntityBase>,
     cause: Option<&dyn EntityBase>,
 ) -> Value {
-    let name = pumpkin_data::registry::REGISTRY_V_26_3
+    let name = pumpkin_data::registry::REGISTRY_V_26_2
         .iter()
         .find(|registry| registry.registry_id == "damage_type")
         .and_then(|registry| registry.entries.get(usize::from(damage_type.id)))

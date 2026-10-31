@@ -943,7 +943,7 @@ fn match_tool_evaluates_damage_durability_and_enchantments() {
 }
 
 #[test]
-fn time_check_and_predicate_reference_evaluation() {
+fn time_check_and_missing_predicate_reference_evaluation() {
     let time_json = r#"{"pools":[{"entries":[{"type":"minecraft:item","name":"minecraft:diamond","conditions":[{"condition":"minecraft:time_check","period":24000,"value":{"min":6000,"max":18000}}]}]}]}"#;
     let table_time = parse_loot_table(time_json).unwrap();
 
@@ -967,8 +967,8 @@ fn time_check_and_predicate_reference_evaluation() {
         tool: Some(shears),
         ..Default::default()
     };
-    assert!(evaluate_predicate(
-        "minecraft:tool/can_shear",
+    assert!(!evaluate_predicate(
+        "test:missing_predicate",
         &params_shears
     ));
 
@@ -977,8 +977,5 @@ fn time_check_and_predicate_reference_evaluation() {
         tool: Some(stick),
         ..Default::default()
     };
-    assert!(!evaluate_predicate(
-        "minecraft:tool/can_shear",
-        &params_stick
-    ));
+    assert!(!evaluate_predicate("test:missing_predicate", &params_stick));
 }

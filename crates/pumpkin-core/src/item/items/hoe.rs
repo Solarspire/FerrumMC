@@ -4,7 +4,7 @@ use crate::item::{ItemBehaviour, ItemMetadata};
 use crate::server::Server;
 use pumpkin_data::BlockDirection;
 use pumpkin_data::block_transformer::DropStrategy;
-use pumpkin_data::data_component_impl::BlockTransformerImpl;
+use pumpkin_data::block_transformer::HOE;
 use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::SoundCategory;
@@ -33,12 +33,7 @@ impl ItemBehaviour for HoeItem {
         block: &Block,
         _server: &Server,
     ) -> BlockActionResult {
-        let Some(transformer) = item
-            .get_data_component::<BlockTransformerImpl>()
-            .and_then(BlockTransformerImpl::get_transformer)
-        else {
-            return BlockActionResult::Pass;
-        };
+        let transformer = &HOE;
 
         let world = player.world();
         let get_block = |dx: i8, dy: i8, dz: i8| {
@@ -58,6 +53,13 @@ impl ItemBehaviour for HoeItem {
 
             world.set_block_state(&location, result.new_state_id, BlockFlags::NOTIFY_ALL);
             world.emit_game_event(GameEvent::BlockChange.name(), location.to_f64());
+            if block == &Block::ROOTED_DIRT {
+                world.drop_stack_from_face(
+                    &location,
+                    face,
+                    ItemStack::new(1, &pumpkin_data::item::Item::HANGING_ROOTS),
+                );
+            }
 
             if let Some(loot_key) = result.entry.loot
                 && let Some(loot_table) = world.get_loot_table(loot_key)

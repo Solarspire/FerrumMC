@@ -150,7 +150,6 @@ use pumpkin_world::biome;
 use pumpkin_world::cylindrical_chunk_iterator::Cylindrical;
 
 use crate::block;
-use crate::block::blocks::straw_bed::StrawBedBlock;
 use crate::command::context::command_source::CommandSource;
 use crate::command::node::dispatcher::CommandDispatcher;
 use crate::command::{CommandSender, client_suggestions};
@@ -222,7 +221,7 @@ fn read_root_vehicle(nbt: &NbtCompound) -> Option<Uuid> {
     ))
 }
 
-pub const DATA_VERSION: i32 = 5023; // 26.3
+pub const DATA_VERSION: i32 = 4903; // 26.2
 
 /// Food exhaustion applied for every block a player mines.
 ///
@@ -395,7 +394,6 @@ pub struct Player {
     pub warden_spawn_tracker: std::sync::Mutex<WardenSpawnTracker>,
     pub score: AtomicI32,
     pub spawn_extra_particles_on_fall: AtomicBool,
-    pub post_effects: std::sync::Mutex<Vec<String>>,
     /// Inbound packets waiting to be processed during player tick.
     pub inbound_packets: SegQueue<RawPacket>,
 }
@@ -593,81 +591,8 @@ impl Player {
             warden_spawn_tracker: std::sync::Mutex::new(WardenSpawnTracker::default()),
             score: AtomicI32::new(0),
             spawn_extra_particles_on_fall: AtomicBool::new(false),
-            post_effects: std::sync::Mutex::new(Vec::new()),
             inbound_packets: SegQueue::new(),
         }
-    }
-
-    #[must_use]
-    pub fn get_post_effects(&self) -> Vec<String> {
-        self.post_effects
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone()
-    }
-
-    #[must_use]
-    pub fn has_post_effect(&self, effect: &str) -> bool {
-        self.post_effects
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .iter()
-            .any(|e| e == effect)
-    }
-
-    pub fn add_post_effect(&self, effect: String) -> bool {
-        let mut effects = self
-            .post_effects
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if effects.iter().any(|e| e == &effect) {
-            return false;
-        }
-        effects.push(effect);
-        self.try_send_client_packet(&pumpkin_protocol::java::client::play::CPostEffects::new(
-            &effects,
-        ));
-        true
-    }
-
-    pub fn remove_post_effect(&self, effect: &str) -> bool {
-        let mut effects = self
-            .post_effects
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        effects.iter().position(|e| e == effect).is_some_and(|pos| {
-            effects.remove(pos);
-            self.try_send_client_packet(&pumpkin_protocol::java::client::play::CPostEffects::new(
-                &effects,
-            ));
-            true
-        })
-    }
-
-    pub fn clear_post_effects(&self) -> usize {
-        let mut effects = self
-            .post_effects
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if effects.is_empty() {
-            return 0;
-        }
-        let count = effects.len();
-        effects.clear();
-        self.try_send_client_packet(&pumpkin_protocol::java::client::play::CPostEffects::new(
-            &effects,
-        ));
-        count
-    }
-
-    pub fn send_post_effects(&self) {
-        let effects = self
-            .post_effects
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        self.try_send_client_packet(&pumpkin_protocol::java::client::play::CPostEffects::new(
-            &effects,
-        ));
     }
 
     pub fn set_tab_list(&self, tab_list: impl Into<crate::plugin::api::tab_list::TabList>) {
@@ -2056,9 +1981,7 @@ impl Player {
         }
 
         let (bed, bed_state) = world.get_block_and_state_id(&bed_pos);
-        if bed == &Block::STRAW_BED {
-            StrawBedBlock::destroy_after_use(&world, bed_pos);
-        } else if bed.has_tag(&tag::Block::MINECRAFT_BEDS) {
+        if bed.has_tag(&tag::Block::MINECRAFT_BEDS) {
             crate::block::blocks::bed::BedBlock::set_occupied(
                 false, &world, bed, &bed_pos, bed_state,
             );

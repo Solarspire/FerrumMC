@@ -1,5 +1,4 @@
 pub mod armor_stand;
-pub mod cushion;
 pub mod display;
 pub mod end_crystal;
 pub mod item_frame;

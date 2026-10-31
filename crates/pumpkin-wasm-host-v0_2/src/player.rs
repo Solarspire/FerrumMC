@@ -150,7 +150,6 @@ const fn to_wasm_java_version(
         JavaMinecraftVersion::V_1_21_11 => pumpkin::plugin::player::JavaMinecraftVersion::V12111,
         JavaMinecraftVersion::V_26_1 => pumpkin::plugin::player::JavaMinecraftVersion::V261,
         JavaMinecraftVersion::V_26_2 => pumpkin::plugin::player::JavaMinecraftVersion::V262,
-        JavaMinecraftVersion::V_26_3 => pumpkin::plugin::player::JavaMinecraftVersion::V263,
         JavaMinecraftVersion::Unknown => pumpkin::plugin::player::JavaMinecraftVersion::Unknown,
     }
 }
@@ -1054,20 +1053,6 @@ impl pumpkin::plugin::player::HostPlayer for PluginHostState {
             }
         }
         Ok(list)
-    }
-
-    fn get_post_effects(&mut self, player: Resource<Player>) -> wasmtime::Result<Vec<String>> {
-        let player = self.get(&player)?;
-        Ok(player.get_post_effects())
-    }
-
-    fn has_post_effect(
-        &mut self,
-        player: Resource<Player>,
-        effect: String,
-    ) -> wasmtime::Result<bool> {
-        let player = self.get(&player)?;
-        Ok(player.has_post_effect(&effect))
     }
 
     fn get_statistic(
@@ -2341,41 +2326,6 @@ impl pumpkin::plugin::player::HostPlayerWithStore<PluginHostState> for HasSelf<P
         };
 
         run_blocking(accessor, move || player.add_effect(effect)).await
-    }
-
-    async fn add_post_effect(
-        accessor: &Accessor<PluginHostState, Self>,
-        player: Resource<Player>,
-        effect: String,
-    ) -> wasmtime::Result<bool> {
-        let player = accessor.get_res(&player)?;
-        Ok(player.add_post_effect(effect))
-    }
-
-    async fn remove_post_effect(
-        accessor: &Accessor<PluginHostState, Self>,
-        player: Resource<Player>,
-        effect: String,
-    ) -> wasmtime::Result<bool> {
-        let player = accessor.get_res(&player)?;
-        Ok(player.remove_post_effect(&effect))
-    }
-
-    async fn clear_post_effects(
-        accessor: &Accessor<PluginHostState, Self>,
-        player: Resource<Player>,
-    ) -> wasmtime::Result<u32> {
-        let player = accessor.get_res(&player)?;
-        Ok(player.clear_post_effects() as u32)
-    }
-
-    async fn send_post_effects(
-        accessor: &Accessor<PluginHostState, Self>,
-        player: Resource<Player>,
-    ) -> wasmtime::Result<()> {
-        let player = accessor.get_res(&player)?;
-        player.send_post_effects();
-        Ok(())
     }
 
     async fn heal(

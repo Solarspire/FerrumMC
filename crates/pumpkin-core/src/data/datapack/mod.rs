@@ -1,5 +1,4 @@
 pub mod advancement_loader;
-pub mod context_provider_loader;
 pub mod damage_type_loader;
 pub mod dynamic_registry_loader;
 pub mod dynamic_registry_manager;
@@ -22,7 +21,6 @@ use tracing::{info, warn};
 
 use pumpkin_data::damage::DamageType;
 use pumpkin_data::registry::RegistryEntryData;
-use pumpkin_nbt::tag::NbtTag;
 use pumpkin_nbt::{NbtCompound, nbt_compress::read_gzip_compound_tag};
 use pumpkin_protocol::codec::recipe::DynamicRecipe;
 use pumpkin_util::loot_table::DynamicLootTable;
@@ -32,7 +30,6 @@ use crate::server::Server;
 use crate::server::recipe::RecipeManager;
 use crate::world::loot::LootTableHandle;
 
-use self::context_provider_loader::ContextProviderRegistry;
 use self::damage_type_loader::{DamageTypeDefinition, DamageTypeEntry, DamageTypeRegistry};
 use self::test_loader::{
     TestInstance, TestInstanceRegistry, load_test_instances_from_dir, to_registry_entry,
@@ -82,8 +79,6 @@ pub struct DatapackManager {
     functions: RwLock<HashMap<String, Arc<[String]>>>,
     function_tags: RwLock<HashMap<String, Vec<String>>>,
     test_instances: RwLock<TestInstanceRegistry>,
-    context_int_providers: RwLock<ContextProviderRegistry>,
-    context_float_providers: RwLock<ContextProviderRegistry>,
     damage_types: RwLock<DamageTypeRegistry>,
     loot_tables: RwLock<HashMap<String, Arc<DynamicLootTable>>>,
     dynamic_registries: RwLock<HashMap<String, HashMap<String, RegistryEntryData>>>,
@@ -119,8 +114,6 @@ impl DatapackManager {
             functions: RwLock::new(HashMap::new()),
             function_tags: RwLock::new(HashMap::new()),
             test_instances: RwLock::new(HashMap::new()),
-            context_int_providers: RwLock::new(HashMap::new()),
-            context_float_providers: RwLock::new(HashMap::new()),
             damage_types: RwLock::new(HashMap::new()),
             loot_tables: RwLock::new(HashMap::new()),
             dynamic_registries: RwLock::new(HashMap::new()),
@@ -152,8 +145,6 @@ impl DatapackManager {
         let mut all_functions: HashMap<String, Vec<String>> = HashMap::new();
         let mut all_function_tags: HashMap<String, Vec<String>> = HashMap::new();
         let mut all_test_instances: TestInstanceRegistry = HashMap::new();
-        let mut all_context_int_providers: ContextProviderRegistry = HashMap::new();
-        let mut all_context_float_providers: ContextProviderRegistry = HashMap::new();
         let mut all_damage_type_defs: HashMap<String, DamageTypeDefinition> = HashMap::new();
         let mut all_loot_tables: HashMap<String, Arc<DynamicLootTable>> = HashMap::new();
 
@@ -162,16 +153,6 @@ impl DatapackManager {
         let embedded_count = test_loader::load_embedded_test_instances(&mut all_test_instances);
         if embedded_count > 0 {
             info!("Loaded {embedded_count} embedded test instance(s)");
-        }
-        let (embedded_ints, embedded_floats) =
-            context_provider_loader::load_embedded_context_providers(
-                &mut all_context_int_providers,
-                &mut all_context_float_providers,
-            );
-        if embedded_ints > 0 || embedded_floats > 0 {
-            info!(
-                "Loaded {embedded_ints} int and {embedded_floats} float embedded context provider(s)"
-            );
         }
         let mut all_dynamic_registries: HashMap<String, HashMap<String, RegistryEntryData>> =
             HashMap::new();
@@ -192,8 +173,6 @@ impl DatapackManager {
             function_tags: &mut all_function_tags,
             test_instances: &mut all_test_instances,
             damage_types: &mut all_damage_type_defs,
-            context_int_providers: &mut all_context_int_providers,
-            context_float_providers: &mut all_context_float_providers,
             loot_tables: &mut all_loot_tables,
             dynamic_registries: &mut all_dynamic_registries,
             trade_registry: &mut all_trade_registry,
@@ -233,14 +212,6 @@ impl DatapackManager {
             .test_instances
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner) = all_test_instances;
-        *self
-            .context_int_providers
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = all_context_int_providers;
-        *self
-            .context_float_providers
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = all_context_float_providers;
         for (id, entry) in &damage_type_registry {
             all_dynamic_registries
                 .entry("minecraft:damage_type".to_string())
@@ -456,60 +427,6 @@ impl DatapackManager {
         let mut names: Vec<_> = test_instances.keys().cloned().collect();
         names.sort_unstable();
         names
-    }
-
-    #[must_use]
-    pub fn get_context_int_provider(&self, id: &str) -> Option<NbtTag> {
-        self.context_int_providers
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .get(id)
-            .cloned()
-    }
-
-    #[must_use]
-    pub fn get_context_float_provider(&self, id: &str) -> Option<NbtTag> {
-        self.context_float_providers
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .get(id)
-            .cloned()
-    }
-
-    #[must_use]
-    pub fn get_context_int_provider_names(&self) -> Vec<String> {
-        let providers = self
-            .context_int_providers
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let mut names: Vec<_> = providers.keys().cloned().collect();
-        names.sort_unstable();
-        names
-    }
-
-    #[must_use]
-    pub fn get_context_float_provider_names(&self) -> Vec<String> {
-        let providers = self
-            .context_float_providers
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let mut names: Vec<_> = providers.keys().cloned().collect();
-        names.sort_unstable();
-        names
-    }
-
-    pub fn insert_context_int_provider(&self, id: String, tag: NbtTag) {
-        self.context_int_providers
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .insert(id, tag);
-    }
-
-    pub fn insert_context_float_provider(&self, id: String, tag: NbtTag) {
-        self.context_float_providers
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .insert(id, tag);
     }
 
     #[must_use]
@@ -1517,8 +1434,6 @@ struct PackContentAccumulators<'a> {
     function_tags: &'a mut HashMap<String, Vec<String>>,
     test_instances: &'a mut TestInstanceRegistry,
     damage_types: &'a mut HashMap<String, DamageTypeDefinition>,
-    context_int_providers: &'a mut ContextProviderRegistry,
-    context_float_providers: &'a mut ContextProviderRegistry,
     loot_tables: &'a mut HashMap<String, Arc<DynamicLootTable>>,
     dynamic_registries: &'a mut HashMap<String, HashMap<String, RegistryEntryData>>,
     trade_registry: &'a mut TradeRegistry,
@@ -1535,8 +1450,6 @@ struct PackContentCounts {
     functions: usize,
     test_instances: usize,
     damage_types: usize,
-    int_providers: usize,
-    float_providers: usize,
     loot_tables: usize,
     structures: usize,
     template_pools: usize,
@@ -1610,13 +1523,11 @@ fn load_bundled_datapacks(
             let (description, pack_format, known_packs) = read_pack_mcmeta(&pack_path);
             let counts = load_pack_contents(&pack_path, acc);
             info!(
-                "Loaded bundled datapack '{bundled}': {} recipe(s), {} function(s), {} test instance(s), {} damage type(s), {} int provider(s), {} float provider(s), {} loot table(s), {} structure(s), {} template pool(s), {} processor list(s), {} dynamic registry entry/entries, {} trade set(s), {} trade(s), {} advancement(s), {} predicate(s), {} tag(s)",
+                "Loaded bundled datapack '{bundled}': {} recipe(s), {} function(s), {} test instance(s), {} damage type(s), {} loot table(s), {} structure(s), {} template pool(s), {} processor list(s), {} dynamic registry entry/entries, {} trade set(s), {} trade(s), {} advancement(s), {} predicate(s), {} tag(s)",
                 counts.recipes,
                 counts.functions,
                 counts.test_instances,
                 counts.damage_types,
-                counts.int_providers,
-                counts.float_providers,
                 counts.loot_tables,
                 counts.structures,
                 counts.template_pools,
@@ -1682,13 +1593,11 @@ fn scan_datapacks_dir(
         let counts = load_pack_contents(&pack_path, acc);
 
         info!(
-            "Loaded datapack '{file_name}': {} recipe(s), {} function(s), {} test instance(s), {} damage type(s), {} int provider(s), {} float provider(s), {} loot table(s), {} structure(s), {} template pool(s), {} processor list(s), {} dynamic registry entry/entries, {} trade set(s), {} trade(s), {} advancement(s), {} predicate(s), {} tag(s)",
+            "Loaded datapack '{file_name}': {} recipe(s), {} function(s), {} test instance(s), {} damage type(s), {} loot table(s), {} structure(s), {} template pool(s), {} processor list(s), {} dynamic registry entry/entries, {} trade set(s), {} trade(s), {} advancement(s), {} predicate(s), {} tag(s)",
             counts.recipes,
             counts.functions,
             counts.test_instances,
             counts.damage_types,
-            counts.int_providers,
-            counts.float_providers,
             counts.loot_tables,
             counts.structures,
             counts.template_pools,
@@ -1786,32 +1695,6 @@ fn load_pack_contents(
                         &dt_dir,
                         acc.damage_types,
                     );
-                }
-            }
-
-            // Load context int providers
-            for int_sub in ["context_int_provider", "context_int_providers"] {
-                let provider_dir = ns_path.join(int_sub);
-                if provider_dir.is_dir() {
-                    counts.int_providers +=
-                        context_provider_loader::load_context_providers_from_dir(
-                            &namespace,
-                            &provider_dir,
-                            acc.context_int_providers,
-                        );
-                }
-            }
-
-            // Load context float providers
-            for float_sub in ["context_float_provider", "context_float_providers"] {
-                let provider_dir = ns_path.join(float_sub);
-                if provider_dir.is_dir() {
-                    counts.float_providers +=
-                        context_provider_loader::load_context_providers_from_dir(
-                            &namespace,
-                            &provider_dir,
-                            acc.context_float_providers,
-                        );
                 }
             }
 
@@ -2285,8 +2168,6 @@ mod tests {
         let mut function_tags = std::collections::HashMap::new();
         let mut test_instances = std::collections::HashMap::new();
         let mut damage_types = std::collections::HashMap::new();
-        let mut context_int_providers = std::collections::HashMap::new();
-        let mut context_float_providers = std::collections::HashMap::new();
         let mut loot_tables = std::collections::HashMap::new();
         let mut dynamic_registries = std::collections::HashMap::new();
         let mut trade_registry = super::TradeRegistry::new();
@@ -2302,8 +2183,6 @@ mod tests {
             function_tags: &mut function_tags,
             test_instances: &mut test_instances,
             damage_types: &mut damage_types,
-            context_int_providers: &mut context_int_providers,
-            context_float_providers: &mut context_float_providers,
             loot_tables: &mut loot_tables,
             dynamic_registries: &mut dynamic_registries,
             trade_registry: &mut trade_registry,
@@ -2315,18 +2194,18 @@ mod tests {
         };
 
         let counts = super::load_pack_contents(&datapack_path, &mut acc);
-        assert_eq!(counts.recipes, 2042, "all vanilla recipes must load");
+        assert_eq!(counts.recipes, 1585, "all vanilla recipes must load");
         assert_eq!(
-            counts.loot_tables, 1447,
+            counts.loot_tables, 1355,
             "all vanilla loot tables must load"
         );
         assert_eq!(
-            counts.advancements, 1866,
+            counts.advancements, 1688,
             "all vanilla advancements must load"
         );
-        assert_eq!(counts.structures, 1511, "all vanilla structures must load");
+        assert_eq!(counts.structures, 1212, "all vanilla structures must load");
         assert_eq!(
-            counts.template_pools, 245,
+            counts.template_pools, 188,
             "all vanilla template pools must load"
         );
         assert_eq!(
@@ -2338,23 +2217,15 @@ mod tests {
             "all vanilla damage types must load"
         );
         assert_eq!(
-            counts.int_providers, 26,
-            "all vanilla int providers must load"
-        );
-        assert_eq!(
-            counts.float_providers, 4,
-            "all vanilla float providers must load"
-        );
-        assert_eq!(
             counts.test_instances, 1,
             "all vanilla test instances must load"
         );
         assert!(
-            counts.dynamic_registries >= 2080,
+            counts.dynamic_registries >= 1500,
             "all vanilla dynamic registry entries must load"
         );
-        assert!(counts.tags >= 1406, "all vanilla tags must load");
-        assert_eq!(counts.predicates, 3, "all vanilla predicates must load");
+        assert!(counts.tags >= 794, "all vanilla tags must load");
+        assert_eq!(counts.predicates, 0, "all vanilla predicates must load");
     }
 
     #[test]
@@ -2365,8 +2236,6 @@ mod tests {
             let mut function_tags = std::collections::HashMap::new();
             let mut test_instances = std::collections::HashMap::new();
             let mut damage_types = std::collections::HashMap::new();
-            let mut context_int_providers = std::collections::HashMap::new();
-            let mut context_float_providers = std::collections::HashMap::new();
             let mut loot_tables = std::collections::HashMap::new();
             let mut dynamic_registries = std::collections::HashMap::new();
             let mut trade_registry = super::TradeRegistry::new();
@@ -2382,8 +2251,6 @@ mod tests {
                 function_tags: &mut function_tags,
                 test_instances: &mut test_instances,
                 damage_types: &mut damage_types,
-                context_int_providers: &mut context_int_providers,
-                context_float_providers: &mut context_float_providers,
                 loot_tables: &mut loot_tables,
                 dynamic_registries: &mut dynamic_registries,
                 trade_registry: &mut trade_registry,
@@ -2410,12 +2277,12 @@ mod tests {
     #[test]
     fn datapack_manager_dynamic_registry_and_tag_test() {
         let manager = super::DatapackManager::new();
-        assert!(
+        assert_eq!(
             manager
                 .dynamic_registry_manager
                 .get_synced_registries()
-                .len()
-                >= 30
+                .len(),
+            29
         );
         let synced = manager.get_all_synced_registries();
         assert!(

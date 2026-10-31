@@ -376,10 +376,8 @@ macro_rules! impl_block_entity_for_cooking {
                             $recipe_kind,
                             CookingRecipeKind::Blasting | CookingRecipeKind::Smoking
                         );
-                        let fuel_component = bottom_item
-                            .get_data_component::<pumpkin_data::data_component_impl::CookingFuelImpl>();
-                        let adjusted_fuel_ticks = fuel_component
-                            .map_or(0, |fuel| fuel.get_burn_ticks(is_fast));
+                        let fuel_ticks = pumpkin_data::fuels::get_item_burn_ticks(bottom_item.item.id).unwrap_or(0);
+                        let adjusted_fuel_ticks = if is_fast { fuel_ticks / 2 } else { fuel_ticks };
 
                         let mut burn_ticks = adjusted_fuel_ticks;
                         let mut burn_cancelled = false;

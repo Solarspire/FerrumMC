@@ -87,9 +87,6 @@ impl EntityBase for ExperienceBottleEntity {
             position,
             SPLASH_COLOR,
         );
-        if !entity.is_silent() {
-            world.sync_world_event(WorldEvent::SoundSpellPotionSplash, position, 0);
-        }
         let mut random = rand::rng();
         let amount = 3 + random.random_range(0..5) + random.random_range(0..5);
         let direction = match &hit {
