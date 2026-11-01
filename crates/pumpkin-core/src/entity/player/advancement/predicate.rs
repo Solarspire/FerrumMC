@@ -387,6 +387,11 @@ impl LocationPredicate {
                 return false;
             }
         }
+        // No structure lookup at the player's position exists yet, so a structure predicate
+        // must not match; ignoring it would grant every structure advancement.
+        if self.structure.is_some() {
+            return false;
+        }
         if let Some(block_matcher) = &self.block {
             let Some(blk) = step_block else {
                 return false;
@@ -2335,6 +2340,43 @@ mod tests {
                 ));
             }
             _ => panic!("Expected ItemUsedOnBlock variant"),
+        }
+    }
+
+    #[test]
+    fn generated_location_criteria_are_restrictive() {
+        for id in [
+            "adventure/adventuring_time",
+            "adventure/minecraft_trials_edition",
+        ] {
+            let advancement = pumpkin_data::advancement::Advancement::from_minecraft_name(
+                &format!("minecraft:{id}"),
+            )
+            .expect("advancement exists");
+            for criterion in advancement.criteria_definitions {
+                let CriterionConditions::Location(pred) =
+                    CriterionConditions::from(criterion.conditions)
+                else {
+                    panic!("{} is not a location condition", criterion.name);
+                };
+                assert!(
+                    !pred.matches(
+                        (0.0, 64.0, 0.0),
+                        Some("plains"),
+                        Some("overworld"),
+                        None,
+                        None,
+                        None,
+                        None,
+                        None
+                    ) || pred
+                        .biome
+                        .as_ref()
+                        .is_some_and(|b| b.matches(RegistryKey::WorldgenBiome, "plains")),
+                    "{} matches an arbitrary location",
+                    criterion.name
+                );
+            }
         }
     }
 
