@@ -5397,15 +5397,26 @@ impl World {
             return;
         }
 
-        let new_state_id = self.block_registry.get_state_for_neighbor_update(
-            self,
-            block,
-            block_state_id,
-            block_pos,
-            direction,
-            neighbor_pos,
-            neighbor_state_id,
-        );
+        let new_state_id = if pumpkin_data::runtime::block(block.id).is_some() {
+            crate::neoforge::update_shape(
+                self,
+                *block_pos,
+                block_state_id,
+                direction,
+                neighbor_state_id,
+            )
+            .unwrap_or(block_state_id)
+        } else {
+            self.block_registry.get_state_for_neighbor_update(
+                self,
+                block,
+                block_state_id,
+                block_pos,
+                direction,
+                neighbor_pos,
+                neighbor_state_id,
+            )
+        };
 
         if new_state_id != block_state_id {
             if is_air(new_state_id) {

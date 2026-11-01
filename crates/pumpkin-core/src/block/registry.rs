@@ -777,16 +777,30 @@ impl BlockRegistry {
             return Ok(None);
         }
 
-        let mut new_state = self.on_place(
-            server,
-            &world,
-            player,
-            placed_block,
-            &final_block_pos,
-            final_face,
-            replacing,
-            use_item_on,
-        );
+        // A mod block's placement state comes from Java (facing, connections, refusals).
+        let modded_placement = held_stack.as_ref().and_then(|stack| {
+            crate::neoforge::placement_state(
+                player,
+                placed_block,
+                use_item_on,
+                final_block_pos,
+                stack,
+            )
+        });
+        let mut new_state = match modded_placement {
+            Some(Some(state)) => state,
+            Some(None) => return Ok(None),
+            None => self.on_place(
+                server,
+                &world,
+                player,
+                placed_block,
+                &final_block_pos,
+                final_face,
+                replacing,
+                use_item_on,
+            ),
+        };
 
         if let Some(ref stack) = held_stack
             && let Some(block_state_comp) =

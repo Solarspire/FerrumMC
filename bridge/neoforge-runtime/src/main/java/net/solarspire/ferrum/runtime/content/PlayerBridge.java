@@ -190,7 +190,9 @@ public final class PlayerBridge {
                 result.add("packets", Outbox.drain());
                 return result.toString();
             }
-            if (op.equals("block_placed")) return level.blockPlaced(request, id == null ? null : PLAYERS.get(id)).toString();
+            if (op.equals("block_placed")) return level.blockPlaced(request, id == null ? null : facing(PLAYERS.get(id), request)).toString();
+            if (op.equals("placement_state")) return level.placementState(request, id == null ? null : facing(PLAYERS.get(id), request)).toString();
+            if (op.equals("update_shape")) return level.updateShape(request).toString();
             if (op.equals("correct_tool")) {
                 var reply = new JsonObject();
                 var tool = stackFromRust(decode(request.get("tool").getAsString()));
@@ -253,6 +255,16 @@ public final class PlayerBridge {
             }
             return sync(player, request).toString();
         }
+    }
+
+    /** Placement reads the placer's look direction, which Rust sends with the request because the view may be a tick old. */
+    private static RustPlayer facing(RustPlayer player, JsonObject request) {
+        if (player != null && request.has("yaw")) {
+            player.setYRot(request.get("yaw").getAsFloat());
+            player.setXRot(request.get("pitch").getAsFloat());
+            player.setYHeadRot(player.getYRot());
+        }
+        return player;
     }
 
     /** Rust's damage on a bridged entity, with the damage type and entities Rust named. */

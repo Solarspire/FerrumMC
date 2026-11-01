@@ -393,11 +393,13 @@ impl JavaClient {
             .block_registry
             .place_block(player, block, server, use_item_on, location, face)
         {
-            Ok(Some((final_block_pos, new_state))) => {
+            Ok(Some((final_block_pos, _))) => {
                 crate::neoforge::block_placed(player, final_block_pos, item);
+                // Placement callbacks may have replaced the block (a multiblock moving its core), so send what is there now.
+                let state = player.world().get_block_state_id(&final_block_pos);
                 player.try_send_client_packet(&CBlockUpdate::new(
                     final_block_pos,
-                    VarInt(i32::from(new_state.as_u16())),
+                    VarInt(i32::from(state.as_u16())),
                 ));
                 Ok(true)
             }

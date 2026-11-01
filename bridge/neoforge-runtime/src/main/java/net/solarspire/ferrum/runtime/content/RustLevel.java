@@ -734,6 +734,38 @@ public final class RustLevel extends ServerLevel {
         return reply;
     }
 
+    /**
+     * BlockItem.getPlacementState for the player's click: the block's getStateForPlacement, kept when it can survive.
+     * "state" is -1 when the block refuses the spot.
+     */
+    JsonObject placementState(JsonObject request,net.minecraft.server.level.ServerPlayer placer) throws Exception {
+        var reply = new JsonObject();
+        if (placer == null) return reply;
+        var stack = PlayerBridge.stackFromRust(decode(request.get("stack").getAsString()));
+        var clicked = position(request);
+        var face = net.minecraft.core.Direction.from3DDataValue(request.get("face").getAsInt());
+        var cursor = new net.minecraft.world.phys.Vec3(clicked.getX() + request.get("cx").getAsDouble(), clicked.getY() + request.get("cy").getAsDouble(), clicked.getZ() + request.get("cz").getAsDouble());
+        var hand = request.get("hand").getAsInt() == 1 ? net.minecraft.world.InteractionHand.OFF_HAND : net.minecraft.world.InteractionHand.MAIN_HAND;
+        var context = new net.minecraft.world.item.context.BlockPlaceContext(this,placer,hand,stack,new net.minecraft.world.phys.BlockHitResult(cursor,face,clicked,request.get("inside").getAsBoolean()));
+        var target = new BlockPos(request.get("px").getAsInt(),request.get("py").getAsInt(),request.get("pz").getAsInt());
+        if (!context.getClickedPos().equals(target)) context = net.minecraft.world.item.context.BlockPlaceContext.at(context,target,face);
+        var block = Block.stateById(request.get("block").getAsInt()).getBlock();
+        var state = block.getStateForPlacement(context);
+        reply.addProperty("state", state != null && state.canSurvive(this,target) ? Block.getId(state) : -1);
+        return reply;
+    }
+
+    /** BlockBehaviour.updateShape for a mod block whose neighbour changed. */
+    JsonObject updateShape(JsonObject request) {
+        var pos = position(request);
+        var direction = net.minecraft.core.Direction.from3DDataValue(request.get("direction").getAsInt());
+        var state = Block.stateById(request.get("state").getAsInt());
+        var neighbor = Block.stateById(request.get("neighbor").getAsInt());
+        var reply = new JsonObject();
+        reply.addProperty("state", Block.getId(state.updateShape(this,this,pos,direction,pos.relative(direction),neighbor,rustRandom)));
+        return reply;
+    }
+
     /** Block.getDrops against the Rust block entity: loot tables, component copying and mod overrides all apply. */
     JsonObject blockDrops(JsonObject request) throws Exception {
         var pos = position(request);

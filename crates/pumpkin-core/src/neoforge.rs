@@ -933,9 +933,11 @@ pub fn block_placed(player: &Player, position: BlockPos, stack: &ItemStack) {
     }
     let mut nbt = NbtCompound::new();
     stack.write_item_stack(&mut nbt);
+    let entity = player.get_entity();
     let request = json!({
         "op": "block_placed", "uuid": player.gameprofile.id.to_string(),
         "x": position.0.x, "y": position.0.y, "z": position.0.z, "stack": bridge::encode_nbt(&nbt),
+        "yaw": entity.yaw.load(), "pitch": entity.pitch.load(),
     });
     match play_in(&world, request) {
         Ok(reply) => {
@@ -1766,6 +1768,72 @@ pub fn neighbor_changed(world: &Arc<World>, position: BlockPos, source: &pumpkin
     let mut request = block_request("neighbor_changed", position);
     request["source"] = json!(source);
     mod_block_op(world, request);
+}
+
+/// `BlockBehaviour.updateShape` of a mod block after its neighbour in `direction` changed; `None` keeps the state.
+pub fn update_shape(
+    world: &Arc<World>,
+    position: BlockPos,
+    state: BlockStateId,
+    direction: pumpkin_data::BlockDirection,
+    neighbor: BlockStateId,
+) -> Option<BlockStateId> {
+    if !bridge::enabled() {
+        return None;
+    }
+    let mut request = block_request("update_shape", position);
+    request["state"] = json!(bridge::java_state(state).ok()?);
+    request["neighbor"] = json!(bridge::java_state(neighbor).ok()?);
+    request["direction"] = json!(direction.to_index());
+    let reply = mod_block_op(world, request)?;
+    reply["state"]
+        .as_u64()
+        .and_then(|id| u32::try_from(id).ok())
+        .and_then(bridge::rust_state)
+}
+
+/// `BlockItem.getPlacementState` for a mod block: Java's `getStateForPlacement` (facing, connections) and
+/// `canSurvive`. `Some(None)` when the block refuses the spot, `None` when Java gave no answer.
+pub fn placement_state(
+    player: &Player,
+    block: &pumpkin_data::Block,
+    use_item_on: &pumpkin_protocol::java::server::play::SUseItemOn,
+    target: BlockPos,
+    stack: &ItemStack,
+) -> Option<Option<BlockStateId>> {
+    if !bridge::enabled() || pumpkin_data::runtime::block(block.id).is_none() {
+        return None;
+    }
+    let world = player.world();
+    let mut nbt = NbtCompound::new();
+    stack.write_item_stack(&mut nbt);
+    let clicked = use_item_on.position;
+    let entity = player.get_entity();
+    let request = json!({
+        "op": "placement_state", "uuid": player.gameprofile.id.to_string(),
+        "x": clicked.0.x, "y": clicked.0.y, "z": clicked.0.z,
+        "px": target.0.x, "py": target.0.y, "pz": target.0.z,
+        "face": use_item_on.face.0, "hand": use_item_on.hand.0, "inside": use_item_on.inside_block,
+        "cx": use_item_on.cursor_pos.x, "cy": use_item_on.cursor_pos.y, "cz": use_item_on.cursor_pos.z,
+        "yaw": entity.yaw.load(), "pitch": entity.pitch.load(),
+        "block": bridge::java_state(block.default_state.id).ok()?,
+        "stack": bridge::encode_nbt(&nbt),
+    });
+    let reply = match play_in(&world, request) {
+        Ok(reply) => reply,
+        Err(error) => {
+            warn!("NeoForge placement state failed at {target:?}: {error}");
+            return None;
+        }
+    };
+    let state = reply["state"].as_i64()?;
+    if state < 0 {
+        return Some(None);
+    }
+    u32::try_from(state)
+        .ok()
+        .and_then(bridge::rust_state)
+        .map(Some)
 }
 
 /// `BlockState.tick` of a mod block whose scheduled tick came due.
