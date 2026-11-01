@@ -83,10 +83,10 @@ impl ApplyEntityImpulse {
         );
 
         if let Some(player) = world.get_player_by_id(entity.entity_id) {
-            // Vanilla's server-side player motion is ~zero because the client simulates its
-            // own movement; Pumpkin's stored value is stale (old knockback, earlier impulses).
-            // Adding to it makes the client replace its motion with stale y and pulls it up.
-            entity.set_velocity(impulse);
+            // The client owns its movement and the stored server velocity is stale. The velocity
+            // packet replaces the client's motion, so stack onto the movement the client
+            // last reported (keeps wind charge or earlier lunge momentum).
+            entity.set_velocity(entity.movement.load() + impulse);
             player
                 .living_entity
                 .apply_post_impulse_grace_time(POST_IMPULSE_CONTEXT_RESET_GRACE_TIME_TICKS);
