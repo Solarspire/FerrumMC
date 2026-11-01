@@ -900,6 +900,8 @@ public final class RustLevel extends ServerLevel {
     @Override public net.minecraft.world.level.material.FluidState getFluidState(BlockPos pos) { return getBlockState(pos).getFluidState(); }
     @Override public boolean setBlock(BlockPos pos, BlockState state,int flags,int recursion) {
         boolean changed = BridgeRuntime.setState(handle,pos.getX(),pos.getY(),pos.getZ(),Block.getId(state),flags);
+        var view = changed ? loadedViews.get(new ChunkPos(pos.getX() >> 4,pos.getZ() >> 4)) : null;
+        if (view != null) view.invalidateSections();
         if (changed && (flags & Block.UPDATE_CLIENTS) != 0) broadcastBlockEntity(pos);
         return changed;
     }
@@ -974,34 +976,80 @@ public final class RustLevel extends ServerLevel {
         int count = levelHeight >> 4;
         try {
             if (template == null) template = new LevelChunkSection(net.minecraft.world.level.chunk.PalettedContainerFactory.create(REGISTRIES));
+            var column = new Column(this,chunkX,chunkZ);
             var sections = new LevelChunkSection[count];
             for (int i = 0; i < count; i++) {
                 var section = (RustSection) UNSAFE.allocateInstance(RustSection.class);
                 // The containers stay empty: block data lives in Rust and every access below goes there.
                 RustPlayer.set(section,LevelChunkSection.class,"states",template.getStates());
                 RustPlayer.set(section,LevelChunkSection.class,"biomes",template.getBiomes());
-                section.owner = this;
+                section.column = column;
+                section.index = i;
                 section.x = chunkX << 4; section.y = minimumY + (i << 4); section.z = chunkZ << 4;
                 sections[i] = section;
             }
             return sections;
         } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
     }
+    /**
+     * The distinct block states of each section of a column, read from Rust in one call and kept for the tick. Section
+     * scans (hasOnlyAir, maybeHas) answer from it, so a mod walking every section of a loaded chunk only reads blocks in
+     * sections that can hold what it looks for. Empty when Rust no longer has the chunk; null when it cannot be read
+     * here (a mod's worker thread outside the tick), and then the section answers block by block.
+     */
+    private static final class Column {
+        private final RustLevel owner;
+        private final int chunkX, chunkZ;
+        private BlockState[][] palettes;
+        private long stamp = Long.MIN_VALUE;
+        Column(RustLevel owner,int chunkX,int chunkZ) { this.owner = owner; this.chunkX = chunkX; this.chunkZ = chunkZ; }
+        synchronized BlockState[] palette(int index) {
+            if (stamp != owner.gameTime || palettes == null) {
+                var request = new JsonObject();
+                request.addProperty("op","chunk_palettes");
+                request.addProperty("x",chunkX << 4); request.addProperty("y",0); request.addProperty("z",chunkZ << 4);
+                JsonElement reply;
+                try { reply = owner.bridgeCall(request); }
+                catch (RuntimeException outsideTick) { return null; }
+                var sections = reply.isJsonArray() ? reply.getAsJsonArray() : new JsonArray();
+                palettes = new BlockState[sections.size()][];
+                for (int i = 0; i < palettes.length; i++) {
+                    var ids = sections.get(i).getAsJsonArray();
+                    palettes[i] = new BlockState[ids.size()];
+                    for (int j = 0; j < ids.size(); j++) palettes[i][j] = Block.stateById(ids.get(j).getAsInt());
+                }
+                stamp = owner.gameTime;
+            }
+            return index < palettes.length ? palettes[index] : new BlockState[0];
+        }
+        void invalidate() { stamp = Long.MIN_VALUE; }
+    }
     private static final class RustSection extends LevelChunkSection {
-        private RustLevel owner;
-        private int x, y, z;
+        private Column column;
+        private int index, x, y, z;
         private RustSection() { super(null,null); }
-        @Override public BlockState getBlockState(int sx,int sy,int sz) { return Block.stateById(BridgeRuntime.getState(owner.handle,x+sx,y+sy,z+sz)); }
+        @Override public BlockState getBlockState(int sx,int sy,int sz) {
+            var palette = column.palette(index);
+            if (palette != null && palette.length == 0) return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+            if (palette != null && palette.length == 1) return palette[0];
+            return Block.stateById(BridgeRuntime.getState(column.owner.handle,x+sx,y+sy,z+sz));
+        }
         @Override public net.minecraft.world.level.material.FluidState getFluidState(int sx,int sy,int sz) { return getBlockState(sx,sy,sz).getFluidState(); }
         /** LevelChunkSection writes skip neighbour updates; Rust still sends the change to clients. */
         @Override public BlockState setBlockState(int sx,int sy,int sz,BlockState state,boolean checkThreading) {
             var old = getBlockState(sx,sy,sz);
-            BridgeRuntime.setState(owner.handle,x+sx,y+sy,z+sz,Block.getId(state),2|16);
+            BridgeRuntime.setState(column.owner.handle,x+sx,y+sy,z+sz,Block.getId(state),2|16);
+            column.invalidate();
             return old;
         }
-        @Override public boolean hasFluid() { return true; }
-        @Override public boolean hasOnlyAir() { return false; }
-        @Override public boolean maybeHas(java.util.function.Predicate<BlockState> predicate) { return true; }
+        @Override public boolean hasFluid() { return maybeHas(state -> !state.getFluidState().isEmpty()); }
+        @Override public boolean hasOnlyAir() { return !maybeHas(state -> !state.isAir()); }
+        @Override public boolean maybeHas(java.util.function.Predicate<BlockState> predicate) {
+            var palette = column.palette(index);
+            if (palette == null) return true;
+            for (var state : palette) if (predicate.test(state)) return true;
+            return false;
+        }
     }
     private static final class RustChunk extends LevelChunk {
         private RustLevel owner;
@@ -1057,6 +1105,7 @@ public final class RustLevel extends ServerLevel {
             return owner.getHeight(type,(position.x()<<4)+x,(position.z()<<4)+z) - 1;
         }
         private LevelChunkSection[] sections;
+        void invalidateSections() { if (sections != null && sections.length > 0) ((RustSection) sections[0]).column.invalidate(); }
         @Override public LevelChunkSection[] getSections() {
             if (sections == null || sections.length != owner.levelHeight >> 4) sections = owner.sections(position.x(),position.z());
             return sections;

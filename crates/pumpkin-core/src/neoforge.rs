@@ -291,6 +291,7 @@ impl WorldAccess for RustWorld {
                 Ok(Value::Null)
             }
             "neighbor_update" | "shape_update" => neighbor_op(world, &request.op, pos, &raw),
+            "chunk_palettes" => Ok(chunk_palettes(world, pos)),
             "comparator" => {
                 world.update_neighbour_for_output_signal(&pos, world.get_block(&pos));
                 Ok(Value::Null)
@@ -386,6 +387,35 @@ impl WorldAccess for RustWorld {
     fn random(&self) -> i32 {
         rand::random::<i32>()
     }
+}
+
+/// The distinct block states of each section of the chunk at `pos`, as Java state ids; `null` when it is not loaded.
+fn chunk_palettes(world: &World, pos: BlockPos) -> Value {
+    world
+        .level
+        .read_chunk_sync(&pos.chunk_position(), |chunk| {
+            let sections = chunk
+                .section
+                .block_sections
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            sections
+                .iter()
+                .map(|section| {
+                    let mut states: Vec<BlockStateId> = Vec::new();
+                    for state in section {
+                        if !states.contains(&state) {
+                            states.push(state);
+                        }
+                    }
+                    states
+                        .into_iter()
+                        .filter_map(|state| bridge::java_state(state).ok())
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
+        })
+        .map_or(Value::Null, |sections| json!(sections))
 }
 
 /// Level's `NeighborUpdater`: Rust runs neighbour and shape updates, calling back into Java for mod blocks.
