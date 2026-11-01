@@ -30,10 +30,8 @@ impl JavaClient {
         };
 
         match result {
-            TeleportResult::Success => {}
-            TeleportResult::WrongId => {
-                self.try_kick(&TextComponent::text("Wrong teleport id"));
-            }
+            // Vanilla ignores a confirmation for an older teleport; the client confirms the newest one next.
+            TeleportResult::Success | TeleportResult::WrongId => {}
             TeleportResult::NotTeleporting => {
                 self.try_kick(&TextComponent::text(
                     "Send Teleport confirm, but we did not teleport",
