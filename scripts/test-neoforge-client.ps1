@@ -1,4 +1,4 @@
-param([int] $Port = 25581, [string] $Block = 'hbm:machine_electric_furnace', [string] $PlaceItem = 'hbm:machine_radar', [string] $GunItem = 'hbm:gun_greasegun', [string] $CrateItem = '', [int] $TimeoutSeconds = 180, [int] $ViewDistance = 2, [switch] $SkipBuild, [switch] $VanillaOnly)
+param([int] $Port = 25581, [string] $Block = 'hbm:machine_electric_furnace', [string] $PlaceItem = 'hbm:machine_radar', [string] $GunItem = 'hbm:gun_greasegun', [string] $CrateItem = '', [int] $TimeoutSeconds = 180, [int] $ViewDistance = 2, [switch] $SkipBuild, [switch] $VanillaOnly, [switch] $Machines)
 . "$PSScriptRoot/env.ps1"
 if ($Port -lt 1024 -or $Port -gt 65535) { throw 'Use an unprivileged TCP port.' }
 $runtime = Join-Path $FerrumRoot 'bridge/neoforge-runtime'
@@ -89,14 +89,18 @@ $vmArgs += @('net.solarspire.ferrum.runtime.smoke.ClientAcceptance', "$scratch/c
     "$scratch/client-report.json".Replace('\', '/'), $PlaceItem, $GunItem, $CrateItem)
 $vmArgs | ForEach-Object { '"' + $_ + '"' } | Set-Content "$scratch/client-args.txt" -Encoding utf8NoBOM
 
-$process = [Diagnostics.Process]::new()
-$process.StartInfo.FileName = if ($env:FERRUM_TEST_EXE) { $env:FERRUM_TEST_EXE } else { "$FerrumRoot/target/debug/ferrummc.exe" }
-$process.StartInfo.WorkingDirectory = $scratch
-$process.StartInfo.UseShellExecute = $false
-$process.StartInfo.CreateNoWindow = $true
-$process.StartInfo.RedirectStandardInput = $true
-$process.StartInfo.RedirectStandardOutput = $true
-$process.StartInfo.RedirectStandardError = $true
+function New-ServerProcess {
+    $server = [Diagnostics.Process]::new()
+    $server.StartInfo.FileName = if ($env:FERRUM_TEST_EXE) { $env:FERRUM_TEST_EXE } else { "$FerrumRoot/target/debug/ferrummc.exe" }
+    $server.StartInfo.WorkingDirectory = $scratch
+    $server.StartInfo.UseShellExecute = $false
+    $server.StartInfo.CreateNoWindow = $true
+    $server.StartInfo.RedirectStandardInput = $true
+    $server.StartInfo.RedirectStandardOutput = $true
+    $server.StartInfo.RedirectStandardError = $true
+    return $server
+}
+$process = New-ServerProcess
 $output = [FerrumBridgeOutput]::new($process)
 $started = $false
 $passed = $false
@@ -150,6 +154,7 @@ try {
     }
     Start-Sleep -Milliseconds 1000
     $env:FERRUM_PROBE_VIEW_DISTANCE = "$ViewDistance"
+    $env:FERRUM_PROBE_MACHINES = if ($Machines) { '1' } else { $null }
     $client = Start-Process -FilePath "$env:JAVA_HOME/bin/java.exe" -ArgumentList ('@"' + "$scratch/client-args.txt" + '"') -WorkingDirectory $scratch -WindowStyle Hidden -PassThru -RedirectStandardOutput "$scratch/client.stdout.log" -RedirectStandardError "$scratch/client.stderr.log"
     # Once the client is in play, drop a leaves item next to it and chat, so entity data and chat get translated.
     $clientDeadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
@@ -218,6 +223,45 @@ try {
         if (!$crate.blockInserted -or $crate.blockReopenedStone -lt 1) { throw "Items put into the placed crate were gone after close and reopen: $($crate | ConvertTo-Json -Compress)" }
         if (!$crate.blockBroken -or !$crate.droppedCratePickedUp -or !$crate.droppedCrateHasStone) { throw "Breaking the filled crate did not drop an item holding its contents: $($crate | ConvertTo-Json -Compress)" }
         if (!$crate.blockPlacedAgain -or $crate.placedAgainStone -lt 1) { throw "Placing the dropped crate item did not restore its contents: $($crate | ConvertTo-Json -Compress)" }
+    }
+    if ($Machines) {
+        $m = $report.machines
+        foreach ($at in '-3 100 0', '-3 100 2') {
+            $beLine = $output.Lines.Count
+            Send-Console $process "ferrum be $at"
+            Start-Sleep -Milliseconds 500
+            Write-Output "BE ${at}: $(($output.Lines.ToArray() | Select-Object -Skip $beLine) -join ' ')"
+        }
+        Write-Output "Machines: $($m | ConvertTo-Json -Compress -Depth 5)"
+        if (!$m.furnace.opened -or !$m.furnace.smelted) { throw "A powered electric furnace did not smelt through its menu: $($m.furnace | ConvertTo-Json -Compress)" }
+        if ($m.multiblock.hbmBlocks -lt 9 -or !$m.multiblock.cellMenuOpened) { throw "The assembly machine did not place its cells or open from a cell: $($m.multiblock | ConvertTo-Json -Compress)" }
+        if ($m.multiblock.clearedOnBreak -lt $m.multiblock.hbmBlocks - 1) { throw "Breaking the assembly machine core left cells behind: $($m.multiblock | ConvertTo-Json -Compress)" }
+        if (!$m.energy.smeltedOnCable) { throw "A battery did not power a furnace through a cable: $($m.energy | ConvertTo-Json -Compress)" }
+        if ($m.hoppers.pulledIngots -lt 1 -or $m.hoppers.rawLeftOnTop -ne 0) { throw "Hoppers did not feed or empty the electric furnace: $($m.hoppers | ConvertTo-Json -Compress)" }
+        # The machines, the multiblock's cells and the power network must come back after a save and restart.
+        Send-Console $process 'stop'
+        $process.StandardInput.Close()
+        if (!$process.WaitForExit(60000)) { throw 'Server did not stop for the restart check' }
+        $output.Lines.ToArray() | Set-Content "$scratch/server-before-restart.log"
+        $process.Dispose()
+        $process = New-ServerProcess
+        $output = [FerrumBridgeOutput]::new($process)
+        if (!$process.Start()) { throw 'Server did not restart' }
+        $process.BeginOutputReadLine()
+        $process.BeginErrorReadLine()
+        $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+        while ([DateTime]::UtcNow -lt $deadline -and !$process.HasExited -and -not (($output.Lines.ToArray() -join "`n").Contains('Server is now running.'))) { Start-Sleep -Milliseconds 200 }
+        if ($process.HasExited) { throw 'Server exited on restart' }
+        Start-Sleep -Milliseconds 2000
+        $env:FERRUM_PROBE_MACHINES = 'restart'
+        Remove-Item "$scratch/client-report.json"
+        $client = Start-Process -FilePath "$env:JAVA_HOME/bin/java.exe" -ArgumentList ('@"' + "$scratch/client-args.txt" + '"') -WorkingDirectory $scratch -WindowStyle Hidden -PassThru -RedirectStandardOutput "$scratch/client-restart.stdout.log" -RedirectStandardError "$scratch/client-restart.stderr.log"
+        if (!$client.WaitForExit($TimeoutSeconds * 1000)) { Stop-Process -Id $client.Id -Force; throw "Restart client probe timed out; see $scratch/client-restart.stdout.log" }
+        if ($client.ExitCode -ne 0) { throw "Restart client probe exited $($client.ExitCode); see $scratch/client-restart.stdout.log" }
+        $restart = (Get-Content "$scratch/client-report.json" -Raw | ConvertFrom-Json).machines.restart
+        Write-Output "After restart: $($restart | ConvertTo-Json -Compress)"
+        if (!$restart.cellMenuOpened) { throw "The kept assembly machine did not open from a cell after the restart: $($restart | ConvertTo-Json -Compress)" }
+        if ($restart.keptIngots -lt 1 -or !$restart.smeltedOnCable) { throw "The cable-fed furnace lost its output or power after the restart: $($restart | ConvertTo-Json -Compress)" }
     }
     if ($GunItem) {
         if (!$report.gunStateChanged) { throw "Gun $GunItem stack state did not change after its keybinds: '$($report.gunInitialData)' -> '$($report.gunData)'" }

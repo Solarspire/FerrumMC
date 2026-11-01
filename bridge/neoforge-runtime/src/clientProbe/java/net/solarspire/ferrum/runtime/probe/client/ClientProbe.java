@@ -440,6 +440,7 @@ public final class ClientProbe {
                 continue;
             }
             if (packet == null || housekeeping(serverbound, packet)) continue;
+            watchBlocks(packet);
             if (seen.see(packet)) return true;
         }
         return false;
@@ -840,6 +841,224 @@ public final class ClientProbe {
     }
 
     /** A mod recipe in the player's 2x2 grid: Rust's crafting falls back to Java's recipe manager for the result. */
+    /** Block states the client was told about, by position, from single and section updates. */
+    private final Map<net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState> seenStates = new HashMap<>();
+
+    private void watchBlocks(Packet<?> packet) {
+        if (packet instanceof net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket update) {
+            seenStates.put(update.getPos().immutable(), update.getBlockState());
+        } else if (packet instanceof net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket section) {
+            section.runUpdates((pos, state) -> seenStates.put(pos.immutable(), state));
+        }
+    }
+
+    private static String blockName(net.minecraft.world.level.block.state.BlockState state) {
+        return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+    }
+
+    /** Moves a stack inside an open menu with two left clicks, the way a player drags it. */
+    private void moveInMenu(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, OpenMenu menu, int from, int to) throws IOException {
+        sendPacket(serverbound, clickPacket(menu.id(), menu.stateId(), from, 0, net.minecraft.world.inventory.ContainerInput.PICKUP));
+        pump(clientbound, serverbound, 400, packet -> false);
+        sendPacket(serverbound, clickPacket(menu.id(), menu.stateId(), to, 0, net.minecraft.world.inventory.ContainerInput.PICKUP));
+        pump(clientbound, serverbound, 400, packet -> false);
+    }
+
+    private net.minecraft.world.phys.BlockHitResult topHit(net.minecraft.core.BlockPos pos) {
+        return new net.minecraft.world.phys.BlockHitResult(new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5), net.minecraft.core.Direction.UP, pos, false);
+    }
+
+    /**
+     * HBM machines in real play: a powered electric furnace smelts through its menu, a multiblock placed from its item
+     * fills its cells, opens its menu from a cell and tears down when the core breaks, and a battery feeds a furnace
+     * through a cable.
+     */
+    private void machinesProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound) throws Exception {
+        var result = new JsonObject();
+        report.add("machines", result);
+        if ("restart".equals(System.getenv("FERRUM_PROBE_MACHINES"))) {
+            machinesAfterRestart(clientbound, serverbound, result);
+            return;
+        }
+        socket.setSoTimeout(500);
+        command(serverbound, "gamemode creative @s");
+        command(serverbound, "fill -4 99 -2 4 99 10 minecraft:stone");
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerInputPacket(net.minecraft.world.entity.player.Input.EMPTY));
+        pump(clientbound, serverbound, 1500, packet -> false);
+        var item = (java.util.function.Function<String, net.minecraft.world.item.Item>) name -> BuiltInRegistries.ITEM.getValue(Identifier.parse(name));
+
+        // 1. Electric furnace at 0,100,0: creative battery and raw iron in, an iron ingot out.
+        var furnace = new net.minecraft.core.BlockPos(0, 100, 0);
+        var furnaceResult = new JsonObject();
+        result.add("furnace", furnaceResult);
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(item.apply("hbm:battery_creative")), new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON, 4));
+        var menu = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(furnace), ++useSequence));
+        furnaceResult.addProperty("opened", menu.id() > 0);
+        if (menu.id() > 0) {
+            int hotbar = menu.items().size() - 9;
+            furnaceResult.addProperty("containerSlots", hotbar - 27);
+            moveInMenu(clientbound, serverbound, menu, hotbar, 0);
+            moveInMenu(clientbound, serverbound, menu, hotbar + 1, 1);
+            int[] data = {0};
+            JsonArray payloads = new JsonArray();
+            boolean smelted = pump(clientbound, serverbound, 20000, packet -> {
+                if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetDataPacket set && set.getContainerId() == menu.id()) data[0]++;
+                if (packet instanceof ClientboundCustomPayloadPacket custom && custom.payload().type().id().getNamespace().equals("hbm") && payloads.size() < 16) payloads.add(custom.payload().type().id().toString());
+                if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket slot && slot.getContainerId() == menu.id() && slot.getSlot() == 2) {
+                    return slot.getItem().is(net.minecraft.world.item.Items.IRON_INGOT);
+                }
+                if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket set && set.containerId() == menu.id() && set.items().size() > 2) {
+                    return set.items().get(2).is(net.minecraft.world.item.Items.IRON_INGOT);
+                }
+                return false;
+            });
+            furnaceResult.addProperty("smelted", smelted);
+            furnaceResult.addProperty("dataPackets", data[0]);
+            furnaceResult.add("hbmPayloads", payloads);
+            closeMenu(clientbound, serverbound, menu);
+        }
+        System.out.println("machines furnace: " + furnaceResult);
+
+        // 2. Multiblock: the assembly machine placed on the floor south of the player.
+        var multi = new JsonObject();
+        result.add("multiblock", multi);
+        var machineItem = item.apply("hbm:machine_assembly_machine");
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(machineItem), net.minecraft.world.item.ItemStack.EMPTY);
+        var floor = new net.minecraft.core.BlockPos(0, 99, 6);
+        seenStates.clear();
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(floor), ++useSequence));
+        pump(clientbound, serverbound, 4000, packet -> { watchBlocks(packet); return false; });
+        var cells = new ArrayList<net.minecraft.core.BlockPos>();
+        net.minecraft.core.BlockPos core = null;
+        for (var entry : seenStates.entrySet()) {
+            var offset = entry.getKey().subtract(floor);
+            if (!blockName(entry.getValue()).startsWith("hbm:") || Math.abs(offset.getX()) > 3 || offset.getY() < 1 || offset.getY() > 4 || offset.getZ() < -1 || offset.getZ() > 4) continue;
+            cells.add(entry.getKey());
+            if (entry.getValue().getBlock() == Block.byItem(machineItem)) core = entry.getKey();
+        }
+        multi.addProperty("hbmBlocks", cells.size());
+        multi.addProperty("core", String.valueOf(core));
+        if (core != null) multi.addProperty("coreState", seenStates.get(core).toString());
+        net.minecraft.core.BlockPos cell = null;
+        for (var pos : cells) if (!pos.equals(core) && (cell == null || pos.getY() > cell.getY())) cell = pos;
+        multi.addProperty("cell", String.valueOf(cell));
+        if (cell != null) {
+            giveHotbar(clientbound, serverbound, net.minecraft.world.item.ItemStack.EMPTY, net.minecraft.world.item.ItemStack.EMPTY);
+            final var at = cell;
+            var cellMenu = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(at), ++useSequence));
+            multi.addProperty("cellMenuOpened", cellMenu.id() > 0);
+            multi.addProperty("cellMenuSlots", cellMenu.items().size());
+            closeMenu(clientbound, serverbound, cellMenu);
+        }
+        if (core != null) {
+            seenStates.clear();
+            sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+                net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, core, net.minecraft.core.Direction.UP, ++useSequence));
+            pump(clientbound, serverbound, 4000, packet -> { watchBlocks(packet); return false; });
+            int cleared = 0;
+            var left = new JsonArray();
+            for (var pos : cells) {
+                var state = seenStates.get(pos);
+                if (state != null && !blockName(state).startsWith("hbm:")) cleared++;
+                else left.add(pos.toShortString() + "=" + (state == null ? "no update" : blockName(state)));
+            }
+            multi.addProperty("clearedOnBreak", cleared);
+            multi.add("leftBehind", left);
+            // Placed again and kept, so the restart check can open it from a cell.
+            giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(machineItem), net.minecraft.world.item.ItemStack.EMPTY);
+            sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(floor), ++useSequence));
+            pump(clientbound, serverbound, 3000, packet -> false);
+        }
+        System.out.println("machines multiblock: " + multi);
+
+        // 3. Energy: a battery block next to a cable that runs into a second electric furnace.
+        var energy = new JsonObject();
+        result.add("energy", energy);
+        var furnace2 = new net.minecraft.core.BlockPos(-3, 100, 2);
+        var cablePos = new net.minecraft.core.BlockPos(-3, 100, 1);
+        var battery = new net.minecraft.core.BlockPos(-3, 100, 0);
+        command(serverbound, "setblock -3 100 2 hbm:machine_electric_furnace");
+        command(serverbound, "setblock -3 100 1 hbm:cable");
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(item.apply("hbm:machine_battery")), net.minecraft.world.item.ItemStack.EMPTY);
+        sendPacket(serverbound, new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(battery.below()), ++useSequence));
+        pump(clientbound, serverbound, 1500, packet -> false);
+        energy.addProperty("cablePos", cablePos.toString());
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(item.apply("hbm:battery_creative")), new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON, 4));
+        var batteryMenu = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(battery), ++useSequence));
+        energy.addProperty("batteryOpened", batteryMenu.id() > 0);
+        if (batteryMenu.id() > 0) {
+            moveInMenu(clientbound, serverbound, batteryMenu, batteryMenu.items().size() - 9, 0);
+            closeMenu(clientbound, serverbound, batteryMenu);
+        }
+        // A battery provides only while powered in its default modes, as a player would set it with redstone.
+        command(serverbound, "setblock -4 100 0 minecraft:redstone_block");
+        pump(clientbound, serverbound, 1000, packet -> false);
+        var furnaceMenu = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(furnace2), ++useSequence));
+        energy.addProperty("furnaceOpened", furnaceMenu.id() > 0);
+        if (furnaceMenu.id() > 0) {
+            moveInMenu(clientbound, serverbound, furnaceMenu, furnaceMenu.items().size() - 8, 1);
+            boolean smelted = pump(clientbound, serverbound, 20000, packet ->
+                packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket slot && slot.getContainerId() == furnaceMenu.id() && slot.getSlot() == 2
+                    && slot.getItem().is(net.minecraft.world.item.Items.IRON_INGOT));
+            energy.addProperty("smeltedOnCable", smelted);
+            energy.addProperty("cableState", String.valueOf(seenStates.get(cablePos)));
+            energy.addProperty("batteryState", String.valueOf(seenStates.get(battery)));
+            closeMenu(clientbound, serverbound, furnaceMenu);
+        }
+        System.out.println("machines energy: " + energy);
+
+        // 4. Vanilla hoppers feed the powered furnace from above and pull its output from below, through its item capability.
+        var hoppers = new JsonObject();
+        result.add("hoppers", hoppers);
+        command(serverbound, "setblock 0 99 0 minecraft:hopper");
+        command(serverbound, "setblock 0 101 0 minecraft:hopper");
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON, 3), net.minecraft.world.item.ItemStack.EMPTY);
+        var top = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(new net.minecraft.core.BlockPos(0, 101, 0)), ++useSequence));
+        hoppers.addProperty("topOpened", top.id() > 0);
+        if (top.id() > 0) {
+            moveInMenu(clientbound, serverbound, top, top.items().size() - 9, 0);
+            closeMenu(clientbound, serverbound, top);
+        }
+        pump(clientbound, serverbound, 15000, packet -> false);
+        var bottom = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND,
+            new net.minecraft.world.phys.BlockHitResult(new net.minecraft.world.phys.Vec3(0.5, 99.5, 1.0), net.minecraft.core.Direction.SOUTH, new net.minecraft.core.BlockPos(0, 99, 0), false), ++useSequence));
+        hoppers.addProperty("bottomOpened", bottom.id() > 0);
+        hoppers.addProperty("pulledIngots", bottom.id() > 0 ? countOf(bottom.items(), 0, 5, net.minecraft.world.item.Items.IRON_INGOT) : -1);
+        closeMenu(clientbound, serverbound, bottom);
+        var topAgain = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(new net.minecraft.core.BlockPos(0, 101, 0)), ++useSequence));
+        hoppers.addProperty("rawLeftOnTop", topAgain.id() > 0 ? countOf(topAgain.items(), 0, 5, net.minecraft.world.item.Items.RAW_IRON) : -1);
+        closeMenu(clientbound, serverbound, topAgain);
+        System.out.println("machines hoppers: " + hoppers);
+    }
+
+    /** The world the machines probe left behind, after a server restart. */
+    private void machinesAfterRestart(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, JsonObject result) throws Exception {
+        var restart = new JsonObject();
+        result.add("restart", restart);
+        socket.setSoTimeout(500);
+        pump(clientbound, serverbound, 3000, packet -> false);
+        giveHotbar(clientbound, serverbound, net.minecraft.world.item.ItemStack.EMPTY, net.minecraft.world.item.ItemStack.EMPTY);
+        var cell = new net.minecraft.core.BlockPos(-1, 102, 7);
+        var cellMenu = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(cell), ++useSequence));
+        restart.addProperty("cellMenuOpened", cellMenu.id() > 0);
+        closeMenu(clientbound, serverbound, cellMenu);
+        giveHotbar(clientbound, serverbound, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON, 2), net.minecraft.world.item.ItemStack.EMPTY);
+        var furnace = new net.minecraft.core.BlockPos(-3, 100, 2);
+        var menu = openMenu(clientbound, serverbound, () -> new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, topHit(furnace), ++useSequence));
+        restart.addProperty("furnaceOpened", menu.id() > 0);
+        if (menu.id() > 0) {
+            int kept = countOf(menu.items(), 2, 3, net.minecraft.world.item.Items.IRON_INGOT);
+            restart.addProperty("keptIngots", kept);
+            moveInMenu(clientbound, serverbound, menu, menu.items().size() - 9, 1);
+            boolean smelted = pump(clientbound, serverbound, 20000, packet ->
+                packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket slot && slot.getContainerId() == menu.id() && slot.getSlot() == 2
+                    && slot.getItem().is(net.minecraft.world.item.Items.IRON_INGOT) && slot.getItem().getCount() > kept);
+            restart.addProperty("smeltedOnCable", smelted);
+            closeMenu(clientbound, serverbound, menu);
+        }
+        System.out.println("machines restart: " + restart);
+    }
+
     private void craftProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound) throws Exception {
         var input = BuiltInRegistries.ITEM.getValue(Identifier.parse("hbm:asphalt_light"));
         var output = BuiltInRegistries.ITEM.getValue(Identifier.parse("hbm:asphalt"));
@@ -1208,6 +1427,7 @@ public final class ClientProbe {
                 if (gunItem != null && !gunItem.isEmpty()) enchantProbe(clientbound, serverbound);
                 if (gunItem != null && !gunItem.isEmpty()) maceProbe(clientbound, serverbound);
                 if (crateItem != null && !crateItem.isEmpty()) crateProbe(clientbound, serverbound, crateItem);
+                if (System.getenv("FERRUM_PROBE_MACHINES") != null) machinesProbe(clientbound, serverbound);
                 if (placeItem != null && !placeItem.isEmpty() && blockName.equals("hbm:machine_electric_furnace")) carryIntoDisconnect(clientbound, serverbound, new net.minecraft.core.BlockPos(x, y, z));
                 return;
             }
