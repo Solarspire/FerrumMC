@@ -1,4 +1,4 @@
-param([int] $Port = 25581, [string] $Block = 'hbm:machine_electric_furnace', [string] $PlaceItem = 'hbm:machine_radar', [string] $GunItem = 'hbm:gun_greasegun', [string] $CrateItem = '', [int] $TimeoutSeconds = 180, [int] $ViewDistance = 2, [switch] $SkipBuild, [switch] $VanillaOnly, [switch] $Machines)
+param([int] $Port = 25581, [string] $Block = 'hbm:machine_electric_furnace', [string] $PlaceItem = 'hbm:machine_radar', [string] $GunItem = 'hbm:gun_greasegun', [string] $CrateItem = '', [int] $TimeoutSeconds = 180, [int] $ViewDistance = 2, [switch] $SkipBuild, [switch] $VanillaOnly, [switch] $Machines, [string] $World = '', [int] $TerrainChunks = 0)
 . "$PSScriptRoot/env.ps1"
 if ($Port -lt 1024 -or $Port -gt 65535) { throw 'Use an unprivileged TCP port.' }
 $runtime = Join-Path $FerrumRoot 'bridge/neoforge-runtime'
@@ -47,6 +47,8 @@ color = false
 [commands]
 use_tty = false
 "@ | Set-Content "$scratch/ferrummc.toml" -Encoding utf8NoBOM
+# An existing world (copied, never the original) for join and terrain checks.
+if ($World) { Copy-Item -Recurse -LiteralPath $World -Destination "$scratch/world" }
 if ($VanillaOnly) {
     ((Get-Content "$scratch/ferrummc.toml" -Raw) -replace '(\[networking\.bedrock\]\s+)enabled = false', '${1}enabled = true' -replace '(\[networking\.lan_broadcast\]\s+)enabled = false', '${1}enabled = true') |
         Set-Content "$scratch/ferrummc.toml" -Encoding utf8NoBOM
@@ -155,6 +157,7 @@ try {
     Start-Sleep -Milliseconds 1000
     $env:FERRUM_PROBE_VIEW_DISTANCE = "$ViewDistance"
     $env:FERRUM_PROBE_MACHINES = if ($Machines) { '1' } else { $null }
+    $env:FERRUM_PROBE_TERRAIN = if ($TerrainChunks -gt 0) { "$TerrainChunks" } else { $null }
     $client = Start-Process -FilePath "$env:JAVA_HOME/bin/java.exe" -ArgumentList ('@"' + "$scratch/client-args.txt" + '"') -WorkingDirectory $scratch -WindowStyle Hidden -PassThru -RedirectStandardOutput "$scratch/client.stdout.log" -RedirectStandardError "$scratch/client.stderr.log"
     # Once the client is in play, drop a leaves item next to it and chat, so entity data and chat get translated.
     $clientDeadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
@@ -223,6 +226,14 @@ try {
         if (!$crate.blockInserted -or $crate.blockReopenedStone -lt 1) { throw "Items put into the placed crate were gone after close and reopen: $($crate | ConvertTo-Json -Compress)" }
         if (!$crate.blockBroken -or !$crate.droppedCratePickedUp -or !$crate.droppedCrateHasStone) { throw "Breaking the filled crate did not drop an item holding its contents: $($crate | ConvertTo-Json -Compress)" }
         if (!$crate.blockPlacedAgain -or $crate.placedAgainStone -lt 1) { throw "Placing the dropped crate item did not restore its contents: $($crate | ConvertTo-Json -Compress)" }
+    }
+    if ($TerrainChunks -gt 0) {
+        Write-Output "Terrain: $($report.terrainChunks) chunks after $($report.terrainMillis) ms"
+        if ($report.terrainChunks -lt $TerrainChunks) { throw "The client got $($report.terrainChunks) of $TerrainChunks chunks" }
+        $serverText = $output.Lines.ToArray() -join "`n"
+        if ($serverText -match 'accessed unloaded Rust chunk|A mod listener failed on Load') { throw 'A chunk Load listener read an unloaded chunk' }
+        $joined = $serverText.IndexOf('NeoProbe joined')
+        if ($joined -ge 0 -and $serverText.Substring($joined) -match "Can't keep up") { throw 'The server fell behind while the client loaded terrain' }
     }
     if ($Machines) {
         $m = $report.machines

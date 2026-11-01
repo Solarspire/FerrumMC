@@ -1369,7 +1369,19 @@ public final class ClientProbe {
         closeMenu(clientbound, serverbound, placedAgain);
     }
 
+    private int chunksSeen;
+    private long playStart;
+
+    /** Keeps reading until the client holds the chunks its view distance asks for, timing how long terrain took. */
+    private void terrainProbe(ProtocolInfo<?> clientbound, ProtocolInfo<?> serverbound, int wanted) throws IOException {
+        pump(clientbound, serverbound, 120000, packet -> chunksSeen >= wanted);
+        report.addProperty("terrainChunks", chunksSeen);
+        report.addProperty("terrainMillis", System.currentTimeMillis() - playStart);
+        System.out.println("terrain: " + chunksSeen + " chunks after " + (System.currentTimeMillis() - playStart) + " ms");
+    }
+
     private void play(String blockName, int x, int y, int z, String placeItem, String gunItem, String crateItem) throws Exception {
+        playStart = System.currentTimeMillis();
         RegistryAccess access = gameRegistries != null ? gameRegistries : RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
         ProtocolInfo<?> clientbound = GameProtocols.CLIENTBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(access, ConnectionType.NEOFORGE));
         ProtocolInfo<?> serverbound = GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(access, ConnectionType.NEOFORGE), () -> true);
@@ -1427,6 +1439,7 @@ public final class ClientProbe {
                 if (gunItem != null && !gunItem.isEmpty()) enchantProbe(clientbound, serverbound);
                 if (gunItem != null && !gunItem.isEmpty()) maceProbe(clientbound, serverbound);
                 if (crateItem != null && !crateItem.isEmpty()) crateProbe(clientbound, serverbound, crateItem);
+                if (System.getenv("FERRUM_PROBE_TERRAIN") != null) terrainProbe(clientbound, serverbound, Integer.parseInt(System.getenv("FERRUM_PROBE_TERRAIN")));
                 if (System.getenv("FERRUM_PROBE_MACHINES") != null) machinesProbe(clientbound, serverbound);
                 if (placeItem != null && !placeItem.isEmpty() && blockName.equals("hbm:machine_electric_furnace")) carryIntoDisconnect(clientbound, serverbound, new net.minecraft.core.BlockPos(x, y, z));
                 return;
@@ -1665,6 +1678,7 @@ public final class ClientProbe {
             Packet<?> packet = protocol.codec().decode(raw);
             if (raw.isReadable()) throw new IllegalStateException(raw.readableBytes() + " trailing bytes");
             trackZombie(packet);
+            if (packet instanceof ClientboundLevelChunkWithLightPacket) chunksSeen++;
             return packet;
         } catch (RuntimeException error) {
             if (protocol.id() == ConnectionProtocol.CONFIGURATION) {
