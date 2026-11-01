@@ -849,7 +849,9 @@ public final class RustLevel extends ServerLevel {
     @Override public BlockState getBlockState(BlockPos pos) { return Block.stateById(BridgeRuntime.getState(handle,pos.getX(),pos.getY(),pos.getZ())); }
     @Override public net.minecraft.world.level.material.FluidState getFluidState(BlockPos pos) { return getBlockState(pos).getFluidState(); }
     @Override public boolean setBlock(BlockPos pos, BlockState state,int flags,int recursion) {
-        return BridgeRuntime.setState(handle,pos.getX(),pos.getY(),pos.getZ(),Block.getId(state),flags);
+        boolean changed = BridgeRuntime.setState(handle,pos.getX(),pos.getY(),pos.getZ(),Block.getId(state),flags);
+        if (changed && (flags & Block.UPDATE_CLIENTS) != 0) broadcastBlockEntity(pos);
+        return changed;
     }
     @Override public boolean setBlock(BlockPos pos,BlockState state,int flags) { return setBlock(pos,state,flags,512); }
     @Override public BlockEntity getBlockEntity(BlockPos pos) {
@@ -862,7 +864,17 @@ public final class RustLevel extends ServerLevel {
     /** Rust commits the block entity's data with the next batch reply, which marks its chunk for saving. */
     @Override public void blockEntityChanged(BlockPos pos) { changed.add(pos.immutable()); }
     @Override public void updateNeighbourForOutputSignal(BlockPos pos,Block block) { request("comparator",pos); }
-    @Override public void sendBlockUpdated(BlockPos pos,BlockState old,BlockState state,int flags) { request("update",pos); }
+    @Override public void sendBlockUpdated(BlockPos pos,BlockState old,BlockState state,int flags) {
+        request("update",pos);
+        broadcastBlockEntity(pos);
+    }
+    /** ChunkHolder.broadcastBlockEntityIfNeeded: a mod block entity's own update packet goes to the chunk's watchers. */
+    private void broadcastBlockEntity(BlockPos pos) {
+        var held = entities.get(pos);
+        if (held == null || vanilla(held.be) || held.state.getBlock() != getBlockState(pos).getBlock()) return;
+        var packet = held.be.getUpdatePacket();
+        if (packet != null) Outbox.toChunk(pos.getX() >> 4,pos.getZ() >> 4,packet);
+    }
     /** Rust runs the explosion (blocks, damage, knockback, packets); Java's would only half apply it. */
     @Override public void explode(net.minecraft.world.entity.Entity source,net.minecraft.world.damagesource.DamageSource damage,net.minecraft.world.level.ExplosionDamageCalculator calculator,double x,double y,double z,float power,boolean fire,Level.ExplosionInteraction interaction,net.minecraft.core.particles.ParticleOptions small,net.minecraft.core.particles.ParticleOptions large,net.minecraft.util.random.WeightedList<net.minecraft.core.particles.ExplosionParticleInfo> blockParticles,net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> sound) {
         var request = new JsonObject();

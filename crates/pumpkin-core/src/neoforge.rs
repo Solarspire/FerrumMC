@@ -2555,6 +2555,22 @@ fn vanilla_targets(world: &Arc<World>, packet: &Value) -> Vec<Arc<Player>> {
                 .cloned()
                 .collect()
         }
+        // Players that have the chunk loaded, as vanilla's ChunkHolder broadcasts block entity updates.
+        Some("chunk") => {
+            let (Some(x), Some(z)) = (
+                packet["cx"].as_i64().and_then(|x| i32::try_from(x).ok()),
+                packet["cz"].as_i64().and_then(|z| i32::try_from(z).ok()),
+            ) else {
+                return Vec::new();
+            };
+            world
+                .players
+                .load()
+                .iter()
+                .filter(|player| player.watched_section.load().is_within_distance(x, z))
+                .cloned()
+                .collect()
+        }
         _ => Vec::new(),
     }
 }

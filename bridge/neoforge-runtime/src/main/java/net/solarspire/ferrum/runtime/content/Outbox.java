@@ -93,6 +93,14 @@ final class Outbox {
         add(entry);
     }
 
+    /** Players that have the chunk loaded. */
+    static void toChunk(int chunkX, int chunkZ, Packet<?> packet) {
+        var entry = entry("chunk", packet);
+        entry.addProperty("cx", chunkX);
+        entry.addProperty("cz", chunkZ);
+        add(entry);
+    }
+
     /** Players that currently see the entity, and the entity itself when it is a player. */
     static void toTracking(int entity, boolean includeSelf, Packet<?> packet) {
         if (ownedByRust(packet)) return;
