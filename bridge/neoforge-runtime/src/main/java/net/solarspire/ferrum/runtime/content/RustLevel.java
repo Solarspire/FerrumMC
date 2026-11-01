@@ -899,28 +899,40 @@ public final class RustLevel extends ServerLevel {
         final BlockEntity be; BlockState state; byte[] saved;
         Entry(BlockEntity be,BlockState state,byte[] saved) { this.be=be; this.state=state; this.saved=saved; }
     }
-    private LevelChunkSection[] sections;
-    private LevelChunkSection[] sections() {
+    private LevelChunkSection template;
+    /** Sections of one chunk column; each reads and writes the Rust world, so mods that walk sections see real blocks. */
+    private LevelChunkSection[] sections(int chunkX,int chunkZ) {
         int count = levelHeight >> 4;
-        if (sections == null || sections.length != count) {
-            try {
-                sections = new LevelChunkSection[count];
-                // Containers that mods read straight off a section (radiation, conduit scans) exist but stay empty: block data lives in Rust.
-                var template = new LevelChunkSection(net.minecraft.world.level.chunk.PalettedContainerFactory.create(REGISTRIES));
-                for (int i = 0; i < count; i++) {
-                    var section = (LevelChunkSection) UNSAFE.allocateInstance(RustSection.class);
-                    RustPlayer.set(section,LevelChunkSection.class,"states",template.getStates());
-                    RustPlayer.set(section,LevelChunkSection.class,"biomes",template.getBiomes());
-                    sections[i] = section;
-                }
-            } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
-        }
-        return sections;
+        try {
+            if (template == null) template = new LevelChunkSection(net.minecraft.world.level.chunk.PalettedContainerFactory.create(REGISTRIES));
+            var sections = new LevelChunkSection[count];
+            for (int i = 0; i < count; i++) {
+                var section = (RustSection) UNSAFE.allocateInstance(RustSection.class);
+                // The containers stay empty: block data lives in Rust and every access below goes there.
+                RustPlayer.set(section,LevelChunkSection.class,"states",template.getStates());
+                RustPlayer.set(section,LevelChunkSection.class,"biomes",template.getBiomes());
+                section.owner = this;
+                section.x = chunkX << 4; section.y = minimumY + (i << 4); section.z = chunkZ << 4;
+                sections[i] = section;
+            }
+            return sections;
+        } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
     }
     private static final class RustSection extends LevelChunkSection {
+        private RustLevel owner;
+        private int x, y, z;
         private RustSection() { super(null,null); }
+        @Override public BlockState getBlockState(int sx,int sy,int sz) { return Block.stateById(BridgeRuntime.getState(owner.handle,x+sx,y+sy,z+sz)); }
+        @Override public net.minecraft.world.level.material.FluidState getFluidState(int sx,int sy,int sz) { return getBlockState(sx,sy,sz).getFluidState(); }
+        /** LevelChunkSection writes skip neighbour updates; Rust still sends the change to clients. */
+        @Override public BlockState setBlockState(int sx,int sy,int sz,BlockState state,boolean checkThreading) {
+            var old = getBlockState(sx,sy,sz);
+            BridgeRuntime.setState(owner.handle,x+sx,y+sy,z+sz,Block.getId(state),2|16);
+            return old;
+        }
         @Override public boolean hasFluid() { return true; }
         @Override public boolean hasOnlyAir() { return false; }
+        @Override public boolean maybeHas(java.util.function.Predicate<BlockState> predicate) { return true; }
     }
     private static final class RustChunk extends LevelChunk {
         private RustLevel owner;
@@ -975,8 +987,11 @@ public final class RustLevel extends ServerLevel {
         @Override public int getHeight(net.minecraft.world.level.levelgen.Heightmap.Types type,int x,int z) {
             return owner.getHeight(type,(position.x()<<4)+x,(position.z()<<4)+z) - 1;
         }
-        // Sections are not stored; each reports fluid so callers fall back to per-block queries through the Rust world.
-        @Override public LevelChunkSection[] getSections() { return owner.sections(); }
+        private LevelChunkSection[] sections;
+        @Override public LevelChunkSection[] getSections() {
+            if (sections == null || sections.length != owner.levelHeight >> 4) sections = owner.sections(position.x(),position.z());
+            return sections;
+        }
         @Override public Map<BlockPos,BlockEntity> getBlockEntities() {
             var result = new LinkedHashMap<BlockPos,BlockEntity>();
             owner.entities.forEach((pos,entry) -> {
