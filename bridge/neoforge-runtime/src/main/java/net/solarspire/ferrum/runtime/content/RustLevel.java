@@ -74,10 +74,13 @@ public final class RustLevel extends ServerLevel {
         level.light = (RustLightEngine) UNSAFE.allocateInstance(RustLightEngine.class);
         level.light.owner = level;
         level.entityGetter = new EntityBridge.Getter(level);
-        UNSAFE.putObject(level.chunks,UNSAFE.objectFieldOffset(ServerChunkCache.class.getDeclaredField("chunkMap")),UNSAFE.allocateInstance(RustChunkMap.class));
+        var chunkMap = (RustChunkMap) UNSAFE.allocateInstance(RustChunkMap.class);
+        chunkMap.owner = level;
+        UNSAFE.putObject(level.chunks,UNSAFE.objectFieldOffset(ServerChunkCache.class.getDeclaredField("chunkMap")),chunkMap);
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("waypointManager")),new net.minecraft.server.waypoints.ServerWaypointManager());
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("dragonParts")),new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>());
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("navigatingMobs")),new java.util.HashSet<>());
+        put(level,ServerLevel.class,"debugSynchronizers",new net.minecraft.util.debug.LevelDebugSynchronizers(level));
         put(level,Level.class,"neighborUpdater",level.new RustNeighborUpdater());
         // ServerLevel.explode and others read the field directly; it must show the players Rust has in this world.
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("players")),new java.util.AbstractList<net.minecraft.server.level.ServerPlayer>() {
@@ -297,6 +300,8 @@ public final class RustLevel extends ServerLevel {
                 var chunk = RustChunk.create(this,pos.x(),pos.z());
                 loadedViews.put(pos,chunk);
                 postLifecycle(new net.neoforged.neoforge.event.level.ChunkEvent.Load(chunk,false));
+                // ChunkMap promotes a loaded chunk to ticking here; mods hook it to publish per-chunk state.
+                startTickingChunk(chunk);
             }
         }
         for (var pos : new ArrayList<>(loadedViews.keySet())) {
@@ -356,6 +361,8 @@ public final class RustLevel extends ServerLevel {
         var entry = new Entry(be,state,bytes(be.saveWithFullMetadata(REGISTRIES)));
         entities.put(pos.immutable(),entry);
         be.clearRemoved();
+        // LevelChunk.addAndRegisterBlockEntity: mods hook onBlockEntityAdded to join energy and fluid networks.
+        if (!vanilla(be)) onBlockEntityAdded(be);
         be.onLoad();
         return entry;
     }
@@ -1005,13 +1012,48 @@ public final class RustLevel extends ServerLevel {
         @Override public BlockEntity getBlockEntity(BlockPos pos) { return owner.getBlockEntity(pos); }
         @Override public BlockEntity getBlockEntity(BlockPos pos,EntityCreationType type) { return getBlockEntity(pos); }
         @Override public void markUnsaved() { saveAttachments(); owner.request("dirty",origin()); }
+        /** Rust owns scheduled ticks; the view has no tick containers to unpack. */
+        @Override public void unpackTicks(long time) { }
         @Override public net.minecraft.server.level.FullChunkStatus getFullStatus() { return net.minecraft.server.level.FullChunkStatus.ENTITY_TICKING; }
     }
     /** Entity broadcasts go to Rust's tracker, which knows who sees the entity. */
     private static final class RustChunkMap extends net.minecraft.server.level.ChunkMap {
         private RustChunkMap() { super(null,null,null,null,null,null,null,null,null,null,null,0,false); }
+        private RustLevel owner;
+        /** Mods reach loaded chunks through holders; a holder here is a view of the loaded Rust chunk. */
+        private net.minecraft.server.level.ChunkHolder holder(long key) {
+            int x = ChunkPos.getX(key), z = ChunkPos.getZ(key);
+            if (!owner.hasChunk(x,z)) return null;
+            try {
+                var holder = (RustChunkHolder) UNSAFE.allocateInstance(RustChunkHolder.class);
+                holder.chunk = owner.getChunk(x,z);
+                UNSAFE.putObject(holder,UNSAFE.objectFieldOffset(net.minecraft.server.level.GenerationChunkHolder.class.getDeclaredField("pos")),holder.chunk.getPos());
+                return holder;
+            } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+        }
+        @Override public net.minecraft.server.level.ChunkHolder getUpdatingChunkIfPresent(long key) { return holder(key); }
+        @Override public net.minecraft.server.level.ChunkHolder getVisibleChunkIfPresent(long key) { return holder(key); }
+        @Override public LevelChunk getChunkToSend(long key) { int x = ChunkPos.getX(key), z = ChunkPos.getZ(key); return owner.hasChunk(x,z) ? owner.getChunk(x,z) : null; }
+        @Override public List<net.minecraft.server.level.ServerPlayer> getPlayers(ChunkPos pos,boolean boundaryOnly) { return boundaryOnly ? List.of() : PlayerBridge.playersIn(owner); }
         @Override public void sendToTrackingPlayers(net.minecraft.world.entity.Entity entity,net.minecraft.network.protocol.Packet<? super net.minecraft.network.protocol.game.ClientGamePacketListener> packet) { Outbox.toTracking(entity.getId(),false,packet); }
         @Override public void sendToTrackingPlayersAndSelf(net.minecraft.world.entity.Entity entity,net.minecraft.network.protocol.Packet<? super net.minecraft.network.protocol.game.ClientGamePacketListener> packet) { Outbox.toTracking(entity.getId(),true,packet); }
+    }
+    /** A loaded Rust chunk as a full, entity-ticking chunk holder. */
+    private static final class RustChunkHolder extends net.minecraft.server.level.ChunkHolder {
+        private LevelChunk chunk;
+        private RustChunkHolder() { super(null,0,null,null,null,null); }
+        @Override public ChunkAccess getChunkIfPresentUnchecked(ChunkStatus status) { return chunk; }
+        @Override public ChunkAccess getChunkIfPresent(ChunkStatus status) { return chunk; }
+        @Override public ChunkAccess getLatestChunk() { return chunk; }
+        @Override public LevelChunk getTickingChunk() { return chunk; }
+        @Override public LevelChunk getChunkToSend() { return chunk; }
+        @Override public ChunkStatus getPersistedStatus() { return ChunkStatus.FULL; }
+        @Override public ChunkStatus getLatestStatus() { return ChunkStatus.FULL; }
+        @Override public net.minecraft.server.level.FullChunkStatus getFullStatus() { return net.minecraft.server.level.FullChunkStatus.ENTITY_TICKING; }
+        @Override public java.util.concurrent.CompletableFuture<net.minecraft.server.level.ChunkResult<LevelChunk>> getTickingChunkFuture() { return java.util.concurrent.CompletableFuture.completedFuture(net.minecraft.server.level.ChunkResult.of(chunk)); }
+        @Override public java.util.concurrent.CompletableFuture<net.minecraft.server.level.ChunkResult<LevelChunk>> getEntityTickingChunkFuture() { return getTickingChunkFuture(); }
+        @Override public java.util.concurrent.CompletableFuture<net.minecraft.server.level.ChunkResult<LevelChunk>> getFullChunkFuture() { return getTickingChunkFuture(); }
+        @Override public boolean blockChanged(BlockPos pos) { return false; }
     }
     /** Read-only light view; Rust runs all light propagation, so every update hook is a no-op. */
     private static final class RustLightEngine extends net.minecraft.server.level.ThreadedLevelLightEngine {
