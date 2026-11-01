@@ -195,6 +195,15 @@ impl HopperBlockEntity {
         }
     }
 
+    fn has_room_for(&self, item: &ItemStack) -> bool {
+        (0..self.size()).any(|slot| {
+            let stack = self.get_stack(slot);
+            stack.is_empty()
+                || (stack.item_count < stack.get_max_stack_size()
+                    && stack.are_items_and_components_equal(item))
+        })
+    }
+
     fn inventory_full(&self) -> bool {
         let items = self
             .items
@@ -225,6 +234,17 @@ impl HopperBlockEntity {
             return false;
         }
 
+        if crate::neoforge::modded_block_at(world, pos_up)
+            && let Some(offer) = crate::neoforge::extract_item(world, *pos_up, None)
+        {
+            // Java offered one item without taking it; it leaves only once the hopper has room for it.
+            let one_item = offer.copy_with_count(1);
+            if !self.has_room_for(&one_item) {
+                return false;
+            }
+            return crate::neoforge::extract_item(world, *pos_up, Some(&one_item)).is_some()
+                && Self::add_one_item(self, self, &one_item);
+        }
         if let Some(entity) = world.get_block_entity(pos_up)
             && let Some(container) = entity.clone().get_inventory()
         {
@@ -370,6 +390,36 @@ impl HopperBlockEntity {
 
     fn eject_items(&self, world: &Arc<World>) -> bool {
         // TODO getEntityContainer
+        let target = self.position.offset(to_offset(&self.facing));
+        if crate::neoforge::modded_block_at(world, &target) {
+            // The side of the target the hopper touches, as a Java direction index.
+            let side = match self.facing {
+                FacingHopper::Down => 1,
+                FacingHopper::North => 3,
+                FacingHopper::South => 2,
+                FacingHopper::West => 5,
+                FacingHopper::East => 4,
+            };
+            for slot in 0..Self::INVENTORY_SIZE {
+                let Some(extraction) = self.take_one(slot) else {
+                    continue;
+                };
+                match crate::neoforge::insert_item(world, target, side, &extraction.one_item) {
+                    Some(true) => return true,
+                    answer => {
+                        if let Some(leftover) = self.put_back(slot, extraction) {
+                            let pos = self.position.to_centered_f64();
+                            world.scatter_stack(pos.x, pos.y, pos.z, leftover);
+                        }
+                        // No item handler on that side: nothing else will fit either.
+                        if answer.is_none() {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
 
         if let Some(entity) = world.get_block_entity(&self.position.offset(to_offset(&self.facing)))
             && let Some(container) = entity.get_inventory()

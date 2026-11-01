@@ -193,6 +193,8 @@ public final class PlayerBridge {
             if (op.equals("block_placed")) return level.blockPlaced(request, id == null ? null : facing(PLAYERS.get(id), request)).toString();
             if (op.equals("placement_state")) return level.placementState(request, id == null ? null : facing(PLAYERS.get(id), request)).toString();
             if (op.equals("update_shape")) return level.updateShape(request).toString();
+            if (op.equals("item_insert")) return level.itemInsert(request).toString();
+            if (op.equals("item_extract")) return level.itemExtract(request).toString();
             if (op.equals("correct_tool")) {
                 var reply = new JsonObject();
                 var tool = stackFromRust(decode(request.get("tool").getAsString()));

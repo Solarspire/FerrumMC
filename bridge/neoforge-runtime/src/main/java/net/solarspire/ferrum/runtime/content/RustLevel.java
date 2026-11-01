@@ -762,6 +762,56 @@ public final class RustLevel extends ServerLevel {
         return reply;
     }
 
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> itemHandler(JsonObject request) {
+        return getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,position(request),net.minecraft.core.Direction.from3DDataValue(request.get("side").getAsInt()));
+    }
+
+    /** A vanilla hopper (Rust) pushing one stack into a mod block's item capability. */
+    JsonObject itemInsert(JsonObject request) throws Exception {
+        var reply = new JsonObject();
+        var handler = itemHandler(request);
+        if (handler == null) return reply;
+        reply.addProperty("handler",true);
+        var stack = PlayerBridge.stackFromRust(decode(request.get("stack").getAsString()));
+        try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+            int inserted = handler.insert(net.neoforged.neoforge.transfer.item.ItemResource.of(stack),stack.getCount(),transaction);
+            if (inserted > 0) transaction.commit();
+            reply.addProperty("inserted",inserted);
+        }
+        return reply;
+    }
+
+    /**
+     * A vanilla hopper (Rust) pulling from a mod block's item capability. Without "stack" it names the first item that
+     * would come out and leaves it; with "stack" it takes one of that item.
+     */
+    JsonObject itemExtract(JsonObject request) throws Exception {
+        var reply = new JsonObject();
+        var handler = itemHandler(request);
+        if (handler == null) return reply;
+        if (request.has("stack")) {
+            var resource = net.neoforged.neoforge.transfer.item.ItemResource.of(PlayerBridge.stackFromRust(decode(request.get("stack").getAsString())));
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                if (handler.extract(resource,1,transaction) == 1) {
+                    transaction.commit();
+                    reply.addProperty("stack",PlayerBridge.encode(PlayerBridge.stackToRust(resource.toStack(1))));
+                }
+            }
+            return reply;
+        }
+        for (int slot = 0; slot < handler.size(); slot++) {
+            var resource = handler.getResource(slot);
+            if (resource.isEmpty()) continue;
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                if (handler.extract(slot,resource,1,transaction) == 1) {
+                    reply.addProperty("stack",PlayerBridge.encode(PlayerBridge.stackToRust(resource.toStack(1))));
+                    return reply;
+                }
+            }
+        }
+        return reply;
+    }
+
     /** BlockBehaviour.updateShape for a mod block whose neighbour changed. */
     JsonObject updateShape(JsonObject request) {
         var pos = position(request);

@@ -1770,6 +1770,43 @@ pub fn neighbor_changed(world: &Arc<World>, position: BlockPos, source: &pumpkin
     mod_block_op(world, request);
 }
 
+/// Offers one item to a mod block's item capability on `side` (a Java direction index): `Some(true)` when it took
+/// the item, `None` when the block has no item handler there.
+pub fn insert_item(
+    world: &Arc<World>,
+    position: BlockPos,
+    side: u8,
+    stack: &ItemStack,
+) -> Option<bool> {
+    let mut nbt = NbtCompound::new();
+    stack.write_item_stack(&mut nbt);
+    let mut request = block_request("item_insert", position);
+    request["side"] = json!(side);
+    request["stack"] = json!(bridge::encode_nbt(&nbt));
+    let reply = mod_block_op(world, request)?;
+    (reply["handler"] == true).then(|| reply["inserted"].as_i64().unwrap_or(0) > 0)
+}
+
+/// Takes one item out of a mod block's item capability on its bottom side. Without `take` it only names the item
+/// that would come out; with it, it removes one of that item and returns it.
+pub fn extract_item(
+    world: &Arc<World>,
+    position: BlockPos,
+    take: Option<&ItemStack>,
+) -> Option<ItemStack> {
+    let mut request = block_request("item_extract", position);
+    request["side"] = json!(0);
+    if let Some(take) = take {
+        let mut nbt = NbtCompound::new();
+        take.write_item_stack(&mut nbt);
+        request["stack"] = json!(bridge::encode_nbt(&nbt));
+    }
+    let reply = mod_block_op(world, request)?;
+    let nbt = bridge::decode_nbt(reply["stack"].as_str()?).ok()?;
+    let stack = merged_stack(ItemStack::EMPTY.clone(), &nbt);
+    (!stack.is_empty()).then_some(stack)
+}
+
 /// `BlockBehaviour.updateShape` of a mod block after its neighbour in `direction` changed; `None` keeps the state.
 pub fn update_shape(
     world: &Arc<World>,
