@@ -57,7 +57,7 @@ How it works:
 - Chunks are sent in progressive ticket rings so the client leaves "Loading terrain" quickly.
 - A panic hook in `crates/pumpkin/src/main.rs` writes `panic.log` synchronously. Debug-build `assert_unchecked` and other non-unwinding aborts show up as exit `0xC0000409`.
 
-Running it: `scripts/run.ps1` stages `patchbukkit.dll` and runs `target/debug/ferrummc.exe` in `run/server`. `run/server/ferrum-neoforge.json` enables the bridge and points at `.cache/jvm.json` and `run/server/runtime.json`; mods go in `run/server/neoforge/mods` along with the runtime jar. Test scripts: `scripts/test-neoforge-bridge.ps1`, `scripts/test-neoforge-client.ps1` (headless NeoForge client with `-PlaceItem`, `-ViewDistance` and a gun probe) and `scripts/smoke.ps1`. Rebuild the runtime jar and the exe together; a stale jar against a new exe causes errors like `NeoForge bridge JSON: invalid type: null, expected a sequence`.
+Running it: `scripts/run.ps1` stages `patchbukkit.dll` and runs `target/debug/ferrummc.exe` in `run/server`. `run/server/ferrum-neoforge.json` enables the bridge and points at `.cache/jvm.json` and `run/server/runtime.json`; mods go in `run/server/neoforge/mods` along with the runtime jar. Test scripts: `scripts/test-neoforge-bridge.ps1`, `scripts/test-neoforge-client.ps1` (headless NeoForge client with `-PlaceItem`, `-ViewDistance`, a gun probe and `-Machines`) and `scripts/smoke.ps1`. Rebuild the runtime jar and the exe together; a stale jar against a new exe causes errors like `NeoForge bridge JSON: invalid type: null, expected a sequence`.
 
 Working on Windows with a human playing on the server: a running exe can't be overwritten but can be renamed. Rename `target/debug/ferrummc.exe` to `ferrummc.old-<n>.exe` before `cargo build`, and only stop and relaunch the human's server once tests pass. Don't pipe the server's output (for example through `Tee-Object`); that breaks console input. Disk space on `C:` is tight, so delete scratch `run/neoforge-*` directories when done.
 
@@ -73,10 +73,12 @@ Working:
 - Adapter (2026-10-31): hot world calls (`getState`, `setState`, `isLoaded`, `getHeight`, `biome`, `random`) are registered JNI natives keyed by an int world handle; block entities and player inventories sync only on change; ID remaps use dense tables built once. Mod item components go to the client in Java's own 26.2 encoding.
 - Vanilla block entities written by Java are committed back to Rust; safe leave (Java menu closed, items returned); mod recipes in vanilla crafting/furnace/campfire via Java `RecipeManager`; damage to mod entities through Java `hurtServer`; mod block neighbour/scheduled ticks, `onPlace` and removal side effects; mod entities, player attachments and SavedData (`<world>/data/neoforge`) persist; worldgen runs every non-`minecraft` namespace.
 - Serverbound item components (enchantments, potions) are mapped back to engine IDs; an undecodable creative slot or click is dropped, not a kick.
+- HBM machines (2026-11-01): mod block placement uses Java `getStateForPlacement`/`canSurvive` and `setPlacedBy` sees the placer's current yaw (multiblocks face and fill correctly); `updateShape` and neighbour updates reach mod blocks; the bridge level's `NeighborUpdater` runs updates in Rust; chunk sections and `ChunkMap` holders read the Rust world; `onBlockEntityAdded` and `startTickingChunk` run, so HBM power/fluid graphs and multiblock core indices build and rebuild after a restart; mod `getUpdatePacket` goes to chunk watchers; vanilla hoppers push into and pull from mod item capabilities. Probe: `scripts/test-neoforge-client.ps1 -Machines -PlaceItem '' -GunItem ''` (powered electric furnace, assembly machine placed, opened from a cell and torn down, battery and cable powering a furnace, hoppers, then a server restart).
 
 In progress or open:
 
-- Mod block random ticks and collision shapes; chunk attachments not persisted.
+- Mod block random ticks, collision shapes and chunk attachments are wired but no probe covers them. HBM fluid ducts/tanks, conveyors/inserters and machine GUI buttons are untested.
+- Every neighbour and shape update next to a mod block is one JSON bridge call; watch MSPT in large HBM bases.
 - Many NTM features still don't work in real play; keep closing generic bridge gaps from owner reports.
 - Requests other than the hot natives are still JSON with base64 payloads; a binary envelope is not done.
 - `EnvironmentAttributeSystem` on the stand-in level covers dimension and biome layers only (no day/night).
