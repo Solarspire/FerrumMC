@@ -5290,7 +5290,9 @@ impl World {
             return;
         }
 
-        if let Some(pumpkin_block) = self.block_registry.get_pumpkin_block(block.id) {
+        if pumpkin_data::runtime::block(block.id).is_some() {
+            crate::neoforge::neighbor_changed(self, *position, source_block);
+        } else if let Some(pumpkin_block) = self.block_registry.get_pumpkin_block(block.id) {
             pumpkin_block.on_neighbor_update(OnNeighborUpdateArgs {
                 world: self,
                 block,
