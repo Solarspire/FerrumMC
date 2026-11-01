@@ -78,6 +78,7 @@ public final class RustLevel extends ServerLevel {
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("waypointManager")),new net.minecraft.server.waypoints.ServerWaypointManager());
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("dragonParts")),new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>());
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("navigatingMobs")),new java.util.HashSet<>());
+        put(level,Level.class,"neighborUpdater",level.new RustNeighborUpdater());
         // ServerLevel.explode and others read the field directly; it must show the players Rust has in this world.
         UNSAFE.putObject(level,UNSAFE.objectFieldOffset(ServerLevel.class.getDeclaredField("players")),new java.util.AbstractList<net.minecraft.server.level.ServerPlayer>() {
             @Override public net.minecraft.server.level.ServerPlayer get(int index) { return PlayerBridge.playersIn(level).get(index); }
@@ -583,6 +584,32 @@ public final class RustLevel extends ServerLevel {
         }
         request.addProperty("nbt", Base64.getEncoder().encodeToString(saved));
         bridgeCall(request);
+    }
+
+    /** Level.neighborUpdater: Rust runs neighbour and shape updates in its own order and calls Java for mod blocks. */
+    private final class RustNeighborUpdater extends net.minecraft.world.level.redstone.CollectingNeighborUpdater {
+        RustNeighborUpdater() { super(RustLevel.this,0); }
+        private JsonObject update(String op,BlockPos pos) {
+            var request = new JsonObject();
+            request.addProperty("op",op);
+            request.addProperty("x",pos.getX()); request.addProperty("y",pos.getY()); request.addProperty("z",pos.getZ());
+            return request;
+        }
+        @Override public void shapeUpdate(net.minecraft.core.Direction direction,BlockState neighborState,BlockPos pos,BlockPos neighborPos,int flags,int recursion) {
+            var request = update("shape_update",pos);
+            request.addProperty("direction",direction.get3DDataValue());
+            request.addProperty("flags",flags);
+            bridgeCall(request);
+        }
+        @Override public void neighborChanged(BlockPos pos,Block block,net.minecraft.world.level.redstone.Orientation orientation) {
+            var request = update("neighbor_update",pos);
+            request.addProperty("source",Block.getId(block.defaultBlockState()));
+            bridgeCall(request);
+        }
+        @Override public void neighborChanged(BlockState state,BlockPos pos,Block block,net.minecraft.world.level.redstone.Orientation orientation,boolean movedByPiston) { neighborChanged(pos,block,orientation); }
+        @Override public void updateNeighborsAtExceptFromFacing(BlockPos pos,Block block,net.minecraft.core.Direction skip,net.minecraft.world.level.redstone.Orientation orientation) {
+            for (var direction : UPDATE_ORDER) if (direction != skip) neighborChanged(pos.relative(direction),block,null);
+        }
     }
 
     /** Block ticks Java schedules go to Rust's tick queue; Rust calls back with scheduled_tick when one is due. */

@@ -290,6 +290,7 @@ impl WorldAccess for RustWorld {
                 );
                 Ok(Value::Null)
             }
+            "neighbor_update" | "shape_update" => neighbor_op(world, &request.op, pos, &raw),
             "comparator" => {
                 world.update_neighbour_for_output_signal(&pos, world.get_block(&pos));
                 Ok(Value::Null)
@@ -385,6 +386,30 @@ impl WorldAccess for RustWorld {
     fn random(&self) -> i32 {
         rand::random::<i32>()
     }
+}
+
+/// Level's `NeighborUpdater`: Rust runs neighbour and shape updates, calling back into Java for mod blocks.
+fn neighbor_op(world: &Arc<World>, op: &str, pos: BlockPos, raw: &Value) -> Result<Value, String> {
+    if op == "neighbor_update" {
+        let source = raw["source"]
+            .as_u64()
+            .and_then(|id| u32::try_from(id).ok())
+            .and_then(bridge::rust_state)
+            .ok_or("Java state has no Rust mapping")?;
+        world.update_neighbor(&pos, pumpkin_data::Block::from_state_id(source));
+    } else {
+        let direction = raw["direction"]
+            .as_u64()
+            .and_then(|index| u8::try_from(index).ok())
+            .and_then(pumpkin_data::BlockDirection::from_index)
+            .ok_or("bad direction")?;
+        let flags = raw["flags"]
+            .as_u64()
+            .and_then(|flags| u32::try_from(flags).ok())
+            .unwrap_or(0);
+        world.replace_with_state_for_neighbor_update(&pos, direction, translate_flags(flags));
+    }
+    Ok(Value::Null)
 }
 
 fn translate_flags(flags: u32) -> BlockFlags {
@@ -2340,7 +2365,8 @@ fn apply_java_abilities(world: &Arc<World>, packet: &Value) {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         // Creative and spectator always keep mayfly.
-        let keeps_mayfly = abilities.creative || player.gamemode.load() == pumpkin_util::GameMode::Spectator;
+        let keeps_mayfly =
+            abilities.creative || player.gamemode.load() == pumpkin_util::GameMode::Spectator;
         abilities.allow_flying = keeps_mayfly || packet["mayfly"] == true;
         abilities.flying = abilities.allow_flying && packet["flying"] == true;
         if let Some(speed) = packet["flySpeed"].as_f64() {
